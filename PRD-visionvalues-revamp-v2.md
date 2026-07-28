@@ -78,7 +78,7 @@ The following pages and sections were discovered from the live site. **Every pag
 - Chinese validation messages: "請輸入姓名", "請輸入主旨", "請輸入電郵地址", "請輸入留言"
 - English validation messages: "Please Enter your Name", "Please Enter your Subject", "Please Enter your Email Address", "Please Enter your Message"
 - Submit (遞交) and Reset (重設) buttons
-- **Decision D7**: Messages always stored in DB. Email sent if SMTP configured.
+- **Decision D7**: Email-only contact form. No database storage. Success/failure notification shown to user immediately.
 
 ### 2.3 Navigation Structure
 
@@ -126,7 +126,7 @@ The left sidebar menu organizes pages into:
 3. **Built-in CMS** — Admin login on the same site; no external service
 4. **Bilingual management** — English & Traditional Chinese content editable side-by-side
 5. **Report management UI** — Upload, reorder, hide/show Financial and ESG PDF reports
-6. **Contact form** — Working contact form with email notification + DB storage
+6. **Contact form** — Working contact form with email notification via SMTP
 7. **Self-hosted** — No cloud services; runs locally on Node.js, Docker-ready
 
 ---
@@ -205,7 +205,7 @@ The left sidebar menu organizes pages into:
 | WEB-02 | Navigation collapses to hamburger menu on mobile | P0 |
 | WEB-03 | Breadcrumb navigation on all inner pages | P1 |
 | WEB-04 | Language switcher (EN ↔ ZH) prominent in header | P0 |
-| WEB-05 | Contact form stores in DB and sends email notification via SMTP | P0 |
+| WEB-05 | Contact form sends email via SMTP with success/failure notification to user (no DB storage) | P0 |
 | WEB-06 | PDF download links open in new tab | P0 |
 | WEB-07 | Page metadata (title, description) editable via CMS | P1 |
 | WEB-08 | 404 page for broken links | P1 |
@@ -336,19 +336,7 @@ created_at      DATETIME
 updated_at      DATETIME
 ```
 
-### 9.6 `contact_messages`
-```
-id              INTEGER PRIMARY KEY
-locale          TEXT NOT NULL DEFAULT 'en'
-name            TEXT NOT NULL
-subject         TEXT NOT NULL
-email           TEXT NOT NULL
-message         TEXT NOT NULL
-is_read         BOOLEAN DEFAULT 0
-created_at      DATETIME
-```
-
-### 9.7 `site_settings`
+### 9.6 `site_settings`
 ```
 id              INTEGER PRIMARY KEY
 key             TEXT UNIQUE NOT NULL
@@ -366,13 +354,12 @@ locale          TEXT NULL                  (NULL = applies to both)
 |-------|-------------|
 | `/admin/login` | Login page |
 | `/admin/setup` | First-run admin account creation |
-| `/admin` | Dashboard overview (unread messages count, recent activity) |
+| `/admin` | Dashboard overview (recent activity) |
 | `/admin/pages` | List all pages with published status per locale |
 | `/admin/pages/[slug]` | Edit page content (EN+ZH tabs, WYSIWYG editor, header image, SEO meta) |
 | `/admin/reports/financial` | Manage Financial Reports (upload, reorder, toggle visibility) |
 | `/admin/reports/esg` | Manage ESG Reports |
 | `/admin/announcements` | Manage Announcements (paste HKEX URL, edit metadata) |
-| `/admin/contact-messages` | View submitted messages (read/unread) |
 | `/admin/settings` | Site-wide settings (GA4 tracking ID, contact email, SMTP config info) |
 | `/admin/change-password` | Change admin password |
 
@@ -398,7 +385,9 @@ locale          TEXT NULL                  (NULL = applies to both)
 ### 10.5 SMTP Configuration
 - SMTP host, port, and destination email stored in `.env` file (not in DB for security)
 - **Decision D10**: Company SMTP server uses IP-based authentication — no credentials needed
-- Contact form always stores in DB; email sending is attempted if SMTP is configured
+- Contact form sends email via Nodemailer; no database storage
+- SMTP host, port, and recipient email configured in `.env`
+- Success/failure notification shown to user immediately after form submission
 
 ---
 
@@ -473,7 +462,7 @@ locale          TEXT NULL                  (NULL = applies to both)
 | D4 | WYSIWYG editor scope | One consistent limited editor for all content types (TipTap) |
 | D5 | Announcements implementation | Paste HKEX link → auto-fetch title/date |
 | D6 | Existing PDF migration | Financial/ESG PDFs copied from old server; HKEX-linked kept external |
-| D7 | Contact form storage | Always stored in DB; email sent if SMTP configured |
+| D7 | Contact form storage | Email-only via SMTP. No database storage. Success/failure notification shown to user immediately. |
 | D8 | Language publishing | Independent publish toggle per locale |
 | D9 | Deployment target | Docker compose on own server; portable to cloud |
 | D10 | SMTP configuration | Company SMTP (IP-based auth), settings in `.env` |
@@ -488,38 +477,71 @@ locale          TEXT NULL                  (NULL = applies to both)
 
 ## 15. Implementation Phases
 
-### Phase 1 — Foundation (Week 1-2)
-- [ ] Initialize Next.js project with App Router + TypeScript
-- [ ] Set up SQLite database with Prisma ORM + initial migration
-- [ ] Implement admin auth (login/setup/session/password reset)
-- [ ] Create base responsive layout (header, footer, nav, language switcher)
-- [ ] Recreate logo as SVG
+### Phase 1 — Foundation & Infrastructure (Week 1-2)
+- [ ] Initialize Next.js 14 project with App Router + TypeScript
+- [ ] Set up SQLite database with Prisma ORM + initial migration (all 6 data models)
+- [ ] Implement admin auth (login page, setup flow, JWT session, logout)
+- [ ] Create base responsive layout shell (header, footer, sidebar nav, language switcher)
+- [ ] Recreate logo as SVG (Decision D16)
 - [ ] Docker configuration (Dockerfile + docker-compose.yml)
 - [ ] Backup script (`npm run backup`)
 
-### Phase 2 — Core Pages (Week 3-4)
-- [ ] Build page editor admin UI (WYSIWYG, header image upload, SEO fields)
-- [ ] Implement all 10 page templates with responsive design
-- [ ] Migrate all existing content from old site into database
-- [ ] Implement breadcrumb navigation
-- [ ] Implement mobile hamburger menu
+### Phase 2A — Page Templates & Public Site (Week 3)
+- [ ] Implement all 10 page templates with responsive design (7 template types)
+- [ ] Implement breadcrumb navigation on all inner pages
+- [ ] Implement mobile hamburger menu (full-screen slide-in overlay)
+- [ ] Static/placeholder content for all pages — site fully navigable but CMS not yet connected
 
-### Phase 3 — Reports, Announcements & Contact (Week 5)
-- [ ] Build report management admin UI (upload/reorder/hide)
-- [ ] Build announcements admin UI (paste HKEX URL, auto-fetch metadata)
-- [ ] Build Financial Reports and ESG Reports public pages
-- [ ] Build Announcements public page
-- [ ] Build contact form with DB storage + SMTP email
-- [ ] Implement admin contact messages inbox
+### Phase 2B — Admin CMS Editor (Week 4)
+- [ ] Build admin pages listing at `/admin/pages`
+- [ ] Build page editor at `/admin/pages/[slug]`:
+  - EN/ZH tabbed editing
+  - TipTap WYSIWYG (bold, italic, paragraphs, links only)
+  - Header image upload per page
+  - SEO meta fields (title, description)
+  - Independent publish toggle per locale (Decision D8)
+- [ ] Logo upload in admin settings
+- [ ] In-app password change
+- [ ] CLI password reset command: `npm run reset-password`
+- [ ] Admin settings page (GA4 tracking ID, site name)
 
-### Phase 4 — SEO, Migration & Polish (Week 6)
-- [ ] 301 redirect middleware (old ASP URLs → new)
-- [ ] GA4 analytics integration (configurable in admin)
+### Phase 2.5 — Content Migration (Separate Task, ~1 Week)
+- [ ] Manually copy all existing content from live site into CMS for all 10 pages × 2 languages
+- [ ] Download existing header images from old site and upload to CMS
+- [ ] Verify PDF links and re-add via WYSIWYG where needed
+- [ ] Cross-check against content inventory (PRD Section 2)
+
+### Phase 3 — Reports, Announcements & Contact (Week 5-6)
+- [ ] Build report management admin UI (`/admin/reports/financial`, `/admin/reports/esg`):
+  - Upload PDF files via browser
+  - Title (EN/ZH), Year/Period, Description (EN/ZH), Language tag
+  - Visible/Hidden toggle
+  - Sort order (numeric)
+  - Delete reports
+- [ ] Build announcements admin UI (`/admin/announcements`):
+  - Paste HKEX URL, auto-fetch title/date metadata
+  - Manual edit fallback if auto-fetch fails
+  - Visible/Hidden toggle
+- [ ] Build Financial Reports and ESG Reports public pages (sortable tables with PDF links)
+- [ ] Build Announcements public page (table with Date + HKEX-linked title)
+- [ ] Build contact form page:
+  - Client-side validation (EN + ZH messages)
+  - SMTP email via Nodemailer (IP-based auth, no credentials)
+  - Success/failure notification to user
+  - No database storage
+  - No admin inbox
+
+### Phase 4 — SEO, Migration & Polish (Week 7)
+- [ ] 301 redirect middleware (old ASP URLs → new clean URLs)
+- [ ] GA4 analytics integration (tracking ID configurable in admin settings)
 - [ ] Auto-generated sitemap.xml + robots.txt
-- [ ] Open Graph meta tags
-- [ ] Old PDF download and migration
+- [ ] Open Graph meta tags (og:title, og:description, og:image)
 - [ ] 404 page
+- [ ] Old PDF download and migration from existing server
+- [ ] Lighthouse performance audit (target ≥85 mobile, ≥95 desktop)
+- [ ] WCAG 2.1 AA accessibility checks
 - [ ] Final testing and bug fixes
+- [ ] Docker deployment verification
 
 ---
 
