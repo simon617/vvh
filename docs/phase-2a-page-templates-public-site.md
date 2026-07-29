@@ -28,7 +28,7 @@ Build all 10 public-facing page templates with responsive design, breadcrumb nav
 | 2A.10 | Contact Us template | Header image + breadcrumb + left nav + contact form (static for now; backend in Phase 3) |
 | 2A.11 | Breadcrumb navigation | Auto-generated breadcrumbs on all inner pages (PRD WEB-03) |
 | 2A.12 | Mobile hamburger menu | Full-screen slide-in overlay menu, collapse sidebar on mobile (PRD WEB-02) |
-| 2A.13 | Sidebar navigation | Left sidebar with grouped links: Corporate Information, Investor Relations, Contact Us |
+| 2A.13 | Sidebar navigation | Left sidebar with grouped links: Corporate Information, Corporate Governance, Investor Relations, Contact Us |
 
 ---
 

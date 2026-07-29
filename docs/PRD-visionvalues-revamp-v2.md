@@ -87,7 +87,8 @@ The left sidebar menu organizes pages into:
 **Corporate Information**
   - Board of Directors
   - Corporate Details
-  - Corporate Governance
+
+**Corporate Governance**
 
 **Investor Relations**
   - Announcements and Circulars
