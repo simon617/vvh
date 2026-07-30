@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "home": "首頁",
+    "corporateInformation": "公司資料",
+    "boardOfDirectors": "董事會",
+    "corporateDetails": "公司詳情",
+    "corporateGovernance": "企業管治",
+    "investorRelations": "投資者關係",
+    "announcements": "公告及通函",
+    "financialReports": "財務報告",
+    "esgReports": "環境、社會及管治報告",
+    "lostShareCertificates": "遺失股票證書",
+    "corporateCommunications": "公司通訊",
+    "contactUs": "聯絡我們"
+  },
+  "header": {
+    "languageSwitch": "English"
+  },
+  "footer": {
+    "copyright": "© {year} 遠見控股有限公司 版權所有"
+  },
+  "admin": {
+    "login": "管理員登入",
+    "username": "用戶名稱",
+    "password": "密碼",
+    "loginButton": "登入",
+    "logout": "登出",
+    "setupTitle": "建立管理員帳戶",
+    "setupDescription": "設定您的初始管理員帳戶以開始使用。",
+    "confirmPassword": "確認密碼",
+    "createAccount": "建立帳戶",
+    "dashboard": "儀表板",
+    "pages": "頁面",
+    "reports": "報告",
+    "settings": "設定",
+    "changePassword": "更改密碼",
+    "invalidCredentials": "用戶名稱或密碼無效",
+    "passwordMismatch": "密碼不匹配",
+    "setupSuccess": "管理員帳戶建立成功。請登入。",
+    "loginRequired": "請登入以訪問管理區域。"
+  },
+  "common": {
+    "loading": "載入中...",
+    "error": "發生錯誤",
+    "notFound": "頁面未找到",
+    "backToHome": "返回首頁"
+  }
+}

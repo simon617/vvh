@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "home": "Home",
+    "corporateInformation": "Corporate Information",
+    "boardOfDirectors": "Board of Directors",
+    "corporateDetails": "Corporate Details",
+    "corporateGovernance": "Corporate Governance",
+    "investorRelations": "Investor Relations",
+    "announcements": "Announcements & Circulars",
+    "financialReports": "Financial Reports",
+    "esgReports": "ESG Reports",
+    "lostShareCertificates": "Lost Share Certificates",
+    "corporateCommunications": "Corporate Communications",
+    "contactUs": "Contact Us"
+  },
+  "header": {
+    "languageSwitch": "中文"
+  },
+  "footer": {
+    "copyright": "© {year} Vision Values Holdings Limited. All rights reserved."
+  },
+  "admin": {
+    "login": "Admin Login",
+    "username": "Username",
+    "password": "Password",
+    "loginButton": "Login",
+    "logout": "Logout",
+    "setupTitle": "Create Admin Account",
+    "setupDescription": "Set up your initial admin account to get started.",
+    "confirmPassword": "Confirm Password",
+    "createAccount": "Create Account",
+    "dashboard": "Dashboard",
+    "pages": "Pages",
+    "reports": "Reports",
+    "settings": "Settings",
+    "changePassword": "Change Password",
+    "invalidCredentials": "Invalid username or password",
+    "passwordMismatch": "Passwords do not match",
+    "setupSuccess": "Admin account created successfully. Please log in.",
+    "loginRequired": "Please log in to access the admin area."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "notFound": "Page not found",
+    "backToHome": "Back to Home"
+  }
+}

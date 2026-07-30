@@ -97,10 +97,10 @@ docker-compose up -d --build
 | File | Purpose |
 |------|---------|
 | `prisma/schema.prisma` | All 6 data models (see PRD Section 9) |
-| `src/app/layout.tsx` | Root layout with header, footer, language switcher |
-| `src/app/[locale]/layout.tsx` | Locale-specific layout wrapper |
-| `src/app/admin/login/page.tsx` | Admin login page |
-| `src/app/admin/setup/page.tsx` | First-run admin account creation |
+| `src/app/layout.tsx` | Root layout (html/body + Inter font) |
+| `src/app/[locale]/layout.tsx` | Locale layout (Header + Sidebar + Footer) |
+| `src/app/[locale]/admin/login/page.tsx` | Admin login page |
+| `src/app/[locale]/admin/setup/page.tsx` | First-run admin account creation |
 | `src/middleware.ts` | i18n routing + auth middleware |
 | `src/lib/auth.ts` | JWT sign/verify, bcrypt hash/compare, session helpers |
 | `src/lib/prisma.ts` | Prisma client singleton |
@@ -108,7 +108,7 @@ docker-compose up -d --build
 | `docker-compose.yml` | App service + SQLite volume + uploads volume |
 | `scripts/backup.ts` | `npm run backup` script |
 | `scripts/reset-password.ts` | `npm run reset-password` script |
-| `public/logo.svg` | Recreated SVG logo |
+| `public/images/logo.jpg` | Existing brand logo (used directly per D16) |
 
 ### 7.3 Database / Data Models
 
