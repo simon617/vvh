@@ -478,14 +478,16 @@ locale          TEXT NULL                  (NULL = applies to both)
 
 ## 15. Implementation Phases
 
-### Phase 1 — Foundation & Infrastructure (Week 1-2)
-- [ ] Initialize Next.js 14 project with App Router + TypeScript
-- [ ] Set up SQLite database with Prisma ORM + initial migration (all 6 data models)
-- [ ] Implement admin auth (login page, setup flow, JWT session, logout)
-- [ ] Create base responsive layout shell (header, footer, sidebar nav, language switcher)
-- [ ] Recreate logo as SVG (Decision D16)
-- [ ] Docker configuration (Dockerfile + docker-compose.yml)
-- [ ] Backup script (`npm run backup`)
+### Phase 1 — Foundation & Infrastructure (Week 1-2) ✅ Completed
+- [x] Initialize Next.js 14 project with App Router + TypeScript
+- [x] Set up SQLite database with Prisma ORM + initial migration (all 6 data models)
+- [x] Implement admin auth (login page, setup flow, JWT session, logout)
+- [x] Create base responsive layout shell (header, footer, sidebar nav, language switcher)
+- [x] Recreate logo as SVG (Decision D16)
+- [x] Docker configuration (Dockerfile + docker-compose.yml)
+- [x] Backup script (`npm run backup`)
+
+> **Phase 1 status (2026-08-02):** All 8 implementation tasks complete. Testing checklist in `docs/phrase-1-implementation.md` is mostly verified. Two items marked `[o]` (not yet fully verified at this stage): language switcher (known bug — EN/ZH toggle behavior inverted; deferred per user) and `docker-compose up -d` (Docker Desktop engine not running on dev machine). `npm run reset-password` interactive run pending manual verification (core logic verified). See `docs/phrase-1-implementation.md` for full details.
 
 ### Phase 2A — Page Templates & Public Site (Week 3)
 - [ ] Implement all 10 page templates with responsive design (7 template types)

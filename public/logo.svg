@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="280" height="80">
+  <defs>
+    <style>
+      .title { font-family: 'Inter', 'Arial', sans-serif; font-weight: 700; font-size: 24px; fill: #FFFFFF; }
+      .subtitle { font-family: 'Inter', 'Arial', sans-serif; font-weight: 400; font-size: 16px; fill: #FFFFFF; }
+    </style>
+  </defs>
+  <rect x="20" y="12" width="30" height="56" rx="2" fill="#9B1B30" />
+  <text x="245" y="34" text-anchor="end" class="title">VISION VALUES</text>
+  <text x="245" y="58" text-anchor="end" class="subtitle">Holdings Limited</text>
+</svg>

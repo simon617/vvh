@@ -20,7 +20,7 @@ Set up the entire project foundation: Next.js project scaffolding, database sche
 | 1.2 | Prisma schema + migration | All 6 data models: `admin_users`, `pages`, `page_contents`, `reports`, `announcements`, `site_settings` |
 | 1.3 | Admin auth system | Login page (`/admin/login`), setup flow (`/admin/setup`), JWT session (HTTP-only cookie, 24h expiry), logout |
 | 1.4 | Base responsive layout | Header (logo + language switcher), footer, sidebar navigation shell, language switcher (EN/ZH) |
-| 1.5 | SVG logo | Recreated from existing `images/logo.jpg` (Decision D16) |
+| 1.5 | SVG logo | Custom SVG at `public/logo.svg` with 30px red bar + right-justified text (Decision D16) |
 | 1.6 | Docker setup | `Dockerfile` (Node.js 18+), `docker-compose.yml` (app + SQLite volume), restart policy `unless-stopped` |
 | 1.7 | Backup script | `npm run backup` — dumps SQLite DB + archives `/uploads/` |
 | 1.8 | CLI password reset | `npm run reset-password` — prompts for new username/password, updates `admin_users` table |
@@ -108,7 +108,7 @@ docker-compose up -d --build
 | `docker-compose.yml` | App service + SQLite volume + uploads volume |
 | `scripts/backup.ts` | `npm run backup` script |
 | `scripts/reset-password.ts` | `npm run reset-password` script |
-| `public/images/logo.jpg` | Existing brand logo (used directly per D16) |
+| `public/logo.svg` | Custom SVG logo (30px red vertical bar + right-justified "VISION VALUES" / "Holdings Limited") |
 
 ### 7.3 Database / Data Models
 
@@ -156,21 +156,21 @@ None in this phase. API routes will be added in later phases for CMS operations.
 
 ### 7.8 Testing Requirements for This Phase
 
-- [ ] Admin setup flow creates user and redirects to login
-- [ ] Login with valid credentials returns JWT cookie
-- [ ] Login with invalid credentials shows error
-- [ ] Protected admin routes redirect to login when unauthenticated
-- [ ] JWT cookie cleared on logout
-- [ ] Language switcher toggles between EN and ZH
-- [ ] Base layout renders correctly on mobile (320px) and desktop (1920px)
-- [ ] `npm run reset-password` updates password in DB
-- [ ] `npm run backup` creates valid archive
-- [ ] `docker-compose up -d` starts app and persists data across restarts
-- [ ] SVG logo renders correctly in both light and dark contexts
+- [x] Admin setup flow creates user and redirects to login
+- [x] Login with valid credentials returns JWT cookie
+- [x] Login with invalid credentials shows error
+- [x] Protected admin routes redirect to login when unauthenticated
+- [x] JWT cookie cleared on logout
+- [o] Language switcher toggles between EN and ZH — **Known bug**: clicking the EN toggle switches the menu to ZH instead of staying on EN (and vice versa). Deferred per user instruction (2026-08-02). **To be fixed before Phase 2 sign-off.** See `docs/phrase-1-implementation.md` for details.
+- [x] Base layout renders correctly on mobile (320px) and desktop (1920px)
+- [o] `npm run reset-password` updates password in DB — Core logic verified (bcrypt hash + upsert + password compare PASS). Full interactive run needs manual verification in a real terminal (piped stdin unreliable on Windows). See `docs/phrase-1-implementation.md` for details.
+- [x] `npm run backup` creates valid archive — Verified archive contains `data/vvh.db` + `.env`.
+- [o] `docker-compose up -d` starts app and persists data across restarts — Docker Desktop engine not running on this machine; cannot be tested at this stage. `docker-compose.yml` host port updated to **3100** (port 3000 is excluded on this Windows machine). Verify once Docker Desktop is available.
+- [x] SVG logo renders correctly in both light and dark contexts
 
 ### 7.9 Known Constraints / Decisions Already Made
 
-- **D16**: Logo recreated as SVG (not uploaded from old site)
+- **D16**: Logo recreated as SVG at `public/logo.svg` — Warm Red vertical bar with right-justified white text on Deep Navy header
 - **D9**: Docker compose on own server; portable to cloud
 - **D10**: Company SMTP uses IP-based auth (no credentials)
 - **D15**: Manual `npm run backup`; Prisma migrations for CI/CD

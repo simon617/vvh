@@ -29,7 +29,7 @@ export function middleware(request: NextRequest) {
     
     // Allow access to login and setup pages without auth
     if (adminPath === "/admin/login" || adminPath === "/admin/setup") {
-      return intlMiddleware(request);
+      return withPathname(intlMiddleware(request), pathname);
     }
 
     // Check for auth cookie
@@ -43,7 +43,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return intlMiddleware(request);
+  return withPathname(intlMiddleware(request), pathname);
+}
+
+// Expose the original pathname to server components (e.g. layouts) via a header
+function withPathname(response: NextResponse, pathname: string): NextResponse {
+  response.headers.set("x-pathname", pathname);
+  return response;
 }
 
 export const config = {

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 interface LogoProps {
@@ -8,13 +7,12 @@ interface LogoProps {
 export default function Logo({ locale = "en" }: LogoProps) {
   return (
     <Link href={`/${locale}`} className="flex items-center shrink-0">
-      <Image
-        src="/images/logo.jpg"
+      <img
+        src="/logo.svg"
         alt="Vision Values Holdings Limited"
-        width={220}
+        width={280}
         height={80}
-        className="h-12 w-auto object-contain"
-        priority
+        className="h-16 w-auto"
       />
     </Link>
   );
