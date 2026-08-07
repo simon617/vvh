@@ -1,5 +1,5 @@
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
@@ -26,12 +26,12 @@ export async function comparePassword(
   return bcrypt.compare(password, hash);
 }
 
-// Sign JWT token
+// creates a JSON Web Token (JWT) for authentication
 export function signToken(payload: JwtPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: SESSION_EXPIRY });
 }
 
-// Verify JWT token
+// verify a JSON Web Token and returns either the decoded token payload or null if verification fails
 export function verifyToken(token: string): JwtPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET) as JwtPayload;
@@ -53,12 +53,21 @@ export async function getSession(): Promise<JwtPayload | null> {
 }
 
 // Set auth cookie
+// "lax" Cookie is set for top-level navigation, but not for cross-site requests like image, iframe, or AJAX requests.  
+// httpOnly : XSS protection, cookie is for server only, JavaScript can't access it.
+// secure :  
+//    Cookie is sent ONLY IF:
+//      (secure === false) OR (secure === true AND connection is HTTPS)
+//    Cookie is BLOCKED IF:
+//       secure === true AND connection is HTTP
+
+// path: "/" : cookie is available for entire website, not just a specific path
 export function setAuthCookie(token: string): void {
   const cookieStore = cookies();
   cookieStore.set("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax", 
     maxAge: 60 * 60 * 24, // 24 hours in seconds
     path: "/",
   });
@@ -76,8 +85,17 @@ export function clearAuthCookie(): void {
   });
 }
 
-// Check if admin user exists
-export async function adminExists(): Promise<boolean> {
+// Check if admin user exists.
+// If a username is provided, checks whether that specific username exists.
+// If no username is provided, checks whether ANY admin user exists (first-run detection).
+export async function adminExists(username?: string): Promise<boolean> {
+  if (username) {
+    const user = await prisma.adminUser.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+    return user !== null;
+  }
   const count = await prisma.adminUser.count();
   return count > 0;
 }

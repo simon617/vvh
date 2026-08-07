@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function AdminSetupPage() {
   const t = useTranslations("admin");
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -18,21 +20,24 @@ export default function AdminSetupPage() {
   useEffect(() => {
     async function checkSetup() {
       try {
+        // 1️⃣ Is user logged in?
         const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          // Admin exists and we're logged in, redirect to dashboard
-          router.push("/en/admin");
-          return;
-        }
-        // Check if admin exists at all
+        const loggedIn = res.ok;
+
+        // 2️⃣ Does any admin account exist?
         const setupRes = await fetch("/api/auth/setup", { method: "HEAD" }).catch(() => null);
-        if (setupRes?.status === 409) {
-          // Admin exists but we're not logged in, redirect to login
-          router.push("/en/admin/login");
+        const adminExists = setupRes?.status === 409;
+
+        if (adminExists && !loggedIn) {
+          // Admin exists but we're not logged in → redirect to login
+          router.push(`/${locale}/admin/login`);
           return;
         }
+
+        // Otherwise (no admin exists, OR admin exists and we're logged in)
+        // → stay here and show the setup form
       } catch {
-        // Continue showing setup form
+        // 3️⃣ No admin exists → stay here and show setup form
       } finally {
         setChecking(false);
       }
@@ -68,7 +73,7 @@ export default function AdminSetupPage() {
 
       setSuccess(t("setupSuccess"));
       setTimeout(() => {
-        router.push("/en/admin/login");
+        router.push(`/${locale}/admin/login`);
       }, 2000);
     } catch {
       setError("An error occurred");

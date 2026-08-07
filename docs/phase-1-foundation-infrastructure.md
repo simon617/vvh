@@ -113,7 +113,7 @@ docker-compose up -d --build
 ### 7.3 Database / Data Models
 
 All 6 models defined in PRD Section 9:
-- `admin_users` — Single admin account (reserved for future multi-admin)
+- `admin_users` — multi admin account  
 - `pages` — Page slugs, menu order, visibility
 - `page_contents` — Bilingual content per page (EN/ZH), WYSIWYG HTML, SEO fields
 - `reports` — Financial/ESG report PDFs with metadata
@@ -149,7 +149,7 @@ None in this phase. API routes will be added in later phases for CMS operations.
 - Session expiry: 24 hours
 - Passwords hashed with bcrypt (cost factor: 12)
 - Admin routes protected by middleware checking JWT validity
-- First-run setup redirects to `/admin/setup` if no admin user exists
+- admin user need to login before accessing `/admin/setup`  
 - CLI password reset as fallback if admin loses access
 - CSRF protection via Next.js built-in measures
 - XSS protection via TipTap sanitization (Phase 2B)
@@ -161,11 +161,11 @@ None in this phase. API routes will be added in later phases for CMS operations.
 - [x] Login with invalid credentials shows error
 - [x] Protected admin routes redirect to login when unauthenticated
 - [x] JWT cookie cleared on logout
-- [o] Language switcher toggles between EN and ZH — **Known bug**: clicking the EN toggle switches the menu to ZH instead of staying on EN (and vice versa). Deferred per user instruction (2026-08-02). **To be fixed before Phase 2 sign-off.** See `docs/phrase-1-implementation.md` for details.
+- [x] Language switcher toggles between EN and ZH 
 - [x] Base layout renders correctly on mobile (320px) and desktop (1920px)
 - [o] `npm run reset-password` updates password in DB — Core logic verified (bcrypt hash + upsert + password compare PASS). Full interactive run needs manual verification in a real terminal (piped stdin unreliable on Windows). See `docs/phrase-1-implementation.md` for details.
 - [x] `npm run backup` creates valid archive — Verified archive contains `data/vvh.db` + `.env`.
-- [o] `docker-compose up -d` starts app and persists data across restarts — Docker Desktop engine not running on this machine; cannot be tested at this stage. `docker-compose.yml` host port updated to **3100** (port 3000 is excluded on this Windows machine). Verify once Docker Desktop is available.
+- [o] `docker-compose up -d` starts app and persists data across restarts — Docker Desktop engine not running on this machine; cannot be tested at this stage. `
 - [x] SVG logo renders correctly in both light and dark contexts
 
 ### 7.9 Known Constraints / Decisions Already Made

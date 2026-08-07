@@ -37,12 +37,12 @@
     "invalidCredentials": "Invalid username or password",
     "passwordMismatch": "Passwords do not match",
     "setupSuccess": "Admin account created successfully. Please log in.",
-    "loginRequired": "Please log in to access the admin area."
-  },
-  "common": {
-    "loading": "Loading...",
-    "error": "An error occurred",
-    "notFound": "Page not found",
-    "backToHome": "Back to Home"
+    "loginRequired": "Please log in to access the admin area.",
+    "common": {
+      "loading": "Loading...",
+      "error": "An error occurred",
+      "notFound": "Page not found",
+      "backToHome": "Back to Home"
+    }
   }
 }

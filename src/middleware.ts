@@ -1,17 +1,17 @@
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
-import { locales, defaultLocale } from "./i18n";
+import { defaultLocale, locales } from "./i18n";
 
 const intlMiddleware = createMiddleware({
-  locales,
-  defaultLocale,
-  localePrefix: "always",
+  locales,                // ['en', 'zh'] - supported languages
+  defaultLocale,          // 'en' - fallback language
+  localePrefix: "always", // Always include locale in URLs (e.g., /en/about)
 });
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files and API routes
+  // 1. Skip static files
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
@@ -22,12 +22,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Handle admin routes - check for JWT cookie
+  // 2. ONLY check admin routes
   if (pathname.includes("/admin")) {
-    // Extract the locale prefix if present
+    //  Remove locale prefix to get the actual admin path
     const adminPath = pathname.replace(/^\/(en|zh)/, "");
     
-    // Allow access to login and setup pages without auth
+    // Allow login/setup withou auth
     if (adminPath === "/admin/login" || adminPath === "/admin/setup") {
       return withPathname(intlMiddleware(request), pathname);
     }
@@ -42,16 +42,22 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   }
-
+  
+  // This runs for :
+  //  ✅ Non-admin routes (e.g., /about, /contact, /products)
+  //  ✅ Admin routes with valid token
   return withPathname(intlMiddleware(request), pathname);
 }
 
 // Expose the original pathname to server components (e.g. layouts) via a header
+// by adding x-pathname as a header, server components can still access the original URL   
 function withPathname(response: NextResponse, pathname: string): NextResponse {
   response.headers.set("x-pathname", pathname);
   return response;
 }
 
+// Tells Next.js which paths should trigger this middleware. 
+// It uses a negative lookahead regex to exclude.
 export const config = {
   matcher: ["/((?!_next|api|images|favicon.ico).*)"],
 };

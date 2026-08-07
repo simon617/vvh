@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 export default function AdminLoginPage() {
   const t = useTranslations("admin");
-  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault();   // keep form submission client-side only, React handles everything withoout page reload
     setError("");
     setLoading(true);
 
@@ -31,7 +32,11 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push("/en/admin");
+      // Full page navigation guarantees the middleware re-runs and the
+      // admin layout re-renders fresh. Client-side router.push can
+      // occasionally leave a stale admin layout (without the CMS menu bar)
+      // on screen, since the shared layout is reused across navigations.
+      window.location.assign(`/${locale}/admin`);
     } catch {
       setError(t("common.error") || "An error occurred");
     } finally {

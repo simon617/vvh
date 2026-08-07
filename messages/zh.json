@@ -37,12 +37,12 @@
     "invalidCredentials": "用戶名稱或密碼無效",
     "passwordMismatch": "密碼不匹配",
     "setupSuccess": "管理員帳戶建立成功。請登入。",
-    "loginRequired": "請登入以訪問管理區域。"
-  },
-  "common": {
-    "loading": "載入中...",
-    "error": "發生錯誤",
-    "notFound": "頁面未找到",
-    "backToHome": "返回首頁"
+    "loginRequired": "請登入以訪問管理區域。",
+    "common": {
+      "loading": "載入中...",
+      "error": "發生錯誤",
+      "notFound": "頁面未找到",
+      "backToHome": "返回首頁"
+    }
   }
 }

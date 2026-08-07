@@ -25,7 +25,10 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy standalone output from builder
-COPY --from=builder /app/public ./public
+# COPY --from=builder  /app/dist   ./dist
+#        ↑               ↑           ↑
+# Which stage?   What to copy?  Where to put it?
+COPY --from=builder /app/public ./public  
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma

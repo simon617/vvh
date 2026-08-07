@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminExists, createAdminUser } from "@/lib/auth";
+import { adminExists, createAdminUser, getSession } from "@/lib/auth";
+
+// HEAD is used by the client to detect whether any admin account exists.
+// Returns 409 if an admin exists, 200 otherwise.
+export async function HEAD() {
+  const exists = await adminExists();
+  return new NextResponse(null, { status: exists ? 409 : 200 });
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if admin already exists
-    const exists = await adminExists();
-    if (exists) {
-      return NextResponse.json(
-        { error: "Admin account already exists" },
-        { status: 409 }
-      );
-    }
-
     const body = await request.json();
     const { username, password, confirmPassword } = body;
 
@@ -34,6 +32,27 @@ export async function POST(request: NextRequest) {
         { error: "Password must be at least 8 characters" },
         { status: 400 }
       );
+    }
+
+    // Check if this specific username already exists
+    const usernameExists = await adminExists(username);
+    if (usernameExists) {
+      return NextResponse.json(
+        { error: "Username already exists" },
+        { status: 409 }
+      );
+    }
+
+    // If any admin already exists, require an authenticated admin session
+    const anyAdminExists = await adminExists();
+    if (anyAdminExists) {
+      const session = await getSession();
+      if (!session) {
+        return NextResponse.json(
+          { error: "Login required to create an admin account" },
+          { status: 401 }
+        );
+      }
     }
 
     await createAdminUser(username, password);

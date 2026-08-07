@@ -119,5 +119,5 @@ All 8 tasks completed successfully. The following notes capture deviations from 
 - [x] Base layout renders correctly on mobile (320px) and desktop (1920px)
 - [o] `npm run reset-password` updates password in DB — Core logic verified (bcrypt hash + upsert + password compare PASS via automated test script simulating the script's exact logic). Interactive prompt could not be driven reliably via piped stdin in this terminal/Windows environment, so the full interactive run was not exercised end-to-end. Manual verification recommended in a real terminal.
 - [x] `npm run backup` creates valid archive — Verified `backups/vvh-backup-20260802_1517.zip` contains `data/vvh.db` + `.env`. Note: `uploads/` folder not present yet (no uploads in Phase 1), so it was correctly skipped.
-- [o] `docker-compose up -d` starts app and persists data across restarts — Docker Desktop engine is not running on this machine (`error during connect: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified`). Cannot be tested at this stage. Note: `docker-compose.yml` maps host port **3100** (port 3000 is in the Windows excluded port range 2947–3046 on this machine, so 3100 was chosen). **Verify once Docker Desktop is available.**
+- [o] `docker-compose up -d` **Verify once Docker Desktop is available.**
 - [x] SVG logo renders correctly in header

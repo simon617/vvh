@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface SidebarProps {
   locale: string;
@@ -62,7 +62,11 @@ export default function Sidebar({ locale }: SidebarProps) {
           </li>
           {navGroups.map((group) => (
             <li key={group.label}>
-              <div className="px-3 py-2 text-xs font-semibold text-sidebar uppercase tracking-wider mt-2 border-b border-sidebar/20">
+              <div
+                className={`px-3 py-2 font-semibold text-sidebar uppercase tracking-wider mt-2 border-b border-sidebar/20 ${
+                  locale === "en" ? "text-xs" : "text-sm"
+                }`}
+              >
                 {group.label}
               </div>
               <ul className="ml-2 space-y-1">
