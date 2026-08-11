@@ -2,7 +2,7 @@
 
 > **Project:** Vision Values Holdings Limited — Website Revamp  
 > **Phase:** 2A — Page Templates & Public Site  
-> **Status:** Task list for review — execution NOT started  
+> **Status:** ✅ **COMPLETE** — all 18 tasks delivered. See `docs/phase-2a-implementation.md` for the progress tracker and verification.
 > **Companion docs:** `docs/phrase-2a-checklists.md` (handoff checklist), `docs/phase-2a-page-templates-public-site.md` (planning)
 
 ---

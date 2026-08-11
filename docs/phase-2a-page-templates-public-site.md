@@ -2,7 +2,8 @@
 
 **Duration:** 1 week  
 **Complexity:** High  
-**Dependencies:** Phase 1 (Foundation & Infrastructure) must be complete
+**Dependencies:** Phase 1 (Foundation & Infrastructure) must be complete  
+**Status:** ✅ **COMPLETE** — see `docs/phase-2a-implementation.md` for the delivered files, tests, and verification.
 
 ---
 
@@ -106,13 +107,22 @@ npm run dev
 | `src/app/[locale]/corporate-communications/page.tsx` | Corporate Communications page |
 | `src/app/[locale]/contact/page.tsx` | Contact Us page |
 | `src/components/layout/ContentWithSidebar.tsx` | Shared layout: header image + breadcrumb + sidebar + content |
+| `src/components/layout/TemplateShell.tsx` | Shared inner-page shell: hero/header image + breadcrumb + content slot (used by board/reports/announcements/contact/home) |
+| `src/components/layout/HomeTemplate.tsx` | Home page layout: hero + metrics + latest reports |
 | `src/components/layout/DirectorCards.tsx` | Director card grid component |
 | `src/components/layout/ReportsTable.tsx` | Sortable reports table component |
-| `src/components/layout/HamburgerMenu.tsx` | Mobile slide-in overlay menu |
+| `src/components/layout/AnnouncementsTable.tsx` | Announcements & Circulars table (HKEX-linked, `target="_blank"`) |
+| `src/components/layout/ContactForm.tsx` | Contact form UI with client-side validation (client component) |
+| `src/components/layout/MobileMenu.tsx` / `MobileMenuToggle.tsx` | Mobile slide-in overlay menu + hamburger toggle (actual names; planned `HamburgerMenu.tsx`) |
 | `src/components/layout/Breadcrumb.tsx` | Breadcrumb navigation component |
-| `src/components/layout/SidebarNav.tsx` | Left sidebar navigation |
+| `src/components/layout/Sidebar.tsx` | Left sidebar navigation (actual name; planned `SidebarNav.tsx`) |
 | `src/lib/navigation.ts` | Navigation structure (menu items, slugs, labels) |
 | `src/lib/placeholders.ts` | Placeholder content for each page × locale |
+| `src/lib/pages.ts` | `getPageData(slug, locale)` data-fetching layer (Phase 2B DB swap point) |
+| `src/lib/breadcrumbs.ts` | `getBreadcrumbs(pathname, locale)` pure breadcrumb logic |
+| `src/lib/reports.ts` | Financial/ESG report placeholder rows per locale |
+| `src/lib/announcements.ts` | Announcement placeholder rows per locale |
+| `src/lib/directors.ts` | Board of Directors data (10 directors, localized) |
 
 ### 7.3 Database / Data Models
 
