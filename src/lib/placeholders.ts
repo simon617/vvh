@@ -101,16 +101,18 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       contentHtml: `
 <table>
   <tbody>
-    <tr><th>Place of Incorporation</th><td>Cayman Islands</td></tr>
-    <tr><th>Board of Directors</th><td>See Board of Directors page</td></tr>
-    <tr><th>Company Secretary</th><td>To be confirmed</td></tr>
-    <tr><th>Auditor</th><td>To be confirmed</td></tr>
-    <tr><th>Share Registrar and Transfer Office (Hong Kong)</th><td>To be confirmed</td></tr>
-    <tr><th>Share Registrar and Transfer Office (Cayman)</th><td>To be confirmed</td></tr>
-    <tr><th>Registered Office</th><td>To be confirmed</td></tr>
-    <tr><th>Principal Place of Business</th><td>Hong Kong</td></tr>
-    <tr><th>Stock Code</th><td>862</td></tr>
-    <tr><th>Website</th><td>www.visionvalues.com.hk</td></tr>
+    <tr><th style="text-align:left">Place of Incorporation</th><td>Cayman Islands</td></tr>
+    <tr><th style="text-align:left">Principal Activities</th><td>Provision of property investment, logistics business, exploration and evaluation of mineral resources and private jet management services</td></tr>
+    <tr><th style="text-align:left">Registered Office</th><td>P.O. Box 31119 Grand Pavilion Hibiscus Way, 802 West Bay Road, Grand Cayman KY1-1205 Cayman Islands</td></tr>
+    <tr><th style="text-align:left">Principal Place of Business in Hong Kong</th><td>17th Floor, 118 Connaught Road West, Hong Kong.</td></tr>
+    <tr><th style="text-align:left">Principal Share Registrar</th><td>Vistra (Cayman) Limited P.O. Box 31119 Grand Pavilion Hibiscus Way, 802 West Bay Road, Grand Cayman KY1-1205 Cayman Islands</td></tr>
+    <tr><th style="text-align:left">Hong Kong Branch Share Registrar</th><td>Tricor Investor Services Limited 17/F, Far East Finance Centre, 16 Harcourt Road, Hong Kong</td></tr>
+    <tr><th style="text-align:left">Listing Date</th><td>14 October 1998</td></tr>
+    <tr><th style="text-align:left">Authorised Shares</th><td>20,000,000,000</td></tr>
+    <tr><th style="text-align:left">Issued Shares</th><td>3,924,190,467</td></tr>
+    <tr><th style="text-align:left">Par Value</th><td>HK$0.01</td></tr>
+    <tr><th style="text-align:left">Board Lot</th><td>5,000</td></tr>
+    <tr><th style="text-align:left">Financial Year End Date</th><td>30 June</td></tr>
   </tbody>
 </table>
 `,
@@ -123,16 +125,18 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       contentHtml: `
 <table>
   <tbody>
-    <tr><th>註冊地點</th><td>開曼群島</td></tr>
-    <tr><th>董事會</th><td>請參閱董事會頁面</td></tr>
-    <tr><th>公司秘書</th><td>待確認</td></tr>
-    <tr><th>核數師</th><td>待確認</td></tr>
-    <tr><th>股份過戶登記處（香港）</th><td>待確認</td></tr>
-    <tr><th>股份過戶登記處（開曼群島）</th><td>待確認</td></tr>
-    <tr><th>註冊辦事處</th><td>待確認</td></tr>
-    <tr><th>主要營業地點</th><td>香港</td></tr>
-    <tr><th>股票編號</th><td>862</td></tr>
-    <tr><th>網站</th><td>https://www.visionvalues.com.hk</td></tr>
+    <tr><th style="text-align:left">註冊地點</th><td>開曼群島</td></tr>
+    <tr><th style="text-align:left">主要業務</th><td>提供物業投資、物流業務、勘探和評估礦產資源及私人飛機管理服務</td></tr>
+    <tr><th style="text-align:left">註冊辦事處</th><td>P.O. Box 31119 Grand Pavilion Hibiscus Way, 802 West Bay Road, Grand Cayman KY1-1205 Cayman Islands</td></tr>
+    <tr><th style="text-align:left">香港主要營業地點</th><td>香港干諾道西 118 號 17 樓</td></tr>
+    <tr><th style="text-align:left">主要股份過戶登記處</th><td>Vistra (Cayman) Limited P.O. Box 31119 Grand Pavilion Hibiscus Way, 802 West Bay Road, Grand Cayman KY1-1205 Cayman Islands</td></tr>
+    <tr><th style="text-align:left">股份過戶登記處香港分處</th><td>卓佳證券登記有限公司 香港夏慤道 16 號遠東金融中心 17 樓</td></tr>
+    <tr><th style="text-align:left">上市日期</th><td>1998 年 10 月 14 日</td></tr>
+    <tr><th style="text-align:left">法定股本</th><td>20,000,000,000</td></tr>
+    <tr><th style="text-align:left">發行股數</th><td>3,924,190,467</td></tr>
+    <tr><th style="text-align:left">票面值</th><td>HK$0.01</td></tr>
+    <tr><th style="text-align:left">買賣單位</th><td>5,000</td></tr>
+    <tr><th style="text-align:left">財務年度結算日期</th><td>6 月 30 日</td></tr>
   </tbody>
 </table>
 `,
