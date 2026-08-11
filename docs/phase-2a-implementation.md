@@ -73,7 +73,7 @@ Per the `tdd` skill:
 | `121ecd8` | 6 | Add ContentWithSidebar shared layout component |
 | `d89a12f` | 7 | Add DirectorCards component with expandable bios |
 | `6286341` | 8 | Add ReportsTable sortable table component |
-| `(next)` | 9–17 | Complete Phase 2A templates, i18n, metadata, data layers & tests |
+| `1274fa6` | 9–17 | Complete Phase 2A templates, i18n, metadata, data layers & tests |
 
 ---
 
