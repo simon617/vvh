@@ -16,8 +16,47 @@
   "header": {
     "languageSwitch": "English"
   },
+  "mobileMenu": {
+    "menu": "選單",
+    "close": "關閉選單",
+    "open": "開啟選單"
+  },
   "footer": {
-    "copyright": "© {year} 遠見控股有限公司 版權所有"
+    "copyright": "© {year} 遠見控股有限公司 版權所有",
+    "contactUs": "聯絡我們"
+  },
+  "tables": {
+    "date": "日期",
+    "document": "文件"
+  },
+  "home": {
+    "metricsTitle": "主要資料",
+    "metrics": {
+      "listed": "上市",
+      "sector": "行業",
+      "headquarters": "總部",
+      "business": "業務"
+    },
+    "listedValue": "香港交易所：862",
+    "sectorValue": "多元化",
+    "headquartersValue": "香港",
+    "businessValue": "多元業務",
+    "reportsTitle": "最新報告",
+    "reportsBody": "財務及環境、社會及管治報告將於連接內容管理系統後在此顯示。"
+  },
+  "contact": {
+    "intro": "請填寫以下表格與我們聯絡。標有 * 的欄位為必填。",
+    "name": "姓名",
+    "subject": "主旨",
+    "email": "電郵地址",
+    "message": "留言",
+    "submit": "遞交",
+    "reset": "重設",
+    "errName": "請輸入姓名",
+    "errSubject": "請輸入主旨",
+    "errEmail": "請輸入電郵地址",
+    "errMessage": "請輸入留言",
+    "info": "網上聯絡表格將於稍後階段啟用。如有查詢，請以電郵聯絡我們。"
   },
   "admin": {
     "login": "管理員登入",

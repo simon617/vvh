@@ -11,6 +11,7 @@ interface MobileMenuProps {
 
 export default function MobileMenu({ isOpen, onClose, locale }: MobileMenuProps) {
   const t = useTranslations("nav");
+  const tm = useTranslations("mobileMenu");
 
   const menuItems = [
     { label: t("home"), href: `/${locale}` },
@@ -37,11 +38,11 @@ export default function MobileMenu({ isOpen, onClose, locale }: MobileMenuProps)
       {/* Menu panel */}
       <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-primary text-white shadow-xl overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-white/20">
-          <span className="text-lg font-semibold">Menu</span>
+          <span className="text-lg font-semibold">{tm("menu")}</span>
           <button
             onClick={onClose}
             className="p-2 rounded hover:bg-white/10 transition-colors"
-            aria-label="Close menu"
+            aria-label={tm("close")}
           >
             <svg
               className="w-6 h-6"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import MobileMenu from "./MobileMenu";
 
 interface MobileMenuToggleProps {
@@ -9,13 +10,14 @@ interface MobileMenuToggleProps {
 
 export default function MobileMenuToggle({ locale }: MobileMenuToggleProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const tm = useTranslations("mobileMenu");
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
         className="md:hidden p-2 rounded hover:bg-white/10 transition-colors"
-        aria-label="Open menu"
+        aria-label={tm("open")}
       >
         <svg
           className="w-6 h-6"

@@ -11,14 +11,19 @@ export interface ReportRow {
 
 interface ReportsTableProps {
   rows: ReportRow[];
+  labels?: { date: string; document: string };
 }
+
 
 type SortKey = "date" | "title";
 type SortDirection = "asc" | "desc";
 
-export default function ReportsTable({ rows }: ReportsTableProps) {
+export default function ReportsTable({ rows, labels }: ReportsTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  const dateLabel = labels?.date ?? "Date";
+  const documentLabel = labels?.document ?? "Document";
 
   const sortedRows = useMemo(() => {
     const sorted = [...rows].sort((a, b) => {
@@ -50,7 +55,7 @@ export default function ReportsTable({ rows }: ReportsTableProps) {
                 onClick={() => handleSort("date")}
                 className="min-h-[44px] hover:text-primary transition-colors"
               >
-                Date
+                {dateLabel}
               </button>
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
@@ -59,7 +64,7 @@ export default function ReportsTable({ rows }: ReportsTableProps) {
                 onClick={() => handleSort("title")}
                 className="min-h-[44px] hover:text-primary transition-colors"
               >
-                Document
+                {documentLabel}
               </button>
             </th>
           </tr>

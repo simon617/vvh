@@ -11,6 +11,7 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+// Single sourch of Truth 
 export const NAV_SLUGS = [
   "home",
   "board-of-directors",

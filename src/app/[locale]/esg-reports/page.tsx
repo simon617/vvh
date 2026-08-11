@@ -1,0 +1,33 @@
+import { useTranslations } from "next-intl";
+import TemplateShell from "@/components/layout/TemplateShell";
+import ReportsTable from "@/components/layout/ReportsTable";
+import { getEsgReports } from "@/lib/reports";
+import { getPageData } from "@/lib/pages";
+import type { Locale } from "@/lib/navigation";
+
+interface Props {
+  params: { locale: string };
+}
+
+export function generateMetadata({ params }: Props) {
+  const data = getPageData("esg-reports", params.locale as Locale);
+  return { title: data?.metaTitle, description: data?.metaDescription };
+}
+
+export default function EsgReportsPage({ params }: Props) {
+  const locale = params.locale as Locale;
+  const data = getPageData("esg-reports", locale);
+  const t = useTranslations("tables");
+  if (!data) return null;
+
+  return (
+    <TemplateShell title={data.title} locale={locale}>
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <ReportsTable
+          rows={getEsgReports(locale)}
+          labels={{ date: t("date"), document: t("document") }}
+        />
+      </div>
+    </TemplateShell>
+  );
+}

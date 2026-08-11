@@ -16,8 +16,47 @@
   "header": {
     "languageSwitch": "中文"
   },
+  "mobileMenu": {
+    "menu": "Menu",
+    "close": "Close menu",
+    "open": "Open menu"
+  },
   "footer": {
-    "copyright": "© {year} Vision Values Holdings Limited. All rights reserved."
+    "copyright": "© {year} Vision Values Holdings Limited. All rights reserved.",
+    "contactUs": "Contact Us"
+  },
+  "tables": {
+    "date": "Date",
+    "document": "Document"
+  },
+  "home": {
+    "metricsTitle": "Key Facts",
+    "metrics": {
+      "listed": "Listed",
+      "sector": "Sector",
+      "headquarters": "Headquarters",
+      "business": "Business"
+    },
+    "listedValue": "HKEX: 862",
+    "sectorValue": "Diversified",
+    "headquartersValue": "Hong Kong",
+    "businessValue": "Multi-industry",
+    "reportsTitle": "Latest Reports",
+    "reportsBody": "Financial and ESG reports will be displayed here once the CMS is connected."
+  },
+  "contact": {
+    "intro": "Please fill in the form below to contact us. Fields marked with * are required.",
+    "name": "Name",
+    "subject": "Subject",
+    "email": "Email Address",
+    "message": "Message",
+    "submit": "Submit",
+    "reset": "Reset",
+    "errName": "Please Enter your Name",
+    "errSubject": "Please Enter your Subject",
+    "errEmail": "Please Enter your Email Address",
+    "errMessage": "Please Enter your Message",
+    "info": "The online contact form will be enabled in a later phase. For enquiries, please contact us by email."
   },
   "admin": {
     "login": "Admin Login",
