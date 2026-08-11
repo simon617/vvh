@@ -3,6 +3,7 @@
 > **Version**: 2.1 (Grill-Reviewed)  
 > **Date**: 2026-07-28  
 > **Status**: Final — Implementation Ready  
+> **Implementation Status**: **Phase 1 (Foundation & Infrastructure)** ✅ (2026-08-02) · **Phase 2A (Page Templates & Public Site)** ✅ (see `docs/phase-2a-implementation.md`) · Phase 2B (Admin CMS), Phase 2.5 (Content Migration), Phase 3 (Reports/Announcements/Contact), Phase 4 (SEO/Polish) — pending.  
 > **Based on**: Full audit of live website at `https://www.visionvalues.com.hk/` + Grilling session (16 decisions)
 
 ---
@@ -490,10 +491,12 @@ locale          TEXT NULL                  (NULL = applies to both)
 > **Phase 1 status (2026-08-02):** All 8 implementation tasks complete. Testing checklist in `docs/phrase-1-implementation.md` is mostly verified. Two items marked `[o]` (not yet fully verified at this stage): language switcher (known bug — EN/ZH toggle behavior inverted; deferred per user) and `docker-compose up -d` (Docker Desktop engine not running on dev machine). `npm run reset-password` interactive run pending manual verification (core logic verified). See `docs/phrase-1-implementation.md` for full details.
 
 ### Phase 2A — Page Templates & Public Site (Week 3)
-- [ ] Implement all 10 page templates with responsive design (7 template types)
-- [ ] Implement breadcrumb navigation on all inner pages
-- [ ] Implement mobile hamburger menu (full-screen slide-in overlay)
-- [ ] Static/placeholder content for all pages — site fully navigable but CMS not yet connected
+- [x] Implement all 10 page templates with responsive design (7 template types)
+- [x] Implement breadcrumb navigation on all inner pages
+- [x] Implement mobile hamburger menu (full-screen slide-in overlay)
+- [x] Static/placeholder content for all pages — site fully navigable but CMS not yet connected
+
+> **Phase 2A status (2026-08-11):** All 18 tasks complete — `89` tests passing, `npm run build` + `npm run lint` clean, and all 20 public URL variants (`/en/*` + `/zh/*`) return 200 at runtime. All 10 routes implemented as server components with `generateMetadata`, locale-aware templates, i18n fixes (Footer/MobileMenu), and data layers (`src/lib/reports.ts`, `announcements.ts`, `directors.ts`) ready for the Phase 2B/3 DB swap. Note: the public *page templates* for reports/announcements/contact were built here with placeholder/static data; the **DB-driven backend** (PDF upload, HKEX fetch, SMTP) is Phase 3. See `docs/phrase-2a-checklists.md` and `docs/phase-2a-implementation.md`.
 
 ### Phase 2B — Admin CMS Editor (Week 4)
 - [ ] Build admin pages listing at `/admin/pages`
