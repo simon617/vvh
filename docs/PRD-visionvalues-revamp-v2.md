@@ -32,7 +32,7 @@ The following pages and sections were discovered from the live site. **Every pag
 | 6 | Financial Reports | `/eng/financial_report.asp` | `/chi/financial_report.asp` | PDF reports table |
 | 7 | ESG Reports | `/eng/environment.asp` | `/chi/environment.asp` | ESG PDF reports table |
 | 8 | Lost Share Certificates | `/eng/lost_share_cert.asp` | `/chi/lost_share_cert.asp` | Policy text + instructions |
-| 9 | Corporate Communications | `/eng/communication.asp` | `/chi/communication.asp` | Communication policy text |
+| 9 | Corporate Communications | `/eng/communication.asp` | `/chi/communication.asp` | Corporate communications table + local PDF links |
 | 10 | Contact Us | `/eng/contact_us.php` | `/chi/contact_us.php` | Contact form + email handler |
 
 ### 2.2 Content Detail Per Page
@@ -55,6 +55,7 @@ The following pages and sections were discovered from the live site. **Every pag
 #### 2.2.4 Corporate Governance
 - Governance policy text
 - PDF download link(s) — admins paste links in WYSIWYG editor **(Decision D11)**
+- The governance PDFs currently reference the old server's absolute URLs (`https://www.visionvalues.com.hk/eng|chi/pdf/governance/…`). In **Phase 3**, download these PDFs and serve them **locally** under `/pdf/governance/…` and update the links (see `docs/phase-3-reports-announcements-contact.md`).
 
 #### 2.2.5 Announcements & Circulars
 - Table listing announcements with Date and Document columns
@@ -72,7 +73,10 @@ The following pages and sections were discovered from the live site. **Every pag
 - Instructions and policy text for lost certificate procedures
 
 #### 2.2.9 Corporate Communications
-- Corporate communication policy text
+- Table of corporate communications with **Date / Document** columns linking to PDF files served **locally** at `/pdf/communication/…`
+- Current document (from the live site):
+  - EN: **Arrangements Regarding Dissemination of Corporate Communications** (January 2024) → `/pdf/communication/e_Communications202401.pdf`
+  - ZH: **有關發佈公司通訊之安排** (2024年1月) → `/pdf/communication/c_Communications202401.pdf`
 
 #### 2.2.10 Contact Us
 - Form fields: Name (姓名), Subject (主旨), Email (電郵地址), Message (留言)
@@ -188,7 +192,7 @@ The left sidebar menu organizes pages into:
 | REP-04 | Each report entry has: Title (EN/ZH), Year/Period, Description (EN/ZH), Language tag, File upload, Visible/Hidden toggle | P0 |
 | REP-05 | Reorder reports via drag-and-drop or numeric sort order | P1 |
 | REP-06 | Delete existing reports | P0 |
-| REP-07 | Reports display as sortable tables on public pages | P0 |
+| REP-07 | Reports display as sortable tables with pagination (rows-per-page selector + Prev/Next + page-number navigation) on public pages | P0 |
 
 ### 7.3 Announcements & Circulars
 
@@ -233,7 +237,7 @@ The left sidebar menu organizes pages into:
 |----------|---------|-------------------|
 | Home | `/en/`, `/zh/` | Hero banner + company intro + key metrics + latest reports section |
 | Content with Sidebar | Corporate pages, Investor pages | Header image + breadcrumb + left nav + main content area |
-| Reports Table | Financial Reports, ESG Reports | Header image + breadcrumb + left nav + sortable/filterable table |
+| Reports Table | Financial Reports, ESG Reports | Header image + breadcrumb + left nav + sortable, paginated table |
 | Announcements | Announcements & Circulars | Header image + breadcrumb + left nav + HKEX-linked table |
 | Contact | Contact Us | Header image + breadcrumb + left nav + contact form |
 | Directors | Board of Directors | Header image + breadcrumb + left nav + director cards (name, title, bio) |
@@ -496,7 +500,7 @@ locale          TEXT NULL                  (NULL = applies to both)
 - [x] Implement mobile hamburger menu (full-screen slide-in overlay)
 - [x] Static/placeholder content for all pages — site fully navigable but CMS not yet connected
 
-> **Phase 2A status (2026-08-11):** All 18 tasks complete — `89` tests passing, `npm run build` + `npm run lint` clean, and all 20 public URL variants (`/en/*` + `/zh/*`) return 200 at runtime. All 10 routes implemented as server components with `generateMetadata`, locale-aware templates, i18n fixes (Footer/MobileMenu), and data layers (`src/lib/reports.ts`, `announcements.ts`, `directors.ts`) ready for the Phase 2B/3 DB swap. Note: the public *page templates* for reports/announcements/contact were built here with placeholder/static data; the **DB-driven backend** (PDF upload, HKEX fetch, SMTP) is Phase 3. See `docs/phrase-2a-checklists.md` and `docs/phase-2a-implementation.md`.
+> **Phase 2A status (2026-08-11):** All 18 tasks complete — `93` tests passing, `npm run build` + `npm run lint` clean, and all 20 public URL variants (`/en/*` + `/zh/*`) return 200 at runtime. All 10 routes implemented as server components with `generateMetadata`, locale-aware templates, i18n fixes (Footer/MobileMenu), and data layers (`src/lib/reports.ts`, `announcements.ts`, `directors.ts`, `corporateCommunications.ts`) ready for the Phase 2B/3 DB swap. Post-2A refinements: the announcements page embeds the Datalink announcements page in an `<iframe>`; corporate-communications renders a Date/Document table with **local PDF links**; `ReportsTable` is sortable **and paginated**. Note: the public *page templates* for reports/announcements/contact were built here with placeholder/static data; the **DB-driven backend** (PDF upload, HKEX fetch, SMTP) is Phase 3. See `docs/phrase-2a-checklists.md` and `docs/phase-2a-implementation.md`.
 
 ### Phase 2B — Admin CMS Editor (Week 4)
 - [ ] Build admin pages listing at `/admin/pages`
@@ -528,7 +532,7 @@ locale          TEXT NULL                  (NULL = applies to both)
   - Paste HKEX URL, auto-fetch title/date metadata
   - Manual edit fallback if auto-fetch fails
   - Visible/Hidden toggle
-- [ ] Build Financial Reports and ESG Reports public pages (sortable tables with PDF links)
+- [ ] Build Financial Reports and ESG Reports public pages (sortable, paginated tables with PDF links)
 - [ ] Build Announcements public page (table with Date + HKEX-linked title)
 - [ ] Build contact form page:
   - Client-side validation (EN + ZH messages)

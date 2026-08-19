@@ -103,22 +103,22 @@ docker-compose up -d --build
 
 ### 2.2 Created in Phase 2A (all delivered, with tests)
 
-> All files below exist, are wired into the 10 public routes, and are covered by tests. See `docs/phase-2a-implementation.md` for the full file list, which also includes the data layers `src/lib/reports.ts`, `src/lib/announcements.ts`, `src/lib/directors.ts` and the shared components `TemplateShell.tsx`, `HomeTemplate.tsx`, `AnnouncementsTable.tsx`, `ContactForm.tsx`.
+> All files below exist, are wired into the 10 public routes, and are covered by tests. See `docs/phase-2a-implementation.md` for the full file list, which also includes the data layers `src/lib/reports.ts`, `src/lib/announcements.ts`, `src/lib/directors.ts`, `src/lib/corporateCommunications.ts` and the shared components `TemplateShell.tsx`, `HomeTemplate.tsx`, `ContactForm.tsx`.
 
 | File | Purpose |
 |------|---------|
 | `src/app/[locale]/board-of-directors/page.tsx` | Board of Directors page (director cards) |
 | `src/app/[locale]/corporate-details/page.tsx` | Corporate Details page (structured data table) |
 | `src/app/[locale]/corporate-governance/page.tsx` | Corporate Governance page (rich text) |
-| `src/app/[locale]/announcements/page.tsx` | Announcements page (HKEX-linked table, static placeholders) |
-| `src/app/[locale]/financial-reports/page.tsx` | Financial Reports page (sortable table, static placeholders) |
-| `src/app/[locale]/esg-reports/page.tsx` | ESG Reports page (sortable table, static placeholders) |
+| `src/app/[locale]/announcements/page.tsx` | Announcements page (embeds the Datalink announcements page in an `<iframe>`) |
+| `src/app/[locale]/financial-reports/page.tsx` | Financial Reports page (sortable, paginated table, static placeholders) |
+| `src/app/[locale]/esg-reports/page.tsx` | ESG Reports page (sortable, paginated table, static placeholders) |
 | `src/app/[locale]/lost-share-certificates/page.tsx` | Lost Share Certificates page (rich text) |
-| `src/app/[locale]/corporate-communications/page.tsx` | Corporate Communications page (rich text) |
+| `src/app/[locale]/corporate-communications/page.tsx` | Corporate Communications page (Date/Document table + local PDF links) |
 | `src/app/[locale]/contact/page.tsx` | Contact Us page (form UI only — backend in Phase 3) |
-| `src/components/layout/ContentWithSidebar.tsx` | Shared layout: header image + breadcrumb + sidebar + content area (used by 8 of 10 pages) |
+| `src/components/layout/ContentWithSidebar.tsx` | Shared layout: header image + breadcrumb + sidebar + content area (rich-text / data-table pages) |
 | `src/components/layout/DirectorCards.tsx` | Director card grid (2-col tablet, 1-col mobile, expandable bios) |
-| `src/components/layout/ReportsTable.tsx` | Sortable reports table (horizontal scroll on mobile) |
+| `src/components/layout/ReportsTable.tsx` | Sortable, paginated reports table (horizontal scroll on mobile) |
 | `src/components/layout/Breadcrumb.tsx` | Breadcrumb navigation component (WEB-03) |
 | `src/lib/navigation.ts` | Navigation structure (menu items, slugs, labels) — centralize constants |
 | `src/lib/placeholders.ts` | Placeholder content per page × locale (use real content from PRD Section 2.2 where available) |
@@ -351,12 +351,14 @@ SiteSetting: id, key (unique), value, locale (nullable — NULL = applies to bot
 | Template | Pages | Key Layout Elements |
 |----------|-------|---------------------|
 | Home | `/`, `/en/`, `/zh/` | Hero banner + company intro + key metrics + latest reports (NO sidebar) |
-| Content with Sidebar | corporate-governance, lost-share-certificates, corporate-communications | Header image + breadcrumb + left nav + rich text |
-| Reports Table | financial-reports, esg-reports | Header image + breadcrumb + left nav + sortable/filterable table |
+| Content with Sidebar | corporate-governance, lost-share-certificates (rich text) | Header image + breadcrumb + left nav + rich text |
+| Reports Table | financial-reports, esg-reports, corporate-communications | Header image + breadcrumb + left nav + sortable, paginated table |
 | Announcements | announcements | Header image + breadcrumb + left nav + HKEX-linked table |
 | Contact | contact | Header image + breadcrumb + left nav + contact form |
 | Directors | board-of-directors | Header image + breadcrumb + left nav + director cards |
 | Blank/Text | corporate-details (data table variant) | Header image + breadcrumb + left nav + structured table |
+
+> **Note (post-2A refinement):** `corporate-communications` was converted from a rich-text page to the **Reports Table** template — its Date/Document table with **local PDF links** now renders via `TemplateShell` + `ReportsTable` (`src/lib/corporateCommunications.ts` data layer). Financial, ESG and Corporate Communications all share `ReportsTable` (sortable + paginated). The announcements page embeds the Datalink announcements page in an `<iframe>`.
 
 ---
 
@@ -364,7 +366,7 @@ SiteSetting: id, key (unique), value, locale (nullable — NULL = applies to bot
 
 ### 8.1 Phase 2A Acceptance Tests
 
-> All items verified: automated tests (89 passing) + `npm run build` + runtime check of all 20 URL variants (all 200; unknown route 404). See `docs/phase-2a-implementation.md`.
+> All items verified: automated tests (93 passing) + `npm run build` + runtime check of all 20 URL variants (all 200; unknown route 404). See `docs/phase-2a-implementation.md`.
 
 - [x] All 10 pages render at `/en/*` AND `/zh/*` URLs (no 404, no layout breakage) — **verified at runtime (all 20 URLs → 200)**
 - [x] Each page has correct header image area, breadcrumb, sidebar, and content — `TemplateShell`/`ContentWithSidebar` + `[locale]/layout.tsx`
@@ -375,7 +377,7 @@ SiteSetting: id, key (unique), value, locale (nullable — NULL = applies to bot
 - [x] Hamburger menu slides in/out on tap; overlay closes on tap outside; close button works — Phase 1 behavior; component render tested
 - [x] Language switcher toggles EN ↔ ZH **preserving the current page** (e.g., `/en/financial-reports` → `/zh/financial-reports`) — `LanguageSwitcher` (Phase 1); ⚠️ known Phase-1 deferred: currently swaps to default locale, revisit before deploy
 - [x] All pages render correctly at **320px, 768px, 1920px** widths — responsive mobile-first CSS (grid/hidden/overflow classes); ⚠️ visual browser pass at breakpoints recommended
-- [x] Tables horizontally scroll on mobile (no overflow cutoff, no page break) — `ReportsTable` + `AnnouncementsTable` use `overflow-x-auto`
+- [x] Tables horizontally scroll on mobile (no overflow cutoff, no page break) — `ReportsTable` (financial/esg/communications) uses `overflow-x-auto`
 - [x] Director cards: correct grid (1-col mobile, 2-col tablet, 3+ col desktop) — `DirectorCards` grid
 - [x] Director bios expandable/collapsible on mobile — `DirectorCards` (tested)
 - [x] All touch targets ≥ 44×44px — buttons use `min-h-[44px]`
@@ -465,11 +467,11 @@ SiteSetting: id, key (unique), value, locale (nullable — NULL = applies to bot
 | 2A.2 | Board of Directors template (director cards) | ✅ Done — `[locale]/board-of-directors` + `directors.ts` |
 | 2A.3 | Corporate Details template (data table) | ✅ Done — `[locale]/corporate-details` (data-table via ContentWithSidebar) |
 | 2A.4 | Corporate Governance template (rich text) | ✅ Done — `[locale]/corporate-governance` |
-| 2A.5 | Announcements template (HKEX-linked table) | ✅ Done — `[locale]/announcements` + `AnnouncementsTable.tsx` |
-| 2A.6 | Financial Reports template (sortable table) | ✅ Done — `[locale]/financial-reports` + `ReportsTable` |
-| 2A.7 | ESG Reports template (sortable table) | ✅ Done — `[locale]/esg-reports` + `ReportsTable` |
+| 2A.5 | Announcements template (HKEX-linked table) | ✅ Done — `[locale]/announcements` embeds the Datalink announcements page in an `<iframe>` |
+| 2A.6 | Financial Reports template (sortable, paginated table) | ✅ Done — `[locale]/financial-reports` + `ReportsTable` |
+| 2A.7 | ESG Reports template (sortable, paginated table) | ✅ Done — `[locale]/esg-reports` + `ReportsTable` |
 | 2A.8 | Lost Share Certificates template (rich text) | ✅ Done — `[locale]/lost-share-certificates` |
-| 2A.9 | Corporate Communications template (rich text) | ✅ Done — `[locale]/corporate-communications` |
+| 2A.9 | Corporate Communications template (document table + local PDF links) | ✅ Done — `[locale]/corporate-communications` + `ReportsTable` |
 | 2A.10 | Contact Us template (static form UI) | ✅ Done — `[locale]/contact` + `ContactForm.tsx` |
 | 2A.11 | Breadcrumb navigation (WEB-03) | ✅ Done — `breadcrumbs.ts` + `Breadcrumb.tsx` |
 | 2A.12 | Mobile hamburger menu (WEB-02) | ✅ **Already done in Phase 1** — i18n fix applied in Task 9 |
@@ -487,7 +489,7 @@ SiteSetting: id, key (unique), value, locale (nullable — NULL = applies to bot
 | `/financial-reports` | Reports Table | 6 | Financial Reports |
 | `/esg-reports` | Reports Table | 7 | ESG Reports |
 | `/lost-share-certificates` | Content with Sidebar | 8 | Lost Share Certificates |
-| `/corporate-communications` | Content with Sidebar | 9 | Corporate Communications |
+| `/corporate-communications` | Reports Table | 9 | Corporate Communications |
 | `/contact` | Contact | 10 | Contact Us |
 
 ---

@@ -15,17 +15,29 @@ vi.mock("next/link", () => ({
 }));
 
 describe("Announcements page", () => {
-  it("renders HKEX-linked table rows that open in a new tab", () => {
+  it("embeds the en Datalink announcement page in an iframe", () => {
     renderWithLocale(<AnnouncementsPage params={{ locale: "en" }} />);
-    expect(screen.getByRole("heading", { level: 1, name: "Announcements & Circulars" })).toBeInTheDocument();
-    const link = screen.getByText("Announcement of Annual Results");
-    expect(link).toHaveAttribute("href", "https://www1.hkexnews.hk/");
-    expect(link).toHaveAttribute("target", "_blank");
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Announcements & Circulars" })
+    ).toBeInTheDocument();
+    const iframe = screen.getByTitle("Announcements & Circulars");
+    expect(iframe.tagName).toBe("IFRAME");
+    expect(iframe).toHaveAttribute(
+      "src",
+      "https://datalink.talesis.com/document/c00640/Announcement_new"
+    );
   });
 
-  it("renders Chinese rows", () => {
+  it("embeds the zh Datalink announcement page in an iframe", () => {
     renderWithLocale(<AnnouncementsPage params={{ locale: "zh" }} />, "zh");
-    expect(screen.getByText("全年業績公告")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "公告及通函" })
+    ).toBeInTheDocument();
+    const iframe = screen.getByTitle("公告及通函");
+    expect(iframe).toHaveAttribute(
+      "src",
+      "https://datalink.talesis.com/document/c00640/Chinese/Announcement_2D_Chineselist_new"
+    );
   });
 
   it("exposes localized metadata", () => {

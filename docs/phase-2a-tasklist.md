@@ -54,7 +54,7 @@
 - **TDD:** renders names/titles; bio expand/collapse; touch targets ≥ 44px
 
 ### Task 8: `ReportsTable.tsx` (client component)
-- Sortable table (Date / Document), `overflow-x-auto` wrapper
+- Sortable, paginated table (Date / Document), `overflow-x-auto` wrapper, rows-per-page selector (5/10/20), Prev/Next + page-number navigation
 - **TDD:** renders rows; click header sorts (date desc default); wrapper class present
 
 ### Task 9: Fix existing i18n hardcoded strings
@@ -69,9 +69,10 @@
 - Full PRD 8.1 layout (hero + intro + metrics + latest reports), **sidebar stays visible**
 - **TDD:** renders hero, metrics, reports section
 
-### Task 11: Rich-text pages (Content with Sidebar template)
-- `corporate-governance`, `lost-share-certificates`, `corporate-communications`
-- **TDD:** each renders localized heading + body
+### Task 11: Content-with-Sidebar pages (rich text + document table)
+- Rich text: `corporate-governance`, `lost-share-certificates`
+- Document table: `corporate-communications` (Date/Document columns + local PDF links)
+- **TDD:** each renders localized heading + body (+ document table for corporate-communications)
 
 ### Task 12: Reports pages (Reports Table template)
 - `financial-reports`, `esg-reports` using `<ReportsTable>` with placeholder rows

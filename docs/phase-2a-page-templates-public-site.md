@@ -22,10 +22,10 @@ Build all 10 public-facing page templates with responsive design, breadcrumb nav
 | 2A.3 | Corporate Details template | Header image + breadcrumb + left nav + structured data table |
 | 2A.4 | Corporate Governance template | Header image + breadcrumb + left nav + rich text body |
 | 2A.5 | Announcements template | Header image + breadcrumb + left nav + HKEX-linked table |
-| 2A.6 | Financial Reports template | Header image + breadcrumb + left nav + sortable/filterable table |
-| 2A.7 | ESG Reports template | Header image + breadcrumb + left nav + sortable/filterable table |
+| 2A.6 | Financial Reports template | Header image + breadcrumb + left nav + sortable, paginated table |
+| 2A.7 | ESG Reports template | Header image + breadcrumb + left nav + sortable, paginated table |
 | 2A.8 | Lost Share Certificates template | Header image + breadcrumb + left nav + rich text body |
-| 2A.9 | Corporate Communications template | Header image + breadcrumb + left nav + rich text body |
+| 2A.9 | Corporate Communications template | Header image + breadcrumb + left nav + document table (Date/Document) with local PDF links |
 | 2A.10 | Contact Us template | Header image + breadcrumb + left nav + contact form (static for now; backend in Phase 3) |
 | 2A.11 | Breadcrumb navigation | Auto-generated breadcrumbs on all inner pages (PRD WEB-03) |
 | 2A.12 | Mobile hamburger menu | Full-screen slide-in overlay menu, collapse sidebar on mobile (PRD WEB-02) |
@@ -100,18 +100,17 @@ npm run dev
 | `src/app/[locale]/board-of-directors/page.tsx` | Board of Directors page |
 | `src/app/[locale]/corporate-details/page.tsx` | Corporate Details page |
 | `src/app/[locale]/corporate-governance/page.tsx` | Corporate Governance page |
-| `src/app/[locale]/announcements/page.tsx` | Announcements page |
+| `src/app/[locale]/announcements/page.tsx` | Announcements page (embeds the Datalink announcements page in an `<iframe>`, EN/ZH) |
 | `src/app/[locale]/financial-reports/page.tsx` | Financial Reports page |
 | `src/app/[locale]/esg-reports/page.tsx` | ESG Reports page |
 | `src/app/[locale]/lost-share-certificates/page.tsx` | Lost Share Certificates page |
-| `src/app/[locale]/corporate-communications/page.tsx` | Corporate Communications page |
+| `src/app/[locale]/corporate-communications/page.tsx` | Corporate Communications page (Date/Document table + local PDF links) |
 | `src/app/[locale]/contact/page.tsx` | Contact Us page |
 | `src/components/layout/ContentWithSidebar.tsx` | Shared layout: header image + breadcrumb + sidebar + content |
 | `src/components/layout/TemplateShell.tsx` | Shared inner-page shell: hero/header image + breadcrumb + content slot (used by board/reports/announcements/contact/home) |
 | `src/components/layout/HomeTemplate.tsx` | Home page layout: hero + metrics + latest reports |
 | `src/components/layout/DirectorCards.tsx` | Director card grid component |
-| `src/components/layout/ReportsTable.tsx` | Sortable reports table component |
-| `src/components/layout/AnnouncementsTable.tsx` | Announcements & Circulars table (HKEX-linked, `target="_blank"`) |
+| `src/components/layout/ReportsTable.tsx` | Sortable, paginated reports table component (rows-per-page selector + Prev/Next + page numbers) |
 | `src/components/layout/ContactForm.tsx` | Contact form UI with client-side validation (client component) |
 | `src/components/layout/MobileMenu.tsx` / `MobileMenuToggle.tsx` | Mobile slide-in overlay menu + hamburger toggle (actual names; planned `HamburgerMenu.tsx`) |
 | `src/components/layout/Breadcrumb.tsx` | Breadcrumb navigation component |

@@ -9,28 +9,28 @@ const FINANCIAL_REPORTS: Record<Locale, ReportRow[]> = {
   en: [
     {
       id: "fin-2025",
-      date: "2025",
+      date: "October 2025",
       title: "Annual Report 2025",
       url: "/pdf/AnnualReport2025.pdf",
     },
     {
       id: "fin-2025-interim",
-      date: "2025 Interim",
-      title: "Interim Report 2025",
+      date: "March 2025",
+      title: "Interim Report 2024/2025",
       url: "/pdf/InterimReport2025.pdf",
     },
   ],
   zh: [
     {
       id: "fin-2025",
-      date: "2025",
+      date: "2025年10月",
       title: "2025年報",
       url: "/pdf/AnnualReport2025.pdf",
     },
     {
       id: "fin-2025-interim",
-      date: "2025中期",
-      title: "2025中期報告",
+      date: "2025年3月",
+      title: "2024/2025年中期報告",
       url: "/pdf/InterimReport2025.pdf",
     },
   ],

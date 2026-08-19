@@ -19,12 +19,13 @@ Build the remaining admin features for managing Financial Reports, ESG Reports, 
 | 3.1 | Report management UI (Financial) | `/admin/reports/financial` — upload PDF, set title/description/year/locale, visible/hidden toggle, sort order, delete |
 | 3.2 | Report management UI (ESG) | `/admin/reports/esg` — same as Financial but separate dashboard |
 | 3.3 | Announcements management UI | `/admin/announcements` — paste HKEX URL, auto-fetch title/date, manual edit fallback, visible/hidden toggle |
-| 3.4 | Financial Reports public page | Sortable table with Date + Document (PDF download) columns, fetched from `reports` table |
-| 3.5 | ESG Reports public page | Sortable table with Date + Document columns, fetched from `reports` table |
+| 3.4 | Financial Reports public page | Sortable, paginated table with Date + Document (PDF download) columns, fetched from `reports` table |
+| 3.5 | ESG Reports public page | Sortable, paginated table with Date + Document columns, fetched from `reports` table |
 | 3.6 | Announcements public page | Table with Date + title linking to HKEX, fetched from `announcements` table |
 | 3.7 | Contact form (public) | Form with Name, Subject, Email, Message fields; client-side validation (EN + ZH messages); Submit + Reset buttons |
 | 3.8 | Contact form email sending | Nodemailer integration: send email via company SMTP (IP-based auth), success/failure notification to user |
 | 3.9 | SMTP configuration | Configured via `.env` variables (SMTP_HOST, SMTP_PORT, SMTP_RECIPIENT) |
+| 3.10 | Local PDF migration (governance & communications) | Download governance/communications policy PDFs from the old server, serve locally under `public/pdf/…`, and update WYSIWYG links (ref PRD §2.2.4, §2.2.9) |
 
 ---
 
@@ -175,6 +176,7 @@ Active tables for this phase:
 - [ ] Public Financial Reports page shows all visible reports sorted by sort order
 - [ ] Public ESG Reports page shows all visible reports sorted by sort order
 - [ ] Report tables are sortable by clicking column headers
+- [ ] Report tables paginate (configurable rows-per-page; Previous/Next and page-number navigation; resets to page 1 on sort change)
 - [ ] Admin can paste HKEX URL; system attempts to fetch title/date
 - [ ] If HKEX fetch succeeds, title and date fields are auto-populated
 - [ ] If HKEX fetch fails, admin can manually enter title and date
@@ -194,6 +196,7 @@ Active tables for this phase:
 - **D6**: Financial/ESG PDFs copied from old server during migration (Phase 2.5); HKEX-linked kept external
 - **D10**: Company SMTP server uses IP-based authentication (no credentials)
 - **D11**: Policy/static PDFs handled in WYSIWYG editor (not report management)
+- **Governance & Corporate Communications PDFs served locally**: The `corporate-governance` and `corporate-communications` pages link to static policy PDFs. The governance PDFs currently point to old-server absolute URLs (`https://www.visionvalues.com.hk/eng|chi/pdf/governance/…`), and corporate-communications links to `/pdf/communication/e_Communications202401.pdf` (EN) and `/pdf/communication/c_Communications202401.pdf` (ZH). In this phase, download these PDFs from the old server, place them under `public/pdf/governance/…` and `public/pdf/communication/…` (so they resolve at the site root), and update the WYSIWYG links from absolute URLs to local paths (`/pdf/governance/…`, `/pdf/communication/…`). See PRD §2.2.4 and §2.2.9.
 - **D4**: All editors use consistent TipTap (note: report title/description are text inputs, not WYSIWYG)
 - **REP-05**: Report reordering uses numeric sort order (drag-and-drop is P1, not required now)
 

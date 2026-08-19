@@ -15,7 +15,7 @@ describe("placeholders", () => {
   });
 
   it("exposes the same slugs as navigation", () => {
-    expect(PLACEHOLDER_SLUGS.sort()).toEqual([...NAV_SLUGS].sort());
+    expect(PLACEHOLDER_SLUGS.toSorted()).toEqual([...NAV_SLUGS].sort());
   });
 
   it("returns null for unknown slug", () => {

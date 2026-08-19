@@ -25,7 +25,15 @@ export default function EsgReportsPage({ params }: Props) {
       <div className="bg-white rounded-lg shadow-md p-6">
         <ReportsTable
           rows={getEsgReports(locale)}
-          labels={{ date: t("date"), document: t("document") }}
+          labels={{
+            date: t("date"),
+            document: t("document"),
+            rowsPerPage: t("rowsPerPage"),
+            previous: t("previous"),
+            next: t("next"),
+            pageInfo: t("pageInfo"),
+            noRows: t("noRows"),
+          }}
         />
       </div>
     </TemplateShell>

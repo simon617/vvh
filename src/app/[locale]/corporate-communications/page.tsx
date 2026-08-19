@@ -1,4 +1,7 @@
-import ContentWithSidebar from "@/components/layout/ContentWithSidebar";
+import { useTranslations } from "next-intl";
+import TemplateShell from "@/components/layout/TemplateShell";
+import ReportsTable from "@/components/layout/ReportsTable";
+import { getCorporateCommunications } from "@/lib/corporateCommunications";
 import { getPageData } from "@/lib/pages";
 import type { Locale } from "@/lib/navigation";
 
@@ -12,10 +15,27 @@ export function generateMetadata({ params }: Props) {
 }
 
 export default function CorporateCommunicationsPage({ params }: Props) {
+  const locale = params.locale as Locale;
+  const data = getPageData("corporate-communications", locale);
+  const t = useTranslations("tables");
+  if (!data) return null;
+
   return (
-    <ContentWithSidebar
-      slug="corporate-communications"
-      locale={params.locale as Locale}
-    />
+    <TemplateShell title={data.title} locale={locale}>
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <ReportsTable
+          rows={getCorporateCommunications(locale)}
+          labels={{
+            date: t("date"),
+            document: t("document"),
+            rowsPerPage: t("rowsPerPage"),
+            previous: t("previous"),
+            next: t("next"),
+            pageInfo: t("pageInfo"),
+            noRows: t("noRows"),
+          }}
+        />
+      </div>
+    </TemplateShell>
   );
 }

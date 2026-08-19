@@ -27,7 +27,12 @@
   },
   "tables": {
     "date": "日期",
-    "document": "文件"
+    "document": "文件",
+    "rowsPerPage": "每頁行數",
+    "previous": "上一頁",
+    "next": "下一頁",
+    "pageInfo": "顯示第 %start% 至 %end% 項，共 %total% 項",
+    "noRows": "暫無報告"
   },
   "home": {
     "metricsTitle": "主要資料",

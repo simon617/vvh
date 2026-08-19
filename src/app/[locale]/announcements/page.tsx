@@ -1,6 +1,5 @@
 import TemplateShell from "@/components/layout/TemplateShell";
-import AnnouncementsTable from "@/components/layout/AnnouncementsTable";
-import { getAnnouncements } from "@/lib/announcements";
+import { getAnnouncementsUrl } from "@/lib/announcements";
 import { getPageData } from "@/lib/pages";
 import type { Locale } from "@/lib/navigation";
 
@@ -20,7 +19,14 @@ export default function AnnouncementsPage({ params }: Props) {
 
   return (
     <TemplateShell title={data.title} locale={locale}>
-      <AnnouncementsTable rows={getAnnouncements(locale)} />
+      <div className="bg-white rounded-lg shadow-md p-4">
+        <iframe
+          src={getAnnouncementsUrl(locale)}
+          title={data.title}
+          className="w-full min-h-[640px] border-0"
+          loading="lazy"
+        />
+      </div>
     </TemplateShell>
   );
 }

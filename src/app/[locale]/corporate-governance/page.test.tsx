@@ -15,16 +15,29 @@ vi.mock("next/link", () => ({
 }));
 
 describe("Corporate Governance page (rich text)", () => {
-  it("renders localized heading and body", () => {
+  it("renders localized heading and clickable document list", () => {
     renderWithLocale(<CorporateGovernancePage params={{ locale: "en" }} />);
     expect(screen.getByRole("heading", { level: 1, name: "Corporate Governance" })).toBeInTheDocument();
-    expect(screen.getByText(/committed to maintaining high standards/i)).toBeInTheDocument();
+    const moa = screen.getByText("Memorandum of Association and Articles of Association");
+    expect(moa).toHaveAttribute(
+      "href",
+      "https://www.visionvalues.com.hk/eng/pdf/governance/MoAandAoA.pdf"
+    );
+    expect(moa).toHaveAttribute("target", "_blank");
+    expect(screen.getByText("Audit Committee - Terms of Reference")).toBeInTheDocument();
+    expect(screen.getByText("Whistleblowing Policy")).toBeInTheDocument();
   });
 
-  it("renders Chinese heading and body", () => {
+  it("renders Chinese heading and clickable document list", () => {
     renderWithLocale(<CorporateGovernancePage params={{ locale: "zh" }} />, "zh");
     expect(screen.getByRole("heading", { level: 1, name: "企業管治" })).toBeInTheDocument();
-    expect(screen.getByText(/企業管治守則/i)).toBeInTheDocument();
+    const moa = screen.getByText("公司組織章程大綱及組織章程細則");
+    expect(moa).toHaveAttribute(
+      "href",
+      "https://www.visionvalues.com.hk/chi/pdf/governance/MoAandAoA.pdf"
+    );
+    expect(moa).toHaveAttribute("target", "_blank");
+    expect(screen.getByText("審核委員會 - 職權範圍書")).toBeInTheDocument();
   });
 
   it("exposes localized metadata", () => {

@@ -21,7 +21,8 @@ describe("Financial Reports page (reports table)", () => {
     expect(screen.getByText("Date")).toBeInTheDocument();
     expect(screen.getByText("Document")).toBeInTheDocument();
     expect(screen.getByText("Annual Report 2025")).toBeInTheDocument();
-    expect(screen.getByText("Interim Report 2025")).toBeInTheDocument();
+    expect(screen.getByText("Interim Report 2024/2025")).toBeInTheDocument();
+    expect(screen.getByText("Rows per page")).toBeInTheDocument();
   });
 
   it("renders localized table headers and rows in Chinese", () => {
@@ -29,7 +30,8 @@ describe("Financial Reports page (reports table)", () => {
     expect(screen.getByRole("heading", { level: 1, name: "財務報告" })).toBeInTheDocument();
     expect(screen.getByText("日期")).toBeInTheDocument();
     expect(screen.getByText("2025年報")).toBeInTheDocument();
-    expect(screen.getByText("2025中期報告")).toBeInTheDocument();
+    expect(screen.getByText("2024/2025年中期報告")).toBeInTheDocument();
+    expect(screen.getByText("每頁行數")).toBeInTheDocument();
   });
 
   it("exposes localized metadata", () => {

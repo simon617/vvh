@@ -39,7 +39,9 @@ describe("ContentWithSidebar", () => {
 
   it("renders the page content body", () => {
     render(<ContentWithSidebar slug="corporate-governance" locale="en" />);
-    expect(screen.getByText(/committed to maintaining high standards/i)).toBeInTheDocument();
+    expect(
+      screen.getByText("Memorandum of Association and Articles of Association")
+    ).toBeInTheDocument();
   });
 
   it("renders localized content for zh", () => {
@@ -47,7 +49,7 @@ describe("ContentWithSidebar", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "企業管治" })
     ).toBeInTheDocument();
-    expect(screen.getByText(/企業管治守則/i)).toBeInTheDocument();
+    expect(screen.getByText("公司組織章程大綱及組織章程細則")).toBeInTheDocument();
   });
 
   it("renders nothing for unknown slug", () => {

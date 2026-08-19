@@ -14,16 +14,36 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-describe("Corporate Communications page (rich text)", () => {
-  it("renders heading and body in English", () => {
+describe("Corporate Communications page (reports table)", () => {
+  it("renders a sortable document table linked to a local PDF in English", () => {
     renderWithLocale(<CorporateCommunicationsPage params={{ locale: "en" }} />);
-    expect(screen.getByRole("heading", { level: 1, name: "Corporate Communications" })).toBeInTheDocument();
-    expect(screen.getByText(/communicates with shareholders/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Corporate Communications" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Date")).toBeInTheDocument();
+    expect(screen.getByText("Document")).toBeInTheDocument();
+
+    const link = screen.getByText(
+      "Arrangements Regarding Dissemination of Corporate Communications"
+    );
+    expect(link).toHaveAttribute(
+      "href",
+      "/pdf/communication/e_Communications202401.pdf"
+    );
+    expect(link).toHaveAttribute("target", "_blank");
   });
 
-  it("renders heading and body in Chinese", () => {
+  it("renders a localized document table linked to a local PDF in Chinese", () => {
     renderWithLocale(<CorporateCommunicationsPage params={{ locale: "zh" }} />, "zh");
     expect(screen.getByRole("heading", { level: 1, name: "公司通訊" })).toBeInTheDocument();
-    expect(screen.getByText(/與股東溝通/i)).toBeInTheDocument();
+    expect(screen.getByText("日期")).toBeInTheDocument();
+    expect(screen.getByText("文件")).toBeInTheDocument();
+
+    const link = screen.getByText("有關發佈公司通訊之安排");
+    expect(link).toHaveAttribute(
+      "href",
+      "/pdf/communication/c_Communications202401.pdf"
+    );
+    expect(link).toHaveAttribute("target", "_blank");
   });
 });

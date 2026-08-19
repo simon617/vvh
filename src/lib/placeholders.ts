@@ -149,9 +149,23 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaDescription: "Corporate governance policies of Vision Values Holdings Limited",
       breadcrumb: "Corporate Governance",
       contentHtml: `
-<p>The Board of Vision Values Holdings Limited is committed to maintaining high standards of corporate governance to safeguard the interests of shareholders and enhance corporate value.</p>
-<p>The Company has adopted the Corporate Governance Code as set out in Appendix 14 of the Rules Governing the Listing of Securities on The Stock Exchange of Hong Kong Limited.</p>
-<p><a href="/pdf/CorporateGovernance.pdf" target="_blank">Corporate Governance Policy (PDF)</a></p>
+<p>Corporate governance documents of the Company are available for download below.</p>
+<table>
+  <tbody>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/MoAandAoA.pdf" target="_blank" rel="noopener noreferrer">Memorandum of Association and Articles of Association</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/TOR-AuditCommittee.pdf" target="_blank" rel="noopener noreferrer">Audit Committee - Terms of Reference</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/TOR-RemunerationCommittee.pdf" target="_blank" rel="noopener noreferrer">Remuneration Committee - Terms of Reference</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/e_Terms of Reference of Nomination Committee.pdf" target="_blank" rel="noopener noreferrer">Nomination Committee - Terms of Reference</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/CodeForSecuritiesTransactions.pdf" target="_blank" rel="noopener noreferrer">Code for Securities Transaction by Directors and Employees</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/e-20161025.pdf" target="_blank" rel="noopener noreferrer">Procedures for Shareholders to Propose a Person for Election as a Director of the Company at a general meeting</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/E-Nomination Policy.pdf" target="_blank" rel="noopener noreferrer">Nomination Policy for Recruitment of Board Members</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/VVH Anti-corruption policy (eng).pdf" target="_blank" rel="noopener noreferrer">Anti-Corruption Policy</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/E-20180800-Board Diversity PolicyV2.pdf" target="_blank" rel="noopener noreferrer">Board Diversity Policy</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/E-dividend policy.pdf" target="_blank" rel="noopener noreferrer">Dividend Policy</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/WHISTLEBLOWING POLICY MEC (eng).pdf" target="_blank" rel="noopener noreferrer">Whistleblowing Policy</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/e_Workforce Diversity Policy.pdf" target="_blank" rel="noopener noreferrer">Workforce Diversity Policy</a></td></tr>
+  </tbody>
+</table>
 `,
     },
     zh: {
@@ -160,9 +174,23 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaDescription: "遠見控股有限公司之企業管治政策",
       breadcrumb: "企業管治",
       contentHtml: `
-<p>遠見控股有限公司董事會致力維持高水平的企業管治，以保障股東權益及提升企業價值。</p>
-<p>本公司已採納香港聯合交易所有限公司證券上市規則附錄十四所載之《企業管治守則》。</p>
-<p><a href="/pdf/CorporateGovernance.pdf" target="_blank">企業管治政策（PDF）</a></p>
+<p>本公司之企業管治文件可供下列下載。</p>
+<table>
+  <tbody>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/MoAandAoA.pdf" target="_blank" rel="noopener noreferrer">公司組織章程大綱及組織章程細則</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/TOR-AuditCommittee.pdf" target="_blank" rel="noopener noreferrer">審核委員會 - 職權範圍書</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/TOR-RemunerationCommittee.pdf" target="_blank" rel="noopener noreferrer">薪酬委員會 - 職權範圍書</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/c_Terms of Reference of Nomination Committee.pdf" target="_blank" rel="noopener noreferrer">提名委員會 - 職權範圍書</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/CodeForSecuritiesTransactions.pdf" target="_blank" rel="noopener noreferrer">董事及員工進行證券交易守則 (只提供英文版)</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/c-20161025.pdf" target="_blank" rel="noopener noreferrer">股東於股東大會上提名個別人士參選董事職位之程序</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/C-Nomination Policy.pdf" target="_blank" rel="noopener noreferrer">提名政策招聘董事會成員</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/VVH Anti-corruption policy (chi).pdf" target="_blank" rel="noopener noreferrer">反貪污政策</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/C-20181205-Board Diversity Policy (chi).pdf" target="_blank" rel="noopener noreferrer">董事會多元化政策</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/C-dividend policy.pdf" target="_blank" rel="noopener noreferrer">股息政策</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/WHISTLEBLOWING POLICY MEC (chi).pdf" target="_blank" rel="noopener noreferrer">舉報政策</a></td></tr>
+    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/c_Workforce Diversity Policy.pdf" target="_blank" rel="noopener noreferrer">員工多元化政策</a></td></tr>
+  </tbody>
+</table>
 `,
     },
   },
@@ -298,21 +326,38 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
     en: {
       title: "Corporate Communications",
       metaTitle: "Corporate Communications | Vision Values Holdings Limited",
-      metaDescription: "Corporate communication policy of Vision Values Holdings Limited",
+      metaDescription:
+        "Corporate communications and dissemination arrangements of Vision Values Holdings Limited",
       breadcrumb: "Corporate Communications",
       contentHtml: `
-<p>The Company communicates with shareholders through annual reports, interim reports, circulars, notices and announcements published on the HKEX website.</p>
-<p>Shareholders may elect to receive corporate communications in printed form or via electronic means.</p>
+<p>The Company disseminates corporate communications to shareholders in accordance with the disclosure requirements of The Stock Exchange of Hong Kong Limited.</p>
+<table>
+  <thead>
+    <tr><th>Date</th><th>Document</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>January 2024</td><td><a href="/pdf/communication/e_Communications202401.pdf" target="_blank" rel="noopener noreferrer">Arrangements Regarding Dissemination of Corporate Communications</a></td></tr>
+  </tbody>
+</table>
+<p>If you want to view PDF files, please download Acrobat Reader.</p>
 `,
     },
     zh: {
       title: "公司通訊",
       metaTitle: "公司通訊 | 遠見控股有限公司",
-      metaDescription: "遠見控股有限公司之公司通訊政策",
+      metaDescription: "遠見控股有限公司之公司通訊及發佈安排",
       breadcrumb: "公司通訊",
       contentHtml: `
-<p>本公司透過年報、中期報告、通函、通告及於香港交易所網站刊發之公告與股東溝通。</p>
-<p>股東可選擇以印刷本或電子方式收取公司通訊。</p>
+<p>本公司按照香港聯合交易所有限公司之披露規定向股東發佈公司通訊。</p>
+<table>
+  <thead>
+    <tr><th>發佈日期</th><th>文件</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>2024年1月</td><td><a href="/pdf/communication/c_Communications202401.pdf" target="_blank" rel="noopener noreferrer">有關發佈公司通訊之安排</a></td></tr>
+  </tbody>
+</table>
+<p>如欲檢視 PDF 檔案，請下載 Acrobat Reader。</p>
 `,
     },
   },

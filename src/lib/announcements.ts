@@ -1,42 +1,16 @@
 import type { Locale } from "./navigation";
 
-export interface Announcement {
-  date: string;
-  title: string;
-  url: string;
-}
-
 /**
- * Placeholder announcements for Phase 2A.
- * Phase 3 replaces this with `announcements` table rows (HKEX-linked).
+ * Per-locale Datalink announcement pages, embedded via an <iframe> — mirroring
+ * the legacy ASP `<frame src="...">`. The page renders whatever content the
+ * provider serves, so newly published announcements appear automatically.
  */
-const ANNOUNCEMENTS: Record<Locale, Announcement[]> = {
-  en: [
-    {
-      date: "2026-01-15",
-      title: "Announcement of Annual Results",
-      url: "https://www1.hkexnews.hk/",
-    },
-    {
-      date: "2025-12-01",
-      title: "Circular",
-      url: "https://www1.hkexnews.hk/",
-    },
-  ],
-  zh: [
-    {
-      date: "2026-01-15",
-      title: "全年業績公告",
-      url: "https://www1.hkexnews.hk/",
-    },
-    {
-      date: "2025-12-01",
-      title: "通函",
-      url: "https://www1.hkexnews.hk/",
-    },
-  ],
+export const ANNOUNCEMENT_IFRAME_URLS: Record<Locale, string> = {
+  en: "https://datalink.talesis.com/document/c00640/Announcement_new",
+  zh: "https://datalink.talesis.com/document/c00640/Chinese/Announcement_2D_Chineselist_new",
 };
 
-export function getAnnouncements(locale: Locale): Announcement[] {
-  return ANNOUNCEMENTS[locale];
+/** Get the announcement iframe URL for a locale. */
+export function getAnnouncementsUrl(locale: Locale): string {
+  return ANNOUNCEMENT_IFRAME_URLS[locale];
 }

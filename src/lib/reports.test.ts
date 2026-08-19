@@ -12,7 +12,8 @@ describe("reports data layer", () => {
   it("returns localized financial report titles in Chinese", () => {
     const rows = getFinancialReports("zh");
     expect(rows[0].title).toBe("2025年報");
-    expect(rows[1].title).toBe("2025中期報告");
+    expect(rows[1].title).toBe("2024/2025年中期報告");
+    expect(rows[1].date).toBe("2025年3月");
   });
 
   it("returns ESG reports for both locales", () => {

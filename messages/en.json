@@ -27,7 +27,12 @@
   },
   "tables": {
     "date": "Date",
-    "document": "Document"
+    "document": "Document",
+    "rowsPerPage": "Rows per page",
+    "previous": "Previous",
+    "next": "Next",
+    "pageInfo": "Showing %start%–%end% of %total%",
+    "noRows": "No records"
   },
   "home": {
     "metricsTitle": "Key Facts",
