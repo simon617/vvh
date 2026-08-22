@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { uploadsDir } from "@/lib/uploads";
 
 /**
  * Serve uploaded files from UPLOAD_DIR (default ./uploads) at /uploads/<path>.
@@ -13,8 +14,7 @@ import path from "path";
  *   container restarts and are served from there.
  */
 export function resolveUploadPath(relativePath: string): string | null {
-  const uploadDir = process.env.UPLOAD_DIR || "./uploads";
-  const base = path.resolve(uploadDir);
+  const base = path.resolve(uploadsDir());
   const target = path.resolve(base, relativePath);
 
   // Guard against path traversal (.. segments escaping UPLOAD_DIR).
