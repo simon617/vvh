@@ -13,6 +13,7 @@
     "postinstall": "prisma generate",
     "backup": "tsx scripts/backup.ts",
     "reset-password": "tsx scripts/reset-password.ts",
+    "seed": "prisma db seed",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -54,5 +55,8 @@
     "tsx": "^4.11.0",
     "typescript": "^5.4.0",
     "vitest": "^4.1.10"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
