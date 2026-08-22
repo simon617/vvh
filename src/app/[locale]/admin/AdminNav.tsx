@@ -26,6 +26,13 @@ export default function AdminNav({ username, locale }: AdminNavProps) {
     }
   }
 
+  const links = [
+    { href: `/${locale}/admin`, label: t("dashboard") },
+    { href: `/${locale}/admin/pages`, label: t("pages") },
+    { href: `/${locale}/admin/settings`, label: t("settings") },
+    { href: `/${locale}/admin/change-password`, label: t("changePassword") },
+  ];
+
   return (
     <nav className="bg-primary text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,12 +45,15 @@ export default function AdminNav({ username, locale }: AdminNavProps) {
               VVH CMS
             </a>
             <div className="hidden md:flex space-x-4 ml-8">
-              <a
-                href={`/${locale}/admin`}
-                className="text-sm text-white hover:text-accent transition-colors"
-              >
-                {t("dashboard")}
-              </a>
+              {links.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-white hover:text-accent transition-colors"
+                >
+                  {link.label}
+                </a>
+              ))}
             </div>
           </div>
           <div className="flex items-center space-x-4">
