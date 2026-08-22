@@ -138,3 +138,36 @@ export async function validateAdmin(
     role: user.role,
   };
 }
+
+/**
+ * Change an admin's password after verifying the current one.
+ * Used by the in-app change-password flow (Phase 2B).
+ */
+export async function changePassword(
+  userId: number,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  const user = await prisma.adminUser.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const valid = await comparePassword(currentPassword, user.password);
+  if (!valid) {
+    throw new Error("Current password is incorrect");
+  }
+
+  if (newPassword.length < 8) {
+    throw new Error("New password must be at least 8 characters");
+  }
+
+  const hashed = await hashPassword(newPassword);
+  await prisma.adminUser.update({
+    where: { id: userId },
+    data: { password: hashed },
+  });
+}
