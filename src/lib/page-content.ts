@@ -57,6 +57,16 @@ export async function getPageContent(
   });
 }
 
+/** Get the Page id for a slug, or null when the page does not exist. */
+export async function getPageBySlug(
+  slug: string
+): Promise<{ id: number } | null> {
+  return prisma.page.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+}
+
 /**
  * Create-or-update a page content row for a single locale.
  * EN/ZH are separate rows linked by pageId (`@@unique([pageId, locale])`);

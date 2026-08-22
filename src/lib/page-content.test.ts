@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getPageContent,
+  getPageBySlug,
   upsertPageContent,
   listPagesWithContent,
   getRecentPageActivity,
@@ -64,6 +65,26 @@ describe("getPageContent(slug, locale)", () => {
   it("returns null when the locale content does not exist", async () => {
     mockPageContent.findFirst.mockResolvedValue(null);
     expect(await getPageContent("home", "zh")).toBeNull();
+  });
+});
+
+describe("getPageBySlug(slug)", () => {
+  beforeEach(() => {
+    mockPage.findUnique.mockReset();
+  });
+
+  it("returns the page id for an existing slug", async () => {
+    mockPage.findUnique.mockResolvedValue({ id: 42 });
+    expect(await getPageBySlug("home")).toEqual({ id: 42 });
+    expect(mockPage.findUnique).toHaveBeenCalledWith({
+      where: { slug: "home" },
+      select: { id: true },
+    });
+  });
+
+  it("returns null for an unknown slug", async () => {
+    mockPage.findUnique.mockResolvedValue(null);
+    expect(await getPageBySlug("nope")).toBeNull();
   });
 });
 
