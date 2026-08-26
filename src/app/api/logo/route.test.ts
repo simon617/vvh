@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-import { POST, logoFilePath } from "./route";
+import { POST } from "./route";
+import { logoFilePath } from "@/lib/logo";
 
 const { mockGetSession } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),

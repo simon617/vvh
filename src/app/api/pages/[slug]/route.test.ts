@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
-import { GET, PUT, validatePageContentBody } from "./route";
+import { GET, PUT } from "./route";
+import { validatePageContentBody } from "@/lib/page-content-validation";
 
 const { mockGetSession, mockGetPageContent, mockGetPageBySlug, mockUpsertPageContent } =
   vi.hoisted(() => ({

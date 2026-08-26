@@ -26,6 +26,22 @@ export function uploadsDir(): string {
   return process.env.UPLOAD_DIR || "./uploads";
 }
 
+/**
+ * Resolve a relative path against UPLOAD_DIR, guarding against path traversal
+ * (`..` segments escaping the uploads root). Returns null when unsafe.
+ * Used by the /uploads serving route.
+ */
+export function resolveUploadPath(relativePath: string): string | null {
+  const base = path.resolve(uploadsDir());
+  const target = path.resolve(base, relativePath);
+
+  // Guard against path traversal (.. segments escaping UPLOAD_DIR).
+  if (target !== base && !target.startsWith(base + path.sep)) {
+    return null;
+  }
+  return target;
+}
+
 /** Whether a file name has an allowed image extension (case-insensitive). */
 export function isAllowedImage(name: string): boolean {
   const ext = path.extname(name).toLowerCase();

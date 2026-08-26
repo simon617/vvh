@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import path from "path";
 import { NextRequest } from "next/server";
-import { resolveUploadPath, GET } from "./route";
+import { GET } from "./route";
+import { resolveUploadPath } from "@/lib/uploads";
 
 describe("resolveUploadPath (uploads serving guard)", () => {
   const originalUploadDir = process.env.UPLOAD_DIR;

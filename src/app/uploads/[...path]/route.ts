@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-import { uploadsDir } from "@/lib/uploads";
+import { resolveUploadPath } from "@/lib/uploads";
 
 /**
  * Serve uploaded files from UPLOAD_DIR (default ./uploads) at /uploads/<path>.
@@ -13,16 +13,6 @@ import { uploadsDir } from "@/lib/uploads";
  * - Docker maps a persistent volume to /app/uploads, so writes survive
  *   container restarts and are served from there.
  */
-export function resolveUploadPath(relativePath: string): string | null {
-  const base = path.resolve(uploadsDir());
-  const target = path.resolve(base, relativePath);
-
-  // Guard against path traversal (.. segments escaping UPLOAD_DIR).
-  if (target !== base && !target.startsWith(base + path.sep)) {
-    return null;
-  }
-  return target;
-}
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",

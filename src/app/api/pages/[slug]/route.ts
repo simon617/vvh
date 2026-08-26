@@ -5,79 +5,8 @@ import {
   getPageContent,
   upsertPageContent,
 } from "@/lib/page-content";
-
-const LOCALES = ["en", "zh"] as const;
-type Locale = (typeof LOCALES)[number];
-
-interface PageContentBody {
-  locale: string;
-  isPublished?: boolean;
-  title?: string;
-  metaTitle?: string | null;
-  metaDescription?: string | null;
-  heroImage?: string | null;
-  contentHtml?: string | null;
-  breadcrumbLabel?: string | null;
-}
-
-type Validation =
-  | { ok: true; data: PageContentBody }
-  | { ok: false; errors: string[] };
-
-/** Validate a PUT body for page content. Pure — easy to unit-test. */
-export function validatePageContentBody(input: unknown): Validation {
-  const errors: string[] = [];
-
-  if (typeof input !== "object" || input === null) {
-    return { ok: false, errors: ["body must be a JSON object"] };
-  }
-
-  const body = input as Record<string, unknown>;
-
-  if (
-    typeof body.locale !== "string" ||
-    !LOCALES.includes(body.locale as Locale)
-  ) {
-    errors.push("locale must be 'en' or 'zh'");
-  }
-
-  if (
-    body.title !== undefined &&
-    typeof body.title !== "string"
-  ) {
-    errors.push("title must be a string");
-  }
-
-  const booleanFields = ["isPublished"] as const;
-  for (const field of booleanFields) {
-    if (body[field] !== undefined && typeof body[field] !== "boolean") {
-      errors.push(`${field} must be a boolean`);
-    }
-  }
-
-  const nullableStringFields = [
-    "metaTitle",
-    "metaDescription",
-    "heroImage",
-    "contentHtml",
-    "breadcrumbLabel",
-  ] as const;
-  for (const field of nullableStringFields) {
-    if (
-      body[field] !== undefined &&
-      body[field] !== null &&
-      typeof body[field] !== "string"
-    ) {
-      errors.push(`${field} must be a string or null`);
-    }
-  }
-
-  if (errors.length > 0) {
-    return { ok: false, errors };
-  }
-
-  return { ok: true, data: body as unknown as PageContentBody };
-}
+import { validatePageContentBody, VALID_LOCALES } from "@/lib/page-content-validation";
+import type { Locale } from "@/lib/page-content-validation";
 
 export async function GET(
   request: NextRequest,
@@ -92,7 +21,7 @@ export async function GET(
   const url = new URL(request.url);
   const localeParam = url.searchParams.get("locale");
 
-  if (localeParam !== null && !LOCALES.includes(localeParam as Locale)) {
+  if (localeParam !== null && !VALID_LOCALES.includes(localeParam as Locale)) {
     return NextResponse.json(
       { error: "locale must be 'en' or 'zh'" },
       { status: 400 }
