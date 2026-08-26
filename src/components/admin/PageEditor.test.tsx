@@ -101,4 +101,37 @@ describe("PageEditor", () => {
     expect(body.title).toBe("Edited Home");
     expect(body.isPublished).toBe(true);
   });
+
+  it("renders localized labels in Chinese", () => {
+    renderWithLocale(
+      <PageEditor slug="home" initialEn={contentRow("en")} initialZh={null} />,
+      "zh"
+    );
+    expect(screen.getByText("標題（EN）")).toBeTruthy();
+    expect(screen.getByText("儲存")).toBeTruthy();
+    expect(screen.getByText("已發佈（EN）")).toBeTruthy();
+  });
+
+  it("confirms before unpublishing the last visible locale (guardrail)", () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    renderWithLocale(
+      <PageEditor
+        slug="home"
+        initialEn={contentRow("en")}
+        initialZh={{ ...contentRow("zh"), isPublished: false }}
+      />
+    );
+
+    // EN is published and ZH is unpublished → unchecking EN would hide the page.
+    fireEvent.click(screen.getByTestId("publish-en"));
+    expect(confirmSpy).toHaveBeenCalled();
+
+    // Confirm declined → the toggle stays published.
+    expect(
+      (screen.getByTestId("publish-en") as HTMLInputElement).checked
+    ).toBe(true);
+
+    confirmSpy.mockRestore();
+  });
 });

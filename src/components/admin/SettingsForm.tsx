@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import ImageUploader from "./ImageUploader";
 
 interface SettingsFormProps {
@@ -14,6 +15,7 @@ interface SettingsFormProps {
  * (2B.7) posts to /api/logo.
  */
 export default function SettingsForm({ initial, logoPath }: SettingsFormProps) {
+  const t = useTranslations("admin.settings");
   const [siteName, setSiteName] = useState(initial.site_name);
   const [ga4, setGa4] = useState(initial.ga4_tracking_id);
   const [saving, setSaving] = useState(false);
@@ -32,12 +34,12 @@ export default function SettingsForm({ initial, logoPath }: SettingsFormProps) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setMessage(data?.error ?? "Save failed");
+        setMessage(data?.error ?? t("saveFailed"));
         return;
       }
-      setMessage("Saved");
+      setMessage(t("saved"));
     } catch {
-      setMessage("Save failed");
+      setMessage(t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -53,7 +55,7 @@ export default function SettingsForm({ initial, logoPath }: SettingsFormProps) {
           htmlFor="site-name"
           className="block text-sm font-medium text-gray-700 mb-1"
         >
-          Site name
+          {t("siteName")}
         </label>
         <input
           id="site-name"
@@ -69,7 +71,7 @@ export default function SettingsForm({ initial, logoPath }: SettingsFormProps) {
           htmlFor="ga4-id"
           className="block text-sm font-medium text-gray-700 mb-1"
         >
-          GA4 Tracking ID
+          {t("ga4")}
         </label>
         <input
           id="ga4-id"
@@ -83,13 +85,13 @@ export default function SettingsForm({ initial, logoPath }: SettingsFormProps) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Logo
+          {t("logo")}
         </label>
         <ImageUploader
           current={logo}
-          onChange={(path) => { setLogo(path); setMessage("Logo uploaded"); }}
+          onChange={(path) => { setLogo(path); setMessage(t("logoUploaded")); }}
           endpoint="/api/logo"
-          label="Upload logo"
+          label={t("uploadLogo")}
         />
       </div>
 
@@ -99,7 +101,7 @@ export default function SettingsForm({ initial, logoPath }: SettingsFormProps) {
           disabled={saving}
           className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-600 transition-colors disabled:opacity-50"
         >
-          Save settings
+          {t("save")}
         </button>
         {message && <span className="text-sm text-gray-600">{message}</span>}
       </div>

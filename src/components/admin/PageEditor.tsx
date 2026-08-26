@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { PageContent } from "@/lib/page-content";
 import LocaleTabs from "./LocaleTabs";
 import TipTapEditor from "./TipTapEditor";
@@ -49,6 +50,7 @@ export default function PageEditor({
   initialEn,
   initialZh,
 }: PageEditorProps) {
+  const t = useTranslations("admin.editor");
   const searchParams = useSearchParams();
   const active: Locale = searchParams.get("tab") === "zh" ? "zh" : "en";
 
@@ -71,13 +73,29 @@ export default function PageEditor({
     setMessage(null);
   }
 
+  // Guardrail: auto-clear the success/error flash after a short while.
+  useEffect(() => {
+    if (!message) return;
+    const id = window.setTimeout(() => setMessage(null), 3000);
+    return () => window.clearTimeout(id);
+  }, [message]);
+
   function handleTabChange() {
     if (dirty[active]) {
-      return window.confirm(
-        "You have unsaved changes. Switch tabs anyway?"
-      );
+      return window.confirm(t("switchTabConfirm"));
     }
     return true;
+  }
+
+  // Guardrail (D8): warn before unpublishing the last visible locale.
+  function handlePublishToggle(checked: boolean) {
+    const other: Locale = active === "en" ? "zh" : "en";
+    const wouldBeHidden = !checked && !drafts[other].isPublished;
+    if (wouldBeHidden) {
+      const ok = window.confirm(t("unpublishConfirm"));
+      if (!ok) return;
+    }
+    update({ isPublished: checked });
   }
 
   async function handleSave() {
@@ -91,13 +109,13 @@ export default function PageEditor({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setMessage(data?.error ?? "Save failed");
+        setMessage(data?.error ?? t("saveFailed"));
         return;
       }
       setDirty((prev) => ({ ...prev, [active]: false }));
-      setMessage("Saved");
+      setMessage(t("saved"));
     } catch {
-      setMessage("Save failed");
+      setMessage(t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -116,7 +134,7 @@ export default function PageEditor({
         <div className="lg:col-span-2 space-y-6">
           <div>
             <label htmlFor="title" className={labelClass}>
-              Title ({active.toUpperCase()})
+              {t("title", { locale: active.toUpperCase() })}
             </label>
             <input
               id="title"
@@ -128,29 +146,30 @@ export default function PageEditor({
           </div>
 
           <div>
-            <label className={labelClass}>Content</label>
+            <label className={labelClass}>{t("content")}</label>
             <TipTapEditor
               value={draft.contentHtml}
               onChange={(html) => update({ contentHtml: html })}
-              placeholder="Enter page content..."
+              placeholder={t("content")}
             />
+            <p className="mt-1 text-xs text-gray-400">{t("editorHelp")}</p>
           </div>
         </div>
 
         {/* Right column: image + SEO + publish */}
         <div className="space-y-6">
           <div>
-            <label className={labelClass}>Header image</label>
+            <label className={labelClass}>{t("headerImage")}</label>
             <ImageUploader
               current={draft.heroImage}
               onChange={(path) => update({ heroImage: path })}
-              label="Upload header image"
+              label={t("uploadHeaderImage")}
             />
           </div>
 
           <div>
             <label htmlFor="metaTitle" className={labelClass}>
-              Meta title
+              {t("metaTitle")}
             </label>
             <input
               id="metaTitle"
@@ -163,7 +182,7 @@ export default function PageEditor({
 
           <div>
             <label htmlFor="metaDescription" className={labelClass}>
-              Meta description
+              {t("metaDescription")}
             </label>
             <textarea
               id="metaDescription"
@@ -179,9 +198,9 @@ export default function PageEditor({
               type="checkbox"
               data-testid={`publish-${active}`}
               checked={draft.isPublished}
-              onChange={(e) => update({ isPublished: e.target.checked })}
+              onChange={(e) => handlePublishToggle(e.target.checked)}
             />
-            Published ({active.toUpperCase()})
+            {t("publishedLabel", { locale: active.toUpperCase() })}
           </label>
 
           <div className="flex items-center gap-4 pt-2 border-t border-border">
@@ -191,17 +210,16 @@ export default function PageEditor({
               disabled={saving}
               className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-600 transition-colors disabled:opacity-50"
             >
-              Save
+              {saving ? t("saving") : t("save")}
             </button>
             {dirty[active] && (
-              <span className="text-sm text-secondary">Unsaved changes</span>
+              <span className="text-sm text-secondary">{t("unsavedChanges")}</span>
             )}
             {message && <span className="text-sm text-gray-600">{message}</span>}
           </div>
 
           <p className="text-xs text-gray-400">
-            {active.toUpperCase()} content is a separate row in the database —
-            publishing one language never affects the other.
+            {t("separateRowHelp", { locale: active.toUpperCase() })}
           </p>
         </div>
       </div>
