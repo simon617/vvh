@@ -1,7 +1,11 @@
 import { screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import AnnouncementsPage, { generateMetadata } from "./page";
+import { getPlaceholder } from "@/lib/placeholders";
 import { renderWithLocale } from "@/test/utils";
+
+const { mockGetPageData } = vi.hoisted(() => ({ mockGetPageData: vi.fn() }));
+vi.mock("@/lib/pages", () => ({ getPageData: mockGetPageData }));
 
 vi.mock("next/headers", () => ({
   headers: () => new Map([["x-pathname", "/en/announcements"]]),
@@ -15,8 +19,14 @@ vi.mock("next/link", () => ({
 }));
 
 describe("Announcements page", () => {
-  it("embeds the en Datalink announcement page in an iframe", () => {
-    renderWithLocale(<AnnouncementsPage params={{ locale: "en" }} />);
+  beforeEach(() => {
+    mockGetPageData.mockImplementation(async (slug, locale) =>
+      getPlaceholder(slug, locale)
+    );
+  });
+
+  it("embeds the en Datalink announcement page in an iframe", async () => {
+    renderWithLocale(await AnnouncementsPage({ params: { locale: "en" } }));
     expect(
       screen.getByRole("heading", { level: 1, name: "Announcements & Circulars" })
     ).toBeInTheDocument();
@@ -28,8 +38,8 @@ describe("Announcements page", () => {
     );
   });
 
-  it("embeds the zh Datalink announcement page in an iframe", () => {
-    renderWithLocale(<AnnouncementsPage params={{ locale: "zh" }} />, "zh");
+  it("embeds the zh Datalink announcement page in an iframe", async () => {
+    renderWithLocale(await AnnouncementsPage({ params: { locale: "zh" } }), "zh");
     expect(
       screen.getByRole("heading", { level: 1, name: "公告及通函" })
     ).toBeInTheDocument();
@@ -40,8 +50,13 @@ describe("Announcements page", () => {
     );
   });
 
-  it("exposes localized metadata", () => {
-    expect(generateMetadata({ params: { locale: "en" } }).title).toContain("Announcements");
-    expect(generateMetadata({ params: { locale: "zh" } }).title).toContain("公告");
+  it("exposes localized metadata", async () => {
+    expect(
+      (await generateMetadata({ params: { locale: "en" } })).title
+    ).toContain("Announcements");
+    expect(
+      (await generateMetadata({ params: { locale: "zh" } })).title
+    ).toContain("公告");
   });
 });
+

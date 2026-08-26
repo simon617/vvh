@@ -6,16 +6,16 @@ interface Props {
   params: { locale: string };
 }
 
-export function generateMetadata({ params }: Props) {
-  const data = getPageData("corporate-details", params.locale as Locale);
+export async function generateMetadata({ params }: Props) {
+  const data = await getPageData("corporate-details", params.locale as Locale);
   return { title: data?.metaTitle, description: data?.metaDescription };
 }
 
-export default function CorporateDetailsPage({ params }: Props) {
+export default async function CorporateDetailsPage({ params }: Props) {
   return (
-    <ContentWithSidebar
-      slug="corporate-details"
-      locale={params.locale as Locale}
-    />
+    await ContentWithSidebar({
+      slug: "corporate-details",
+      locale: params.locale as Locale,
+    })
   );
 }

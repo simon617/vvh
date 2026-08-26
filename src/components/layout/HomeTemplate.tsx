@@ -19,6 +19,15 @@ export default function HomeTemplate({ pageData }: HomeTemplateProps) {
     <div className="space-y-6">
       {/* Hero banner + company intro */}
       <section className="bg-gradient-to-br from-primary to-primary/80 text-white rounded-lg p-8 mb-6">
+        {pageData.heroImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={pageData.heroImage}
+            alt={pageData.title}
+            className="w-full max-h-72 object-cover rounded-lg mb-4"
+            data-testid="hero-image"
+          />
+        )}
         <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-white">
           {pageData.title}
         </h1>

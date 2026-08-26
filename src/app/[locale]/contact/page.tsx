@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import TemplateShell from "@/components/layout/TemplateShell";
 import ContactForm from "@/components/layout/ContactForm";
 import { getPageData } from "@/lib/pages";
@@ -7,19 +8,24 @@ interface Props {
   params: { locale: string };
 }
 
-export function generateMetadata({ params }: Props) {
-  const data = getPageData("contact", params.locale as Locale);
+export async function generateMetadata({ params }: Props) {
+  const data = await getPageData("contact", params.locale as Locale);
   return { title: data?.metaTitle, description: data?.metaDescription };
 }
 
-export default function ContactPage({ params }: Props) {
+export default async function ContactPage({ params }: Props) {
   const locale = params.locale as Locale;
-  const data = getPageData("contact", locale);
-  if (!data) return null;
+  const data = await getPageData("contact", locale);
+  if (!data) notFound();
 
   return (
-    <TemplateShell title={data.title} locale={locale}>
+    <TemplateShell
+      title={data.title}
+      locale={locale}
+      heroImage={data.heroImage}
+    >
       <ContactForm />
     </TemplateShell>
   );
 }
+

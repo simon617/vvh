@@ -1,7 +1,11 @@
 import { screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import EsgReportsPage from "./page";
+import { getPlaceholder } from "@/lib/placeholders";
 import { renderWithLocale } from "@/test/utils";
+
+const { mockGetPageData } = vi.hoisted(() => ({ mockGetPageData: vi.fn() }));
+vi.mock("@/lib/pages", () => ({ getPageData: mockGetPageData }));
 
 vi.mock("next/headers", () => ({
   headers: () => new Map([["x-pathname", "/en/esg-reports"]]),
@@ -15,14 +19,20 @@ vi.mock("next/link", () => ({
 }));
 
 describe("ESG Reports page (reports table)", () => {
-  it("renders table with placeholder rows in English", () => {
-    renderWithLocale(<EsgReportsPage params={{ locale: "en" }} />);
+  beforeEach(() => {
+    mockGetPageData.mockImplementation(async (slug, locale) =>
+      getPlaceholder(slug, locale)
+    );
+  });
+
+  it("renders table with placeholder rows in English", async () => {
+    renderWithLocale(await EsgReportsPage({ params: { locale: "en" } }));
     expect(screen.getByRole("heading", { level: 1, name: "ESG Reports" })).toBeInTheDocument();
     expect(screen.getByText("ESG Report 2025")).toBeInTheDocument();
   });
 
-  it("renders localized rows in Chinese", () => {
-    renderWithLocale(<EsgReportsPage params={{ locale: "zh" }} />, "zh");
+  it("renders localized rows in Chinese", async () => {
+    renderWithLocale(await EsgReportsPage({ params: { locale: "zh" } }), "zh");
     expect(screen.getByRole("heading", { level: 1, name: "環境、社會及管治報告" })).toBeInTheDocument();
     expect(screen.getByText("2025環境、社會及管治報告")).toBeInTheDocument();
   });

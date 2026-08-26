@@ -1,7 +1,11 @@
 import { screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import FinancialReportsPage, { generateMetadata } from "./page";
+import { getPlaceholder } from "@/lib/placeholders";
 import { renderWithLocale } from "@/test/utils";
+
+const { mockGetPageData } = vi.hoisted(() => ({ mockGetPageData: vi.fn() }));
+vi.mock("@/lib/pages", () => ({ getPageData: mockGetPageData }));
 
 vi.mock("next/headers", () => ({
   headers: () => new Map([["x-pathname", "/en/financial-reports"]]),
@@ -15,8 +19,14 @@ vi.mock("next/link", () => ({
 }));
 
 describe("Financial Reports page (reports table)", () => {
-  it("renders table with placeholder rows in English", () => {
-    renderWithLocale(<FinancialReportsPage params={{ locale: "en" }} />);
+  beforeEach(() => {
+    mockGetPageData.mockImplementation(async (slug, locale) =>
+      getPlaceholder(slug, locale)
+    );
+  });
+
+  it("renders table with placeholder rows in English", async () => {
+    renderWithLocale(await FinancialReportsPage({ params: { locale: "en" } }));
     expect(screen.getByRole("heading", { level: 1, name: "Financial Reports" })).toBeInTheDocument();
     expect(screen.getByText("Date")).toBeInTheDocument();
     expect(screen.getByText("Document")).toBeInTheDocument();
@@ -25,8 +35,11 @@ describe("Financial Reports page (reports table)", () => {
     expect(screen.getByText("Rows per page")).toBeInTheDocument();
   });
 
-  it("renders localized table headers and rows in Chinese", () => {
-    renderWithLocale(<FinancialReportsPage params={{ locale: "zh" }} />, "zh");
+  it("renders localized table headers and rows in Chinese", async () => {
+    renderWithLocale(
+      await FinancialReportsPage({ params: { locale: "zh" } }),
+      "zh"
+    );
     expect(screen.getByRole("heading", { level: 1, name: "財務報告" })).toBeInTheDocument();
     expect(screen.getByText("日期")).toBeInTheDocument();
     expect(screen.getByText("2025年報")).toBeInTheDocument();
@@ -34,8 +47,12 @@ describe("Financial Reports page (reports table)", () => {
     expect(screen.getByText("每頁行數")).toBeInTheDocument();
   });
 
-  it("exposes localized metadata", () => {
-    expect(generateMetadata({ params: { locale: "en" } }).title).toContain("Financial Reports");
-    expect(generateMetadata({ params: { locale: "zh" } }).title).toContain("財務報告");
+  it("exposes localized metadata", async () => {
+    expect(
+      (await generateMetadata({ params: { locale: "en" } })).title
+    ).toContain("Financial Reports");
+    expect(
+      (await generateMetadata({ params: { locale: "zh" } })).title
+    ).toContain("財務報告");
   });
 });

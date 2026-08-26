@@ -23,6 +23,16 @@ describe("HomeTemplate", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders the hero image when one is present", () => {
+    renderWithLocale(
+      <HomeTemplate pageData={{ ...pageData("en"), heroImage: "/uploads/images/hero.jpg" }} />
+    );
+    expect(screen.getByTestId("hero-image")).toHaveAttribute(
+      "src",
+      "/uploads/images/hero.jpg"
+    );
+  });
+
   it("renders localized hero, metrics and reports (Chinese)", () => {
     renderWithLocale(<HomeTemplate pageData={pageData("zh")} />, "zh");
     expect(

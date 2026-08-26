@@ -6,16 +6,19 @@ interface Props {
   params: { locale: string };
 }
 
-export function generateMetadata({ params }: Props) {
-  const data = getPageData("corporate-governance", params.locale as Locale);
+export async function generateMetadata({ params }: Props) {
+  const data = await getPageData(
+    "corporate-governance",
+    params.locale as Locale
+  );
   return { title: data?.metaTitle, description: data?.metaDescription };
 }
 
-export default function CorporateGovernancePage({ params }: Props) {
+export default async function CorporateGovernancePage({ params }: Props) {
   return (
-    <ContentWithSidebar
-      slug="corporate-governance"
-      locale={params.locale as Locale}
-    />
+    await ContentWithSidebar({
+      slug: "corporate-governance",
+      locale: params.locale as Locale,
+    })
   );
 }

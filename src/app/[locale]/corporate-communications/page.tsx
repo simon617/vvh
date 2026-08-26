@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { useTranslations } from "next-intl";
 import TemplateShell from "@/components/layout/TemplateShell";
 import ReportsTable from "@/components/layout/ReportsTable";
@@ -9,19 +10,27 @@ interface Props {
   params: { locale: string };
 }
 
-export function generateMetadata({ params }: Props) {
-  const data = getPageData("corporate-communications", params.locale as Locale);
+export async function generateMetadata({ params }: Props) {
+  const data = await getPageData(
+    "corporate-communications",
+    params.locale as Locale
+  );
   return { title: data?.metaTitle, description: data?.metaDescription };
 }
 
-export default function CorporateCommunicationsPage({ params }: Props) {
-  const locale = params.locale as Locale;
-  const data = getPageData("corporate-communications", locale);
+/** Synchronous view (i18n hook must run inside the provider during render). */
+function CorporateCommunicationsView({
+  title,
+  heroImage,
+  locale,
+}: {
+  title: string;
+  heroImage?: string;
+  locale: Locale;
+}) {
   const t = useTranslations("tables");
-  if (!data) return null;
-
   return (
-    <TemplateShell title={data.title} locale={locale}>
+    <TemplateShell title={title} locale={locale} heroImage={heroImage}>
       <div className="bg-white rounded-lg shadow-md p-6">
         <ReportsTable
           rows={getCorporateCommunications(locale)}
@@ -39,3 +48,19 @@ export default function CorporateCommunicationsPage({ params }: Props) {
     </TemplateShell>
   );
 }
+
+export default async function CorporateCommunicationsPage({ params }: Props) {
+  const locale = params.locale as Locale;
+  const data = await getPageData("corporate-communications", locale);
+  if (!data) notFound();
+
+  return (
+    <CorporateCommunicationsView
+      title={data.title}
+      heroImage={data.heroImage}
+      locale={locale}
+    />
+  );
+}
+
+
