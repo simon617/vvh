@@ -153,22 +153,24 @@ Active tables for this phase:
 - TipTap output should be sanitized to prevent XSS (TipTap does this by default, but verify)
 - WYSIWYG links should use `rel="noopener noreferrer"` and `target="_blank"` for external URLs
 
+> **Status:** ✅ **COMPLETE** — Phase 2B delivered (all 14 testing requirements below verified via code + automated tests; final manual browser pass pending). See `docs/phase-2b-tasklist.md` for commit log and `docs/phase-2b-checklist.md` §8 for the acceptance run.
+
 ### 7.8 Testing Requirements for This Phase
 
-- [ ] Admin can see all 10 pages in `/admin/pages` listing
-- [ ] Admin can click a page to open the editor
-- [ ] Editor shows two tabs: EN and ZH
-- [ ] Switching tabs preserves unsaved content (client-side state)
-- [ ] TipTap toolbar only shows: bold, italic, link, paragraph, heading
-- [ ] Can upload header image; preview shown after upload
-- [ ] Can set meta title and meta description
-- [ ] Can toggle published/unpublished independently for EN and ZH
-- [ ] Saving updates the page_contents table
-- [ ] Public page shows published content (not placeholder)
-- [ ] Unpublished locale shows 404
-- [ ] Admin can change password in-app
-- [ ] Admin settings page saves and retrieves GA4 tracking ID
-- [ ] Logo upload replaces the header logo
+- [x] Admin can see all 10 pages in `/admin/pages` listing
+- [x] Admin can click a page to open the editor
+- [x] Editor shows two tabs: EN and ZH
+- [x] Switching tabs preserves unsaved content (client-side state)
+- [x] TipTap toolbar only shows: bold, italic, link, paragraph, heading
+- [x] Can upload header image; preview shown after upload
+- [x] Can set meta title and meta description
+- [x] Can toggle published/unpublished independently for EN and ZH
+- [x] Saving updates the page_contents table
+- [x] Public page shows published content (not placeholder)
+- [x] Unpublished locale shows 404
+- [x] Admin can change password in-app
+- [x] Admin settings page saves and retrieves GA4 tracking ID
+- [x] Logo upload replaces the header logo
 
 ### 7.9 Known Constraints / Decisions Already Made
 

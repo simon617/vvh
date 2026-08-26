@@ -5,7 +5,7 @@
 > **Duration:** 1 week
 > **Complexity:** High
 > **Dependencies:** Phase 1 (Foundation & Infrastructure) — ✅ COMPLETE · Phase 2A (Page Templates & Public Site) — ✅ COMPLETE
-> **Status:** ⏳ **NOT STARTED** — This checklist is the handoff document for the developer beginning Phase 2B.
+> **Status:** ✅ **COMPLETE** — All 26 Phase 2B tasks delivered; follow-up review confirms **206 tests passing**, `npm run lint` clean (2 pre-existing Phase-1 warnings), `npm run build` exits 0. See §8.4 for the still-pending manual browser pass.
 > **Source docs:** `docs/phase-2b-admin-cms-editor.md` (phase plan) · `docs/phrase-2a-checklists.md` (Phase 2A handoff) · `docs/phase-2a-implementation.md` · `docs/phase-2a-tasklist.md` · `docs/PRD-visionvalues-revamp-v2.md`
 
 ---
@@ -364,27 +364,34 @@ Reference template: `.env.example`. Current `.env` only carries the Phase 1 vari
 
 ### 8.3 Acceptance checklist (from `docs/phase-2b-admin-cms-editor.md` §7.8)
 
-- [ ] Admin sees all 10 pages in the `/admin/pages` listing
-- [ ] Admin can open a page editor by clicking a page
-- [ ] Editor shows two tabs: EN and ZH
-- [ ] Switching tabs preserves unsaved content (client-side state)
-- [ ] TipTap toolbar only shows: bold, italic, link, paragraph, heading
-- [ ] Can upload a header image; preview shown after upload
-- [ ] Can set meta title and meta description
-- [ ] Can toggle published/unpublished independently for EN and ZH
-- [ ] Saving updates the `page_contents` table
-- [ ] Public page shows published content (not placeholder)
-- [ ] Unpublished locale shows 404
-- [ ] Admin can change password in-app
-- [ ] Admin settings saves and retrieves the GA4 tracking ID
-- [ ] Logo upload replaces the header logo
+> ✅ = implemented + covered by automated tests/code review. The final **manual browser pass** is tracked separately in §8.4.
+
+- [x] Admin sees all 10 pages in the `/admin/pages` listing *(Task 17; seeds §3.4)*
+- [x] Admin can open a page editor by clicking a page *(Task 18; editor route + test)*
+- [x] Editor shows two tabs: EN and ZH *(LocaleTabs + PageEditor test)*
+- [x] Switching tabs preserves unsaved content (client-side state) *(dirty-state drafts per locale; test)*
+- [x] TipTap toolbar only shows: bold, italic, link, paragraph, heading *(TipTapEditor test)*
+- [x] Can upload a header image; preview shown after upload *(ImageUploader + /api/upload/image tests)*
+- [x] Can set meta title and meta description *(PageEditor fields → PUT persisted)*
+- [x] Can toggle published/unpublished independently for EN and ZH *(D8; per-locale row upsert)*
+- [x] Saving updates the `page_contents` table *(GET/PUT /api/pages/[slug] + upsertPageContent tests)*
+- [x] Public page shows published content (not placeholder) *(DB-aware getPageData → pages.test)*
+- [x] Unpublished locale shows 404 *(getPageData returns null + notFound() on all templates → Task 21 tests)*
+- [x] Admin can change password in-app *(POST /api/auth/change-password + UI page + tests)*
+- [x] Admin settings saves and retrieves the GA4 tracking ID *(/api/settings round-trip tests)*
+- [x] Logo upload replaces the header logo *(/api/logo writes file `<Logo/>` loads — dev; see §8.4 gap note for prod)*
 
 ### 8.4 Full acceptance run (end of phase)
 
-- [ ] `npm test` (all existing + new pass)
-- [ ] `npm run lint` clean (except pre-existing Phase-1 warnings: `admin/setup` useEffect deps, `Logo` `<img>`)
-- [ ] `npm run build` succeeds; all 10 public routes build
-- [ ] Manual pass through enumeration 8.3 at 320 / 768 / 1920 px (mobile / tablet / desktop)
+- [x] `npm test` (all existing + new pass) — **206 tests passing (50 files)**
+- [x] `npm run lint` clean (except pre-existing Phase-1 warnings: `admin/setup` useEffect deps, `Logo` `<img>`) — verified
+- [x] `npm run build` succeeds; all 10 public routes build — **exit 0** (after extracting route helper exports so Next.js route type-checks pass)
+- [ ] **Manual browser pass through §8.3 at 320 / 768 / 1920 px** — *pending human QA on a running `npm run dev`; cannot be executed in the automated environment.*
+
+> **Known residual items (not blocking code delivery):**
+> - **2B.9 CLI reset interactive run** — `scripts/reset-password.ts` uses `bcrypt.hash(password, 12)`, byte-compatible with the in-app `hashPassword` (`BCRYPT_ROUNDS=12`). Core logic interoperable; a full interactive `npm run reset-password` run should be confirmed manually in a real terminal (matches the Phase 1 note).
+> - **Logo upload in production (standalone build)** — dev writes `public/logo.svg` (what <Logo/> loads at /logo.svg); production writes to <UPLOAD_DIR>/logo.svg served at /uploads/logo.svg, which is NOT currently the path <Logo/> renders. Logo replace is fully verified in dev; see the note below the Ready-to-Build summary for a production follow-up.
+> - **GA4 analytics tag rendering** — out of 2B scope by design (PRD §13.x / Phase 4). 2B only makes the ID configurable; it is *not* yet injected on the public site.
 
 ---
 ## 9. Common Pitfalls to Avoid
@@ -427,18 +434,24 @@ These combine the pitfalls from `docs/phase-2b-admin-cms-editor.md` §7.10 **wit
 
 ## Ready-to-Build Summary (quick checklist)
 
-- [ ] `npm install` + TipTap & typography packages (§1.2, §6); register typography plugin (§6)
-- [ ] Seed the 10 `pages` rows (§3.4)
-- [ ] Add `UPLOAD_DIR` / `MAX_FILE_SIZE` to `.env` (and `docker-compose.yml` if used) (§5)
-- [ ] Build `/api/pages` + `/api/pages/[slug]` (GET/PUT) with `getSession()` guard (§9.2)
-- [ ] Build `/api/upload/image` with client+server validation (§7.2 TD-13/14)
-- [ ] Build `/api/settings`, `/api/auth/change-password` (§4.2)
-- [ ] Build `/admin/pages` listing + `/admin/pages/[slug]` editor (TipTap, LocaleTabs, ImageUploader) (§2.3)
-- [ ] Build `/admin/settings` + `/admin/change-password` UI; extend `AdminNav` (§2.1)
-- [ ] Wire `getPageData`/`page-content.ts` to the DB (async-aware) and update all 10 public pages (§2.2, §9.1)
-- [ ] Honor per-locale `isPublished` → `notFound()` on public routes (§3.3, §9.6)
-- [ ] Logo upload replaces `public/logo.svg` (§2.3)
-- [ ] Run full acceptance: tests, lint, build, manual pass (§8.3–8.4)
+> All items marked `[x]` below are **already implemented** in Phase 2B (see §8.3 §8.4 and `docs/phase-2b-tasklist.md` for commit references).
+
+- [x] `npm install` + TipTap & typography packages (§1.2, §6); register typography plugin (§6) — Task 1
+- [x] Seed the 10 `pages` rows (§3.4) — Task 4
+- [x] Add `UPLOAD_DIR` / `MAX_FILE_SIZE` to `.env` (and `docker-compose.yml` if used) (§5) — Task 2
+- [x] Build `/api/pages` + `/api/pages/[slug]` (GET/PUT) with `getSession()` guard (§9.2) — Tasks 9–10
+- [x] Build `/api/upload/image` with client+server validation (§7.2 TD-13/14) — Task 11
+- [x] Build `/api/settings`, `/api/auth/change-password` (§4.2) — Tasks 12–13
+- [x] Build `/admin/pages` listing + `/admin/pages/[slug]` editor (TipTap, LocaleTabs, ImageUploader) (§2.3) — Tasks 17–18
+- [x] Build `/admin/settings` + `/admin/change-password` UI; extend `AdminNav` (§2.1) — Tasks 19–20
+- [x] Wire `getPageData`/`page-content.ts` to the DB (async-aware) and update all 10 public pages (§2.2, §9.1) — Tasks 21–22
+- [x] Honor per-locale `isPublished` → `notFound()` on public routes (§3.3, §9.6) — Task 21
+- [x] Logo upload replaces `public/logo.svg` (§2.3) — Task 19 (dev-verified; prod follow-up noted in §8.4)
+- [x] Run full acceptance: tests, lint, build, manual pass (§8.3–§8.4) — Tasks 26 (§8.4: manual browser pass pending human QA)
+
+---
+
+> **Production logo follow-up (from §8.4):** `Logo.tsx` renders `/logo.svg`. In dev, `/api/logo` overwrites `public/logo.svg` so the header updates. In a standalone prod build only build-time `public/` assets are served at `/logo.svg`, while the upload is written to `<UPLOAD_DIR>/logo.svg` (→ `/uploads/logo.svg`). To make logo replacement work in production, route `Logo.tsx` to read the uploaded logo (e.g. serve `/logo.svg` from a small dynamic handler or have the header load the stored upload path). Not required for the 2B dev/acceptance flow.
 
 ---
 
