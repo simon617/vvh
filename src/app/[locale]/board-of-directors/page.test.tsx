@@ -55,6 +55,42 @@ describe("Board of Directors page template", () => {
     expect(screen.getByText(/extensive experience in corporate management/i)).toBeInTheDocument();
   });
 
+  it("renders DB director content as cards and the Role-and-Functions PDF link", async () => {
+    const placeholder = getPlaceholder("board-of-directors", "en");
+    mockGetPageData.mockResolvedValue({
+      ...placeholder!,
+      isDbContent: true,
+      contentHtml:
+        "<h2>Executive Directors</h2><p><strong>Mr. Lo Luen Chuen</strong><br/><em>Chairman</em><br/>A verified DB bio.</p>" +
+        '<p><strong>Roles &amp; Functions</strong><br/><a href="/uploads/reports/en/RoleAndFunction.pdf" target="_blank" rel="noopener noreferrer">Directors&#39; Roles and Functions (PDF)</a></p>',
+    });
+
+    renderWithLocale(
+      await BoardOfDirectorsPage({ params: { locale: "en" } })
+    );
+
+    // DB-driven grid (not the interactive component)
+    expect(screen.getByTestId("director-db-content")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Lo Luen Chuen/i })).not.toBeInTheDocument();
+
+    // Category heading, director name and bio, and the PDF link are present
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Executive Directors" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Mr. Lo Luen Chuen")).toBeInTheDocument();
+    expect(screen.getByText("A verified DB bio.")).toBeInTheDocument();
+
+    const pdfLink = screen.getByRole("link", {
+      name: /Roles and Functions/,
+    });
+    expect(pdfLink).toHaveAttribute(
+      "href",
+      "/uploads/reports/en/RoleAndFunction.pdf"
+    );
+    expect(pdfLink).toHaveAttribute("target", "_blank");
+    expect(pdfLink).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
   it("exposes localized metadata", async () => {
     expect(
       (await generateMetadata({ params: { locale: "en" } })).title

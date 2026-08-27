@@ -14,6 +14,7 @@
     "backup": "tsx scripts/backup.ts",
     "reset-password": "tsx scripts/reset-password.ts",
     "seed": "prisma db seed",
+    "content:migrate": "prisma db seed",
     "test": "vitest run",
     "test:watch": "vitest"
   },

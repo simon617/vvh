@@ -43,4 +43,30 @@
   .btn-secondary {
     @apply inline-flex items-center justify-center px-6 py-3 bg-secondary text-white font-medium rounded-md hover:bg-secondary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary/50;
   }
+
+  /* Board of Directors (Phase 2.5): turns CMS HTML (h2 category + p director)
+     into a responsive card grid. Each <p> becomes one card; <h2> spans the row. */
+  .director-cards .prose {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  .director-cards .prose > :is(h2, h3) {
+    grid-column: 1 / -1;
+    margin-top: 0.5rem;
+  }
+  .director-cards .prose > h2:first-child {
+    margin-top: 0;
+  }
+  .director-cards .prose > p {
+    margin: 0;
+    padding: 1rem;
+    background: #fff;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .director-cards .prose > p > a {
+    word-break: break-all;
+  }
 }

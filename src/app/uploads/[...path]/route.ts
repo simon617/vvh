@@ -20,6 +20,7 @@ const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
+  ".pdf": "application/pdf",
   ".txt": "text/plain",
 };
 

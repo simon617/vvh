@@ -7,6 +7,8 @@ export interface PagePlaceholder {
   breadcrumb: string;
   heroImage?: string;
   contentHtml: string;
+  /** True when the data came from the `page_contents` DB (vs the static placeholder). */
+  isDbContent?: boolean;
 }
 
 export const PLACEHOLDER_SLUGS = NAV_SLUGS;

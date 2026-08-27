@@ -31,7 +31,7 @@ export async function getPageData(
   const row = await getPageContent(slug, locale);
 
   // No content row yet → keep the placeholder rendering until migration.
-  if (!row) return placeholder;
+  if (!row) return { ...placeholder, isDbContent: false };
 
   // Explicitly unpublished for this locale → 404 (Decision D8).
   if (!row.isPublished) return null;
@@ -43,5 +43,6 @@ export async function getPageData(
     breadcrumb: row.breadcrumbLabel ?? placeholder.breadcrumb,
     heroImage: row.heroImage ?? placeholder.heroImage,
     contentHtml: row.contentHtml ?? placeholder.contentHtml,
+    isDbContent: true,
   };
 }

@@ -1,5 +1,7 @@
 # Phase 2.5: Content Migration (Separate Follow-Up Task)
 
+> **Status:** 🔄 **IN PROGRESS** — baseline content seeded ✅ (see §5.1). All 10 pages × EN/ZH now have editable `page_contents` rows; remaining work is refining text via the CMS editor and the manual verification list (§7.8).
+
 **Duration:** ~1 week (manual copy-paste task)  
 **Complexity:** Low (tedious but straightforward)  
 **Dependencies:** Phase 2B (Admin CMS Editor) must be complete
@@ -68,6 +70,69 @@ This is a **data entry task**, not a development task. It can be performed by a 
 | TD-18 | PDF handling approach | Financial/ESG PDFs: download from old server, upload via admin UI. HKEX-linked PDFs: keep as external links. Policy PDFs: paste URL in WYSIWYG as link. |
 | TD-19 | Header image sources | Download existing header images from old site; create new ones if old ones are low quality (matching color tones from PRD Section 8.3) |
 | TD-20 | Content format in WYSIWYG | Use paragraphs and headings only; avoid tables in WYSIWYG (tables should be native HTML in the page template, not in the editor content) |
+
+---
+
+## 5.1 How-To Guide (as implemented)
+
+### Run the baseline migration
+
+```bash
+npm run seed              # OR: npm run content:migrate  (same command, idempotent)
+```
+
+Upserts the existing site content (the Phase-2A page content) for **all 10 pages × EN/ZH into
+`page_contents`** (20 rows), including the **Board-of-Directors director cards** and the
+**Corporate Governance PDF links** pointing at the PDFs already stored under
+`uploads/reports/{en,zh}/`. Re-running is safe (idempotent `upsert`).
+
+### Retrieve & edit the seeded content
+
+1. Log in at `/en/admin/login` (create the admin first at `/en/admin/setup` on a fresh DB).
+2. Open `/en/admin/pages` and click a page row → the editor opens on the **EN** tab.
+3. Switch to the **ZH** tab (`?tab=zh`) — each language is an independent row, so edit and
+   publish each separately.
+4. Press **Save**. The public page now renders the DB content.
+
+### How the Board of Directors cards work
+
+The public `/en/board-of-directors` and `/zh/board-of-directors` render the page's
+`content_html` **as a responsive card grid** as soon as a published DB row exists
+(until then they show the built-in fallback cards, which are not editable).
+
+In the editor, the rule is simple:
+
+- **One director = one paragraph**, using Bold for the name, Italic for the title, and
+  Shift+Enter line breaks between name / title / bio.
+- **Category headings = Heading (H)**. The two categories span the full row width; the
+  director paragraphs become the cards.
+
+Example of what one director block looks like in the EN tab:
+
+```
+Executive Directors                    ← Heading (H)
+Mr. Lo Luen Chuen                      ← Bold
+Chairman                               ← Italic (blank line above optional)
+Mr. Lo Luen Chuen has extensive experience ...   ← bio text
+```
+
+When you press Enter to start a new paragraph, that paragraph becomes the next card.
+Do **not** use bullet lists inside the editor for directors — bullets would break the card grid.
+
+### How to add a PDF link
+
+The editor toolbar has a **link (🔗)** button.
+
+1. Select the link text, e.g. `Directors' Roles and Functions (PDF)`.
+2. Click 🔗 and paste the **relative** path to the PDF:
+   - Board EN: `/uploads/reports/en/RoleAndFunction.pdf`
+   - Board ZH: `/uploads/reports/zh/RoleAndFunction.pdf`
+   - Any PDF already present under `uploads/reports/<locale>/` can be linked the same way.
+3. Save. External links (the editor adds `rel="noopener noreferrer"` + `target="_blank"`) open in a new tab; the `/uploads` route serves the file with `application/pdf`.
+
+> To add a *new* PDF: drop the file under `uploads/reports/<locale>/` (e.g. by FTP/server upload),
+> then link the path — no code change needed. Keep links **relative** (`/uploads/...`) so they
+> work identically in dev and production.
 
 ---
 

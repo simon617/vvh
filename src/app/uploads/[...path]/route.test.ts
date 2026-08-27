@@ -65,6 +65,28 @@ describe("GET /uploads/[...path]", () => {
     expect(body.length).toBe(8);
   });
 
+  it("serves a PDF file with the application/pdf content-type", async () => {
+    process.env.UPLOAD_DIR = TEST_DIR;
+    const fs = await import("fs/promises");
+
+    const reportsDir = path.resolve(TEST_DIR, "reports", "en");
+    await fs.mkdir(reportsDir, { recursive: true });
+    await fs.writeFile(
+      path.join(reportsDir, "RoleAndFunction.pdf"),
+      Buffer.from("%PDF-1.4 test")
+    );
+
+    const req = new NextRequest(
+      "http://localhost/uploads/reports/en/RoleAndFunction.pdf"
+    );
+    const res = await GET(req, {
+      params: { path: ["reports", "en", "RoleAndFunction.pdf"] },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/pdf");
+  });
+
   it("returns 404 when the file does not exist", async () => {
     process.env.UPLOAD_DIR = TEST_DIR;
     const req = new NextRequest("http://localhost/uploads/images/missing.png");
