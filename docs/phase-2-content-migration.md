@@ -8,6 +8,27 @@
 
 ---
 
+## 0. Work Log & Files Modified
+
+> Baseline migration implemented — content seeded into `page_contents`, CMS now editable/retrievable.
+> **Commit:** `d7781a5` (branch `phase-2b`).
+
+| # | Task | Files Modified |
+|---|------|----------------|
+| 1 | Make Board-of-Directors page render the CMS `content_html` as a responsive **card grid** once a published DB row exists (each `<p>` = one director card, each `<h2>` = a full-width category row); keep the hardcoded `DirectorCards` component as a fallback only. | `src/app/[locale]/board-of-directors/page.tsx`, `.../page.test.tsx` |
+| 2 | Card-grid styling for the DB director content. | `src/app/globals.css` (`.director-cards .prose`) |
+| 3 | Add `application/pdf` MIME to the `/uploads` serving route so stored PDFs open/download. | `src/app/uploads/[...path]/route.ts`, `.../route.test.ts` |
+| 4 | Add an `isDbContent` flag to `getPageData` so the page can choose DB cards vs. fallback component. | `src/lib/pages.ts`, `src/lib/placeholders.ts` |
+| 5 | Extend the seed to **upsert all 10 pages × EN/ZH (20 rows)** into `page_contents` from existing content, including Board director cards + 12 Corporate Governance PDF links pointing to `uploads/reports/{en,zh}/`. Idempotent. | `prisma/seed.ts` |
+| 6 | Add convenience npm script for the baseline content migration. | `package.json` (`content:migrate`) |
+| 7 | Document the How-To (run migration, retrieve/edit, director-card format, PDF links). | `docs/phase-2-content-migration.md` (§5.1) |
+
+**Verification:** `npm test` 208/208 ✅ · `npm run lint` clean (2 pre-existing Phase-1 warnings) ✅ · `npm run build` exit 0 ✅ · `npx tsc --noEmit` clean ✅ · DB seeded (20 `page_contents` rows) ✅
+
+**Left untouched (pre-existing / user files):** `myNotes.docx`, `src/lib/page-content.ts` (stale comment already in working tree).
+
+---
+
 ## 1. Scope & Goals
 
 Manually copy all existing content from the live website at `https://www.visionvalues.com.hk/` into the new CMS. This includes all text content for all 10 pages × 2 languages, header images, and PDF document links. After this phase, the site will have real content and be ready for final features and launch.
