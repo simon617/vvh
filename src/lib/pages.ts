@@ -12,8 +12,9 @@ export type { PagePlaceholder };
  *  2. No `page_contents` row yet           → fall back to the static
  *     placeholder so the site keeps rendering until content migration
  *     (Phase 2.5) — a fresh install has no content rows.
- *  3. Row exists but explicitly unpublished → null (public route notFound,
- *     Decision D8).
+ *  3. Row exists but explicitly unpublished → fall back to the static
+ *     placeholder. Content typed in the editor but left unpublished is not
+ *     shown; the site displays the seeded placeholder instead (no 404).
  *  4. Row exists and is published          → return DB content, falling back
  *     to placeholder values for any unset optional field (SEO/hero/breadcrumb).
  *
@@ -33,8 +34,9 @@ export async function getPageData(
   // No content row yet → keep the placeholder rendering until migration.
   if (!row) return { ...placeholder, isDbContent: false };
 
-  // Explicitly unpublished for this locale → 404 (Decision D8).
-  if (!row.isPublished) return null;
+  // Explicitly unpublished for this locale → show the placeholder instead of
+  // the DB draft (no 404). Empty editor drafts must never leak to the public.
+  if (!row.isPublished) return { ...placeholder, isDbContent: false };
 
   return {
     title: row.title,

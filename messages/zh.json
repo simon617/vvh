@@ -120,6 +120,15 @@
       "saved": "已儲存",
       "saveFailed": "儲存失敗"
     },
+    "keyValue": {
+      "label": "標籤",
+      "value": "內容",
+      "remove": "移除",
+      "removeRow": "移除該行",
+      "addRow": "新增一行",
+      "noRows": "暫無內容。請點擊「新增一行」開始。",
+      "help": "每一行代表「公司詳情」表格中的一項（左側為標籤，右側為內容）。"
+    },
     "common": {
       "loading": "載入中...",
       "error": "發生錯誤",

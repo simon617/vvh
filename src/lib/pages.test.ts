@@ -65,9 +65,12 @@ describe("pages (DB-aware getPageData)", () => {
     expect(data?.metaDescription).toContain("HKEX");
   });
 
-  it("returns null when the current locale is explicitly unpublished", async () => {
+  it("returns the placeholder when the current locale is explicitly unpublished", async () => {
     mockGetPageContent.mockResolvedValue(dbRow({ isPublished: false }));
-    expect(await getPageData("home", "en")).toBeNull();
+    const data = await getPageData("home", "en");
+    // Unpublished → show the seeded placeholder, never the DB draft.
+    expect(data?.title).toBe("Vision Values Holdings Limited");
+    expect(data?.isDbContent).toBe(false);
   });
 
   it("returns null for an unknown slug", async () => {

@@ -120,6 +120,15 @@
       "saved": "Saved",
       "saveFailed": "Save failed"
     },
+    "keyValue": {
+      "label": "Label",
+      "value": "Value",
+      "remove": "Remove",
+      "removeRow": "Remove row",
+      "addRow": "Add row",
+      "noRows": "No rows yet. Click “Add row” to begin.",
+      "help": "Each row is one line of the Corporate Details table (label on the left, value on the right)."
+    },
     "common": {
       "loading": "Loading...",
       "error": "An error occurred",

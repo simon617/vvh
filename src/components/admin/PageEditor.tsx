@@ -7,8 +7,14 @@ import type { PageContent } from "@/lib/page-content";
 import LocaleTabs from "./LocaleTabs";
 import TipTapEditor from "./TipTapEditor";
 import ImageUploader from "./ImageUploader";
+import KeyValueEditor from "./KeyValueEditor";
 
 type Locale = "en" | "zh";
+
+/** Pages whose content is a structured key/value table (edited with KeyValueEditor). */
+const STRUCTURED_PAGES: Record<string, true> = {
+  "corporate-details": true,
+};
 
 interface PageDraft {
   title: string;
@@ -147,12 +153,21 @@ export default function PageEditor({
 
           <div>
             <label className={labelClass}>{t("content")}</label>
-            <TipTapEditor
-              value={draft.contentHtml}
-              onChange={(html) => update({ contentHtml: html })}
-              placeholder={t("content")}
-            />
-            <p className="mt-1 text-xs text-gray-400">{t("editorHelp")}</p>
+            {STRUCTURED_PAGES[slug] ? (
+              <KeyValueEditor
+                value={draft.contentHtml}
+                onChange={(html) => update({ contentHtml: html })}
+              />
+            ) : (
+              <>
+                <TipTapEditor
+                  value={draft.contentHtml}
+                  onChange={(html) => update({ contentHtml: html })}
+                  placeholder={t("content")}
+                />
+                <p className="mt-1 text-xs text-gray-400">{t("editorHelp")}</p>
+              </>
+            )}
           </div>
         </div>
 

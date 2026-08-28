@@ -27,7 +27,8 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-// Unknown slug / unpublished locale → notFound() (Decision D8)
+// Unknown slug → notFound(). Unpublished locales now fall back to the
+// placeholder (rendered content), so they render normally from getPageData.
 vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("NEXT_NOT_FOUND");
@@ -82,10 +83,22 @@ describe("ContentWithSidebar", () => {
     );
   });
 
-  it("404s for an unknown slug / unpublished locale", async () => {
+  it("404s for an unknown slug", async () => {
     mockGetPageData.mockResolvedValue(null);
     await expect(
       ContentWithSidebar({ slug: "unknown-page", locale: "en" })
     ).rejects.toThrow("NEXT_NOT_FOUND");
+  });
+
+  it("renders the placeholder content for an unpublished locale", async () => {
+    // getPageData returns the placeholder (isDbContent: false) when unpublished.
+    mockGetPageData.mockResolvedValue({
+      ...getPlaceholder("corporate-governance", "en"),
+      isDbContent: false,
+    });
+    render(await ContentWithSidebar({ slug: "corporate-governance", locale: "en" }));
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Corporate Governance" })
+    ).toBeInTheDocument();
   });
 });

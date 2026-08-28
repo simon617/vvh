@@ -134,4 +134,20 @@ describe("PageEditor", () => {
 
     confirmSpy.mockRestore();
   });
+
+  it("renders the key/value editor for structured (corporate-details) pages", () => {
+    const initial = {
+      ...contentRow("en"),
+      contentHtml:
+        '<table><tbody><tr><th style="text-align:left">Place of Incorporation</th><td>Cayman Islands</td></tr></tbody></table>',
+    };
+    renderWithLocale(
+      <PageEditor slug="corporate-details" initialEn={initial} initialZh={null} />
+    );
+
+    // The key/value editor (not the WYSIWYG) renders the first row label.
+    expect(
+      (screen.getByLabelText("Label 1") as HTMLInputElement).value
+    ).toBe("Place of Incorporation");
+  });
 });
