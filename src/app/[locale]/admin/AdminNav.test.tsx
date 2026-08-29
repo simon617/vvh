@@ -29,4 +29,15 @@ describe("AdminNav", () => {
     renderWithLocale(<AdminNav username="simon" locale="en" />);
     expect(screen.getByText("simon")).toBeTruthy();
   });
+
+  it("renders real labels, not literal i18n keys (regression: admin.settings)", () => {
+    renderWithLocale(<AdminNav username="admin" locale="en" />);
+    const body = document.body.textContent ?? "";
+    expect(body).not.toContain("admin.settings");
+    expect(body).not.toContain("admin.");
+
+    // The labels resolve to actual strings in both locales.
+    renderWithLocale(<AdminNav username="admin" locale="zh" />, "zh");
+    expect(document.body.textContent ?? "").toContain("設定");
+  });
 });

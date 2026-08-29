@@ -47,6 +47,30 @@ describe("Financial Reports page (reports table)", () => {
     expect(screen.getByText("每頁行數")).toBeInTheDocument();
   });
 
+  it("renders DB-driven report rows when the published content contains report data", async () => {
+    const base = getPlaceholder("financial-reports", "en");
+    mockGetPageData.mockResolvedValue({
+      ...base!,
+      isDbContent: true,
+      contentHtml: JSON.stringify({
+        __type: "reports",
+        rows: [
+          { id: "c", date: "2026", title: "Custom Report 2026", url: "/uploads/reports/en/custom.pdf" },
+        ],
+      }),
+    });
+
+    renderWithLocale(await FinancialReportsPage({ params: { locale: "en" } }));
+
+    // The DB-driven row replaces the hardcoded default.
+    expect(screen.getByText("Custom Report 2026")).toBeInTheDocument();
+    expect(screen.queryByText("Annual Report 2025")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Custom Report 2026" })).toHaveAttribute(
+      "href",
+      "/uploads/reports/en/custom.pdf"
+    );
+  });
+
   it("exposes localized metadata", async () => {
     expect(
       (await generateMetadata({ params: { locale: "en" } })).title

@@ -108,7 +108,7 @@
       "separateRowHelp": "{locale} 內容在資料庫中是獨立的記錄 — 發佈其中一種語言不會影響另一種。",
       "editorHelp": "請使用粗體、斜體、段落、標題及連結。外部連結會在新分頁開啟。"
     },
-    "settings": {
+    "settingsForm": {
       "title": "設定",
       "siteName": "網站名稱",
       "ga4": "GA4 追蹤編碼",
@@ -119,6 +119,17 @@
       "saving": "儲存中...",
       "saved": "已儲存",
       "saveFailed": "儲存失敗"
+    },
+    "reportsEditor": {
+      "date": "日期",
+      "document": "文件",
+      "upload": "上傳 PDF",
+      "uploading": "上傳中...",
+      "removeRow": "移除該行",
+      "remove": "移除",
+      "addRow": "新增報告",
+      "noRows": "暫無報告。請點擊「新增報告」開始。",
+      "help": "每一行代表一份報告：日期、文件標題及已上傳的 PDF。報告會以分頁表格顯示於公開頁面。"
     },
     "keyValue": {
       "label": "標籤",

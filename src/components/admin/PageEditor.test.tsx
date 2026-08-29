@@ -150,4 +150,23 @@ describe("PageEditor", () => {
       (screen.getByLabelText("Label 1") as HTMLInputElement).value
     ).toBe("Place of Incorporation");
   });
+
+  it("renders the reports editor for report pages", () => {
+    const initial = {
+      ...contentRow("en"),
+      contentHtml: JSON.stringify({
+        __type: "reports",
+        rows: [
+          { id: "a", date: "2025", title: "Annual Report 2025", url: "/u/a.pdf" },
+        ],
+      }),
+    };
+    renderWithLocale(
+      <PageEditor slug="financial-reports" initialEn={initial} initialZh={null} />
+    );
+
+    expect(screen.getByLabelText("Date 1")).toBeTruthy();
+    expect(screen.getByLabelText("Document 1")).toBeTruthy();
+    expect(screen.getByText("Add report")).toBeTruthy();
+  });
 });

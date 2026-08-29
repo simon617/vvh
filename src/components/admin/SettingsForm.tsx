@@ -15,7 +15,7 @@ interface SettingsFormProps {
  * (2B.7) posts to /api/logo.
  */
 export default function SettingsForm({ initial, logoPath }: SettingsFormProps) {
-  const t = useTranslations("admin.settings");
+  const t = useTranslations("admin.settingsForm");
   const [siteName, setSiteName] = useState(initial.site_name);
   const [ga4, setGa4] = useState(initial.ga4_tracking_id);
   const [saving, setSaving] = useState(false);

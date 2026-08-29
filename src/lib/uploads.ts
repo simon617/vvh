@@ -15,6 +15,42 @@ export const ALLOWED_IMAGE_EXTENSIONS = [
 
 export const DEFAULT_MAX_FILE_SIZE = 5242880; // 5 MB
 
+/** Allowed report/document file extensions (Phase 2B report editor). */
+export const ALLOWED_DOCUMENT_EXTENSIONS = [
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".xls",
+  ".xlsx",
+] as const;
+
+/** Max document upload size in bytes (default 50 MB, configurable via MAX_DOC_SIZE). */
+export const DEFAULT_MAX_DOC_SIZE = 52428800;
+
+export function maxDocSize(): number {
+  const v = Number(process.env.MAX_DOC_SIZE);
+  return Number.isFinite(v) && v > 0 ? v : DEFAULT_MAX_DOC_SIZE;
+}
+
+/** Whether a file name has an allowed document extension (case-insensitive). */
+export function isAllowedDocument(name: string): boolean {
+  const ext = path.extname(name).toLowerCase();
+  return (ALLOWED_DOCUMENT_EXTENSIONS as readonly string[]).includes(ext);
+}
+
+/** Validate document type and size; throws with a user-facing message. */
+export function assertAllowedDocument(name: string, size: number): void {
+  if (!isAllowedDocument(name)) {
+    throw new Error(
+      "Only document files (pdf, doc, docx, xls, xlsx) are allowed."
+    );
+  }
+  const limit = maxDocSize();
+  if (size > limit) {
+    throw new Error(`File size must be ${limit} bytes or less.`);
+  }
+}
+
 /** Max upload size in bytes, from MAX_FILE_SIZE env (default 5 MB). */
 export function maxFileSize(): number {
   const v = Number(process.env.MAX_FILE_SIZE);

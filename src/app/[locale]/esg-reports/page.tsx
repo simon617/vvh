@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import { useTranslations } from "next-intl";
 import TemplateShell from "@/components/layout/TemplateShell";
 import ReportsTable from "@/components/layout/ReportsTable";
+import type { ReportRow } from "@/components/layout/ReportsTable";
 import { getEsgReports } from "@/lib/reports";
 import { getPageData } from "@/lib/pages";
+import { getReportRows } from "@/lib/report-rows";
 import type { Locale } from "@/lib/navigation";
 
 interface Props {
@@ -20,17 +22,19 @@ function EsgReportsView({
   title,
   heroImage,
   locale,
+  rows,
 }: {
   title: string;
   heroImage?: string;
   locale: Locale;
+  rows: ReportRow[];
 }) {
   const t = useTranslations("tables");
   return (
     <TemplateShell title={title} locale={locale} heroImage={heroImage}>
       <div className="bg-white rounded-lg shadow-md p-6">
         <ReportsTable
-          rows={getEsgReports(locale)}
+          rows={rows}
           labels={{
             date: t("date"),
             document: t("document"),
@@ -51,8 +55,15 @@ export default async function EsgReportsPage({ params }: Props) {
   const data = await getPageData("esg-reports", locale);
   if (!data) notFound();
 
+  const rows = getReportRows(data.contentHtml) ?? getEsgReports(locale);
+
   return (
-    <EsgReportsView title={data.title} heroImage={data.heroImage} locale={locale} />
+    <EsgReportsView
+      title={data.title}
+      heroImage={data.heroImage}
+      locale={locale}
+      rows={rows}
+    />
   );
 }
 

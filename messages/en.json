@@ -108,7 +108,7 @@
       "separateRowHelp": "{locale} content is a separate row in the database — publishing one language never affects the other.",
       "editorHelp": "Use bold, italic, paragraph, heading and links. External links open in a new tab."
     },
-    "settings": {
+    "settingsForm": {
       "title": "Settings",
       "siteName": "Site name",
       "ga4": "GA4 Tracking ID",
@@ -119,6 +119,17 @@
       "saving": "Saving...",
       "saved": "Saved",
       "saveFailed": "Save failed"
+    },
+    "reportsEditor": {
+      "date": "Date",
+      "document": "Document",
+      "upload": "Upload PDF",
+      "uploading": "Uploading...",
+      "removeRow": "Remove row",
+      "remove": "Remove",
+      "addRow": "Add report",
+      "noRows": "No reports yet. Click “Add report” to begin.",
+      "help": "Each row is one report: a date, a document title and an uploaded PDF. Reports appear in a paginated table on the public page."
     },
     "keyValue": {
       "label": "Label",

@@ -8,13 +8,24 @@ import LocaleTabs from "./LocaleTabs";
 import TipTapEditor from "./TipTapEditor";
 import ImageUploader from "./ImageUploader";
 import KeyValueEditor from "./KeyValueEditor";
+import ReportsEditor from "./ReportsEditor";
 
 type Locale = "en" | "zh";
 
-/** Pages whose content is a structured key/value table (edited with KeyValueEditor). */
-const STRUCTURED_PAGES: Record<string, true> = {
-  "corporate-details": true,
+/** Which editor each page's content slot uses.
+ *  - wysiwyg: default rich text
+ *  - keyvalue: structured label/value table (corporate-details)
+ *  - reports: paginated document rows (financial/esg reports, corporate communications) */
+type EditorKind = "wysiwyg" | "keyvalue" | "reports";
+
+const PAGE_EDITOR_TYPES: Record<string, EditorKind> = {
+  "corporate-details": "keyvalue",
+  "financial-reports": "reports",
+  "esg-reports": "reports",
+  "corporate-communications": "reports",
 };
+
+const editorKind = (slug: string): EditorKind => PAGE_EDITOR_TYPES[slug] ?? "wysiwyg";
 
 interface PageDraft {
   title: string;
@@ -153,9 +164,15 @@ export default function PageEditor({
 
           <div>
             <label className={labelClass}>{t("content")}</label>
-            {STRUCTURED_PAGES[slug] ? (
+            {editorKind(slug) === "keyvalue" ? (
               <KeyValueEditor
                 value={draft.contentHtml}
+                onChange={(html) => update({ contentHtml: html })}
+              />
+            ) : editorKind(slug) === "reports" ? (
+              <ReportsEditor
+                value={draft.contentHtml}
+                locale={active}
                 onChange={(html) => update({ contentHtml: html })}
               />
             ) : (
