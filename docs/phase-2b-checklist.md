@@ -5,7 +5,7 @@
 > **Duration:** 1 week
 > **Complexity:** High
 > **Dependencies:** Phase 1 (Foundation & Infrastructure) — ✅ COMPLETE · Phase 2A (Page Templates & Public Site) — ✅ COMPLETE
-> **Status:** ✅ **COMPLETE** — All 26 Phase 2B tasks + follow-up enhancements (Tasks 27–30) delivered; follow-up review confirms **237 tests passing**, `npm run lint` clean (2 pre-existing Phase-1 warnings), `npm run build` exits 0. See §8.4 for the still-pending manual browser pass.
+> **Status:** ✅ **COMPLETE** — All 26 Phase 2B tasks + follow-up enhancements (Tasks 27–30) delivered; follow-up review confirms **239 tests passing**, `npm run lint` clean (2 pre-existing Phase-1 warnings), `npm run build` exits 0. See §8.4 for the still-pending manual browser pass.
 > **Source docs:** `docs/phase-2b-admin-cms-editor.md` (phase plan) · `docs/phrase-2a-checklists.md` (Phase 2A handoff) · `docs/phase-2a-implementation.md` · `docs/phase-2a-tasklist.md` · `docs/PRD-visionvalues-revamp-v2.md`
 
 ---
@@ -383,7 +383,7 @@ Reference template: `.env.example`. Current `.env` only carries the Phase 1 vari
 
 ### 8.4 Full acceptance run (end of phase)
 
-- [x] `npm test` (all existing + new pass) — **237 tests passing (55 files)**
+- [x] `npm test` (all existing + new pass) — **239 tests passing (55 files)**
 - [x] `npm run lint` clean (except pre-existing Phase-1 warnings: `admin/setup` useEffect deps, `Logo` `<img>`) — verified
 - [x] `npm run build` succeeds; all 10 public routes build — **exit 0** (after extracting route helper exports so Next.js route type-checks pass)
 - [ ] **Manual browser pass through §8.3 at 320 / 768 / 1920 px** — *pending human QA on a running `npm run dev`; cannot be executed in the automated environment.*

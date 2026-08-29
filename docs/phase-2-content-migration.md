@@ -23,7 +23,12 @@
 | 6 | Add convenience npm script for the baseline content migration. | `package.json` (`content:migrate`) |
 | 7 | Document the How-To (run migration, retrieve/edit, director-card format, PDF links). | `docs/phase-2-content-migration.md` (§5.1) |
 
-**Verification:** `npm test` 208/208 ✅ · `npm run lint` clean (2 pre-existing Phase-1 warnings) ✅ · `npm run build` exit 0 ✅ · `npx tsc --noEmit` clean ✅ · DB seeded (20 `page_contents` rows) ✅
+**Verification (at the time):** `npm test` 208/208 ✅ · `npm run lint` clean (2 pre-existing Phase-1 warnings) ✅ · `npm run build` exit 0 ✅ · `npx tsc --noEmit` clean ✅ · DB seeded (20 `page_contents` rows) ✅ · *(Current suite after Phase 2B follow-ups 27–30: **239 tests** — see `docs/phase-2b-tasklist.md`.)*
+
+**CMS editor enhancements for migration (Phase 2B follow-ups Tasks 27–30):**
+- **Key/value editor** for `corporate-details` (edits the corporate table rows directly; see §5.1).
+- **Shared report editor** for `financial-reports` / `esg-reports` / `corporate-communications` (date + document + PDF upload; see §5.1).
+- **Unpublished → placeholder fallback**: unpublished locales show the seeded placeholder content instead of a 404.
 
 **Left untouched (pre-existing / user files):** `myNotes.docx`, `src/lib/page-content.ts` (stale comment already in working tree).
 

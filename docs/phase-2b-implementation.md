@@ -2,7 +2,7 @@
 
 > **Project:** Vision Values Holdings Limited — Website Revamp
 > **Phase:** 2B — Admin CMS Editor
-> **Status:** ✅ **COMPLETE** — all 26 tasks executed; review confirms **206 tests passing**, lint clean (2 pre-existing Phase-1 warnings), `npm run build` exit 0.
+> **Status:** ✅ **COMPLETE** — all 26 tasks executed (plus follow-up Tasks 27–30) ; review confirms **239 tests passing**, lint clean (2 pre-existing Phase-1 warnings), `npm run build` exit 0.
 > **Duration:** 1 week · **Complexity:** High
 > **Companion docs:**
 > - `docs/phase-2b-checklist.md` — **handoff checklist (source of truth for this plan)**
@@ -335,7 +335,8 @@ Phase G (verification)
 | D | 14–20 | ✅ done | admin UI |
 | E | 21–23 | ✅ done | public DB wiring |
 | F | 24–25 | ✅ done | i18n / polish |
-| G | 26 | ✅ done | verification — **206 tests**, lint clean, build exit 0 (manual browser pass pending human QA, see checklist §8.4) |
+| G | 26 | ✅ done | verification — **239 tests**, lint clean, build exit 0 (manual browser pass pending human QA, see checklist §8.4) |
+| — | 27–30 (follow-up) | ✅ done | key-value editor, unpublished→placeholder, admin.settings i18n fix, shared report editor + PDF upload — see `docs/phase-2b-tasklist.md` for files/commits |
 
 ---
 
