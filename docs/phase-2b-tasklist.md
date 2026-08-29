@@ -2,7 +2,7 @@
 
 > **Project:** Vision Values Holdings Limited — Website Revamp
 > **Phase:** 2B — Admin CMS Editor
-> **Status:** ✅ **COMPLETE** — all 26 tasks executed from `docs/phase-2b-implementation.md` + follow-up enhancements; suite at **221 tests passing**.
+> **Status:** ✅ **COMPLETE** — all 26 tasks executed from `docs/phase-2b-implementation.md` + follow-up enhancements; suite at **237 tests passing**.
 > **Baseline:** 27 test files / **93 tests passing** (Phase 2A) · branch `phase-2b` at `1ab1763`.
 > **Companion docs:** `docs/phase-2b-checklist.md` (handoff) · `docs/phase-2b-implementation.md` (plan)
 
@@ -39,7 +39,9 @@
 | 25 | Admin UX guardrails | ✅ `206eaa7` | `PageEditor.tsx` (unpublish-both-locales confirm, flash auto-clear) |
 | 26 | Full acceptance run | ✅ `d131284` | `npm test` (206 pass), `npm run lint` (2 pre-existing warnings only), `npm run build` (exit 0); smoke-tests | 
 | 27 | Key/value editor for `corporate-details` (structured table in CMS instead of WYSIWYG) | ✅ `3bae0c6` | `src/lib/key-value.ts` (+ test), `src/components/admin/KeyValueEditor.tsx` (+ test), `src/components/admin/PageEditor.tsx` (+ test), `messages/en.json`, `messages/zh.json` |
-| 28 | Unpublished → placeholder fallback (was 404) on public routes | ✅ `3bae0c6` | `src/lib/pages.ts`, `src/lib/pages.test.ts`, `src/components/layout/ContentWithSidebar.test.tsx` |
+| 28 | Unpublished → placeholder fallback (was 404) on public routes | ✅ `3bae0c6` | `src/lib/pages.ts`, `src/lib/pages.test.ts`, `src/components/layout/ContentWithSidebar.test.tsx` | 
+| 29 | Fix `admin.settings` i18n key collision (nav label vs settings form object) | ✅ `cd2afe6` | `messages/en.json`, `messages/zh.json`, `src/components/admin/SettingsForm.tsx` (namespace renamed to `admin.settingsForm`) |
+| 30 | Shared paginated report editor for `financial-reports` / `esg-reports` / `corporate-communications` (date + document title + PDF upload) | ✅ `cd2afe6` | `src/lib/report-rows.ts` (+test), `src/app/api/upload/pdf/route.ts` (+test), `src/components/admin/ReportsEditor.tsx` (+test), `src/components/admin/PageEditor.tsx`, the 3 public report `page.tsx` + tests, `src/lib/uploads.ts`, `prisma/seed.ts` |
 
 ## Commits
 
@@ -50,6 +52,7 @@
 | `206eaa7` | 24, 25 | Complete admin i18n + UX guardrails |
 | `d131284` | 26 | Extract route helper exports so production build type-checks |
 | `3bae0c6` | 27, 28 | Key-value editor for corporate-details + unpublished→placeholder fallback |
+| `cd2afe6` | 29, 30 | Shared paginated report editor + PDF upload; fix admin.settings i18n key collision |
 
 ---
 

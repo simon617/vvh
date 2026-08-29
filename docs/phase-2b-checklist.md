@@ -5,7 +5,7 @@
 > **Duration:** 1 week
 > **Complexity:** High
 > **Dependencies:** Phase 1 (Foundation & Infrastructure) — ✅ COMPLETE · Phase 2A (Page Templates & Public Site) — ✅ COMPLETE
-> **Status:** ✅ **COMPLETE** — All 26 Phase 2B tasks delivered; follow-up review confirms **206 tests passing**, `npm run lint` clean (2 pre-existing Phase-1 warnings), `npm run build` exits 0. See §8.4 for the still-pending manual browser pass.
+> **Status:** ✅ **COMPLETE** — All 26 Phase 2B tasks + follow-up enhancements (Tasks 27–30) delivered; follow-up review confirms **237 tests passing**, `npm run lint` clean (2 pre-existing Phase-1 warnings), `npm run build` exits 0. See §8.4 for the still-pending manual browser pass.
 > **Source docs:** `docs/phase-2b-admin-cms-editor.md` (phase plan) · `docs/phrase-2a-checklists.md` (Phase 2A handoff) · `docs/phase-2a-implementation.md` · `docs/phase-2a-tasklist.md` · `docs/PRD-visionvalues-revamp-v2.md`
 
 ---
@@ -360,7 +360,7 @@ Reference template: `.env.example`. Current `.env` only carries the Phase 1 vari
 | `/api/pages/[slug]` | `GET` returns content; unauthorised `PUT` → 401; `PUT` upserts `PageContent` for the locale. |
 | `/api/settings` | `GET`/`PUT` round-trips `site_name` / `ga4_tracking_id` with `locale = NULL`. |
 | `/api/auth/change-password` | Wrong current → 400/401; success re-hashes and logs the user out or keeps session as designed. |
-| Public pages | After save, public page shows DB (non-placeholder) content; **unpublished locale → 404**. |
+| Public pages | After save, public page shows DB (non-placeholder) content; **unpublished locale → placeholder fallback (no 404)** (Tasks 21, 28). |
 
 ### 8.3 Acceptance checklist (from `docs/phase-2b-admin-cms-editor.md` §7.8)
 
@@ -376,17 +376,23 @@ Reference template: `.env.example`. Current `.env` only carries the Phase 1 vari
 - [x] Can toggle published/unpublished independently for EN and ZH *(D8; per-locale row upsert)*
 - [x] Saving updates the `page_contents` table *(GET/PUT /api/pages/[slug] + upsertPageContent tests)*
 - [x] Public page shows published content (not placeholder) *(DB-aware getPageData → pages.test)*
-- [x] Unpublished locale shows 404 *(getPageData returns null + notFound() on all templates → Task 21 tests)*
+- [x] Unpublished locale shows placeholder content (not 404) — *revised behavior (Task 28): unpublished → `getPageData` falls back to the seeded placeholder*
 - [x] Admin can change password in-app *(POST /api/auth/change-password + UI page + tests)*
 - [x] Admin settings saves and retrieves the GA4 tracking ID *(/api/settings round-trip tests)*
 - [x] Logo upload replaces the header logo *(/api/logo writes file `<Logo/>` loads — dev; see §8.4 gap note for prod)*
 
 ### 8.4 Full acceptance run (end of phase)
 
-- [x] `npm test` (all existing + new pass) — **206 tests passing (50 files)**
+- [x] `npm test` (all existing + new pass) — **237 tests passing (55 files)**
 - [x] `npm run lint` clean (except pre-existing Phase-1 warnings: `admin/setup` useEffect deps, `Logo` `<img>`) — verified
 - [x] `npm run build` succeeds; all 10 public routes build — **exit 0** (after extracting route helper exports so Next.js route type-checks pass)
 - [ ] **Manual browser pass through §8.3 at 320 / 768 / 1920 px** — *pending human QA on a running `npm run dev`; cannot be executed in the automated environment.*
+
+**Phase 2B follow-up enhancements (Tasks 27–30, commits `3bae0c6` + `cd2afe6`):**
+- **Key-value editor** for `corporate-details` (structured label/value table; WYSIWYG can't edit tables).
+- **Shared paginated report editor** (`ReportsEditor`) for `financial-reports` / `esg-reports` / `corporate-communications` — date + document title + PDF upload (`/api/upload/pdf`) per locale; renders through the existing paginated `ReportsTable`.
+- **`admin.settings` i18n bug fix** — renamed the settings-form namespace to `admin.settingsForm` so the nav label resolves (was leaking the key path).
+- **Unpublished → placeholder fallback** revision (Task 28).
 
 > **Known residual items (not blocking code delivery):**
 > - **2B.9 CLI reset interactive run** — `scripts/reset-password.ts` uses `bcrypt.hash(password, 12)`, byte-compatible with the in-app `hashPassword` (`BCRYPT_ROUNDS=12`). Core logic interoperable; a full interactive `npm run reset-password` run should be confirmed manually in a real terminal (matches the Phase 1 note).
@@ -403,7 +409,7 @@ These combine the pitfalls from `docs/phase-2b-admin-cms-editor.md` §7.10 **wit
 3. **TipTap toolbar too complex.** Limit to **bold, italic, paragraph, heading, link**. InitStarterKit and strip bulletList/blockquote/code; otherwise non-technical admins get formatting chaos and the public layout breaks.
 4. **Not sanitising WYSIWYG HTML.** `ContentWithSidebar` uses `dangerouslySetInnerHTML`. Rely on TipTap's sanitisation but verify; strip scripts/event handlers on save if needed.
 5. **Storing absolute image URLs.** Save relative paths (e.g. `/uploads/images/x.jpg`) and build the full URL at render from `NEXT_PUBLIC_SITE_URL`. Absolute URLs break across dev/localhost/docker/domain changes (Pitfall #7 in the plan).
-6. **Not checking publish state on the public route.** It is not enough for the `Page`/`PageContent` row to exist — the **current locale's `isPublished`** must be `true`, else `notFound()` (D8). Guard the route/middleware or the page’s data fetch.
+6. **Not checking publish state on the public route.** The public route must check the **current locale's `isPublished`**. If published → DB content; if a row exists but is unpublished → fall back to the seeded placeholder (revised in Task 28; no 404). Do not leak empty drafts.
 7. **Admin settings leaking to one locale.** GA4 ID and site name are global (`locale = NULL` in `site_settings`). Reading a single locale row would wrongly scope them.
 8. **Forgetting to seed `pages`.** The migration creates empty tables. Without the 10 `Page` rows, `/admin/pages` (2B.1) is empty and the editor can’t open (Pitfall #4 in the plan).
 9. **`.prose` not styled because the Tailwind typography plugin isn’t registered.** `tailwind.config.ts` has `plugins: []`. Until `@tailwindcss/typography` is installed **and** added to `plugins`, rich HTML renders unstyled on public pages.
@@ -445,7 +451,7 @@ These combine the pitfalls from `docs/phase-2b-admin-cms-editor.md` §7.10 **wit
 - [x] Build `/admin/pages` listing + `/admin/pages/[slug]` editor (TipTap, LocaleTabs, ImageUploader) (§2.3) — Tasks 17–18
 - [x] Build `/admin/settings` + `/admin/change-password` UI; extend `AdminNav` (§2.1) — Tasks 19–20
 - [x] Wire `getPageData`/`page-content.ts` to the DB (async-aware) and update all 10 public pages (§2.2, §9.1) — Tasks 21–22
-- [x] Honor per-locale `isPublished` → `notFound()` on public routes (§3.3, §9.6) — Task 21
+- [x] Honor per-locale `isPublished` → placeholder fallback on public routes (§3.3, §9.6, revised Task 28)
 - [x] Logo upload replaces `public/logo.svg` (§2.3) — Task 19 (dev-verified; prod follow-up noted in §8.4)
 - [x] Run full acceptance: tests, lint, build, manual pass (§8.3–§8.4) — Tasks 26 (§8.4: manual browser pass pending human QA)
 

@@ -140,6 +140,24 @@ Mr. Lo Luen Chuen has extensive experience ...   ← bio text
 When you press Enter to start a new paragraph, that paragraph becomes the next card.
 Do **not** use bullet lists inside the editor for directors — bullets would break the card grid.
 
+### Financial / ESG reports & Corporate Communications (report editor)
+
+`financial-reports`, `esg-reports` and `corporate-communications` use a **shared report
+editor** instead of the WYSIWYG. Each row has:
+- **Date** (e.g. `October 2025`)
+- **Document title** (e.g. `Annual Report 2025`)
+- **PDF upload** — pick a file; it is stored under `uploads/reports/<locale>/` and the
+  row is linked automatically.
+
+Use **Add report** to add rows (the public page paginates them through `ReportsTable`),
+and **Remove** to delete a row. Each locale tab has its own set of rows.
+
+### Corporate Details (key/value editor)
+
+`corporate-details` uses the **key/value editor**: one row per corporate fact
+(label on the left, value on the right). Use **Add row** / **Remove** to manage facts.
+The public page renders them as a table exactly like the placeholder.
+
 ### How to add a PDF link
 
 The editor toolbar has a **link (🔗)** button.

@@ -167,7 +167,7 @@ Active tables for this phase:
 - [x] Can toggle published/unpublished independently for EN and ZH
 - [x] Saving updates the page_contents table
 - [x] Public page shows published content (not placeholder)
-- [x] Unpublished locale shows 404
+- [x] Unpublished locale shows placeholder content (revised behavior: unpublished locale falls back to placeholder, not 404)
 - [x] Admin can change password in-app
 - [x] Admin settings page saves and retrieves GA4 tracking ID
 - [x] Logo upload replaces the header logo
