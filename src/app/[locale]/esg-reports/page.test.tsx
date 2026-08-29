@@ -36,4 +36,22 @@ describe("ESG Reports page (reports table)", () => {
     expect(screen.getByRole("heading", { level: 1, name: "環境、社會及管治報告" })).toBeInTheDocument();
     expect(screen.getByText("2025環境、社會及管治報告")).toBeInTheDocument();
   });
+
+  it("renders DB-driven report rows when the published content contains report data", async () => {
+    const base = getPlaceholder("esg-reports", "en");
+    mockGetPageData.mockResolvedValue({
+      ...base!,
+      isDbContent: true,
+      contentHtml: JSON.stringify({
+        __type: "reports",
+        rows: [
+          { id: "esg-2026", date: "2026", title: "Custom ESG Report 2026", url: "/uploads/reports/en/custom-esg.pdf" },
+        ],
+      }),
+    });
+
+    renderWithLocale(await EsgReportsPage({ params: { locale: "en" } }));
+    expect(screen.getByText("Custom ESG Report 2026")).toBeInTheDocument();
+    expect(screen.queryByText("ESG Report 2025")).not.toBeInTheDocument();
+  });
 });

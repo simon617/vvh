@@ -61,4 +61,28 @@ describe("Corporate Communications page (reports table)", () => {
     );
     expect(link).toHaveAttribute("target", "_blank");
   });
+
+  it("renders DB-driven rows when the published content contains report data", async () => {
+    const base = getPlaceholder("corporate-communications", "en");
+    mockGetPageData.mockResolvedValue({
+      ...base!,
+      isDbContent: true,
+      contentHtml: JSON.stringify({
+        __type: "reports",
+        rows: [
+          { id: "comm-2026", date: "2026", title: "Custom Communication 2026", url: "/uploads/reports/en/custom-comm.pdf" },
+        ],
+      }),
+    });
+
+    renderWithLocale(
+      await CorporateCommunicationsPage({ params: { locale: "en" } })
+    );
+    expect(screen.getByText("Custom Communication 2026")).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Arrangements Regarding Dissemination of Corporate Communications"
+      )
+    ).not.toBeInTheDocument();
+  });
 });
