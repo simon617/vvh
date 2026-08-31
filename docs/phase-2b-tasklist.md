@@ -42,6 +42,7 @@
 | 28 | Unpublished → placeholder fallback (was 404) on public routes | ✅ `3bae0c6` | `src/lib/pages.ts`, `src/lib/pages.test.ts`, `src/components/layout/ContentWithSidebar.test.tsx` | 
 | 29 | Fix `admin.settings` i18n key collision (nav label vs settings form object) | ✅ `cd2afe6` | `messages/en.json`, `messages/zh.json`, `src/components/admin/SettingsForm.tsx` (namespace renamed to `admin.settingsForm`), `src/app/[locale]/admin/AdminNav.test.tsx` (regression test: no literal `admin.` keys leak) |
 | 30 | Shared paginated report editor for `financial-reports` / `esg-reports` / `corporate-communications` (date + document title + PDF upload) | ✅ `cd2afe6`, `dbf4913` | `src/lib/report-rows.ts` (+`report-rows.test.ts`), `src/app/api/upload/pdf/route.ts` (+`route.test.ts`), `src/components/admin/ReportsEditor.tsx` (+`ReportsEditor.test.tsx`), `src/components/admin/PageEditor.tsx` (+`PageEditor.test.tsx`), public `page.tsx` + `page.test.tsx` for all 3 report pages, `src/lib/uploads.ts` (document validation), `prisma/seed.ts` (seed report rows) |
+| 31 | Developer guide — folder map, per-file purposes & linkages, conventions, env vars, testing | ✅ `01dc033` | `docs/developerGuide/developer-guide.md` (+`README.md`) |
 
 ## Commits
 
@@ -54,6 +55,7 @@
 | `3bae0c6` | 27, 28 | Key-value editor for corporate-details + unpublished→placeholder fallback |
 | `cd2afe6` | 29, 30 | Shared paginated report editor + PDF upload; fix admin.settings i18n key collision |
 | `dbf4913` | 30 | DB-driven rows test coverage for esg-reports + corporate-communications |
+| `01dc033` | 31 | Developer guide: folder/file map, linkages, conventions |
 
 ---
 
