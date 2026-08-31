@@ -43,6 +43,7 @@
 | 29 | Fix `admin.settings` i18n key collision (nav label vs settings form object) | ✅ `cd2afe6` | `messages/en.json`, `messages/zh.json`, `src/components/admin/SettingsForm.tsx` (namespace renamed to `admin.settingsForm`), `src/app/[locale]/admin/AdminNav.test.tsx` (regression test: no literal `admin.` keys leak) |
 | 30 | Shared paginated report editor for `financial-reports` / `esg-reports` / `corporate-communications` (date + document title + PDF upload) | ✅ `cd2afe6`, `dbf4913` | `src/lib/report-rows.ts` (+`report-rows.test.ts`), `src/app/api/upload/pdf/route.ts` (+`route.test.ts`), `src/components/admin/ReportsEditor.tsx` (+`ReportsEditor.test.tsx`), `src/components/admin/PageEditor.tsx` (+`PageEditor.test.tsx`), public `page.tsx` + `page.test.tsx` for all 3 report pages, `src/lib/uploads.ts` (document validation), `prisma/seed.ts` (seed report rows) |
 | 31 | Developer guide — folder map, per-file purposes & linkages, conventions, env vars, testing | ✅ `01dc033` | `docs/developerGuide/developer-guide.md` (+`README.md`) |
+| 32 | Pre-Phase-3 doc alignment — PRD status/checklists, Phase 3 plan updated to build on Phase 2B report editor/PDF upload, locale-prefixed admin paths | ✅ `ffccc09` | `docs/PRD-visionvalues-revamp-v2.md`, `docs/phase-3-reports-announcements-contact.md`, `docs/phase-2a-implementation.md` (director-bio CMS note) |
 
 ## Commits
 
@@ -56,6 +57,7 @@
 | `cd2afe6` | 29, 30 | Shared paginated report editor + PDF upload; fix admin.settings i18n key collision |
 | `dbf4913` | 30 | DB-driven rows test coverage for esg-reports + corporate-communications |
 | `01dc033` | 31 | Developer guide: folder/file map, linkages, conventions |
+| `ffccc09` | 32 | Pre-Phase-3 doc alignment: PRD + Phase 3 plan updated |
 
 ---
 
