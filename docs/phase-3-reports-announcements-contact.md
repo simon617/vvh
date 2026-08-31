@@ -14,14 +14,26 @@ Build the remaining admin features for managing Financial Reports, ESG Reports, 
 
 ## 2. Specific Deliverables
 
+> **Note on Phase 2B groundwork (already delivered):** Phase 2B Tasks 27–30 already built a
+> **shared report editor** (`src/components/admin/ReportsEditor.tsx`) with:
+> - Date + Document title fields per locale,
+> - PDF upload via **`POST /api/upload/pdf?locale=en|zh`** → files stored under **`uploads/reports/<locale>/`**,
+> - a **sortable + paginated `ReportsTable`** on the public pages,
+> - rows persisted as a JSON envelope in `page_contents.contentHtml` (`src/lib/report-rows.ts`).
+>
+> Phase 3 therefore **does not re-build** the report upload/table mechanics below — it builds the
+> **management dashboard(s)** and decides whether to (a) keep the JSON-in-`contentHtml` approach
+> (recommended — already working; extend it with a dedicated reports admin UI that CRUDs the same
+> envelope) or (b) migrate to the `reports` table CRUD originally planned (§ TD-30 below).
+
 | # | Deliverable | Description |
 |---|-------------|-------------|
-| 3.1 | Report management UI (Financial) | `/admin/reports/financial` — upload PDF, set title/description/year/locale, visible/hidden toggle, sort order, delete |
-| 3.2 | Report management UI (ESG) | `/admin/reports/esg` — same as Financial but separate dashboard |
-| 3.3 | Announcements management UI | `/admin/announcements` — paste HKEX URL, auto-fetch title/date, manual edit fallback, visible/hidden toggle |
-| 3.4 | Financial Reports public page | Sortable, paginated table with Date + Document (PDF download) columns, fetched from `reports` table |
-| 3.5 | ESG Reports public page | Sortable, paginated table with Date + Document columns, fetched from `reports` table |
-| 3.6 | Announcements public page | Table with Date + title linking to HKEX, fetched from `announcements` table |
+| 3.1 | Report management UI (Financial) | `/en/admin/reports/financial` — upload PDF, set title/description/year/locale, visible/hidden toggle, sort order, delete |
+| 3.2 | Report management UI (ESG) | `/en/admin/reports/esg` — same as Financial but separate dashboard |
+| 3.3 | Announcements management UI | `/en/admin/announcements` — paste HKEX URL, auto-fetch title/date, manual edit fallback, visible/hidden toggle |
+| 3.4 | Financial Reports public page | Sortable, paginated table with Date + Document (PDF download) columns (already wired to `ReportsTable`; Phase 3 connects the chosen data source) |
+| 3.5 | ESG Reports public page | Sortable, paginated table with Date + Document columns (already wired to `ReportsTable`) |
+| 3.6 | Announcements public page | Table with Date + title linking to HKEX, fetched from `announcements` table (replaces current Datalink iframe) |
 | 3.7 | Contact form (public) | Form with Name, Subject, Email, Message fields; client-side validation (EN + ZH messages); Submit + Reset buttons |
 | 3.8 | Contact form email sending | Nodemailer integration: send email via company SMTP (IP-based auth), success/failure notification to user |
 | 3.9 | SMTP configuration | Configured via `.env` variables (SMTP_HOST, SMTP_PORT, SMTP_RECIPIENT) |
@@ -53,10 +65,11 @@ Build the remaining admin features for managing Financial Reports, ESG Reports, 
 | # | Decision | Options | Recommendation |
 |---|----------|---------|----------------|
 | TD-21 | HKEX metadata fetching | Server-side fetch vs client-side proxy | Server-side API route at `/api/announcements/fetch-metadata` that fetches the HKEX URL and extracts title/date from HTML `<title>` tag or Open Graph meta tags |
-| TD-22 | Report PDF storage | Same as image uploads (`/uploads/reports/`) | Use dedicated `/uploads/reports/` directory to separate from images |
+| TD-22 | Report PDF storage | Same as image uploads (`/uploads/reports/`) | ✅ **Already implemented in Phase 2B** — `POST /api/upload/pdf` writes to `uploads/reports/<locale>/`; reuse it as-is. |
 | TD-23 | Contact form email format | Plain text vs HTML email | Plain text is simpler and sufficient: include name, subject, email, message in email body |
 | TD-24 | Contact form spam prevention | Honeypot field vs CAPTCHA vs rate limiting | Honeypot field (hidden field that bots fill in) is simplest; rate limiting by IP if needed later |
-| TD-25 | Report table sorting | Client-side JS vs server-side query | Client-side sorting with JavaScript (simple arrays); server-side sorting for large datasets (not needed here) |
+| TD-25 | Report table sorting | Client-side JS vs server-side query | ✅ **Already implemented in Phase 2B** — `ReportsTable` (src/components/layout/ReportsTable.tsx) is sortable + paginated client-side; no new work needed. |
+| TD-30 | Report data source (NEW) | Keep JSON envelope in `page_contents.contentHtml` vs migrate to `reports` table | **Recommended: keep the JSON envelope** (`src/lib/report-rows.ts`) and build the Phase-3 reports admin UI to CRUD the same envelope (reuse `ReportsEditor` for editing, add a dedicated listing dashboard). Avoids a data migration and re-uses tested code. Optionally leave the `reports` table for future expansion. |
 
 ---
 
@@ -81,56 +94,70 @@ SMTP_HOST=192.168.x.x    # Company SMTP server IP
 SMTP_PORT=25             # SMTP port
 SMTP_RECIPIENT=investor@visionvalues.com.hk  # Where contact form emails go
 
-# Ensure Phase 1 and 2 are complete
+# Ensure Phase 1, 2A and 2B are complete
 cd vvh
 npm run dev
 
-# Login at /admin/login
-# Navigate to /admin/reports/financial to add Financial Reports
-# Navigate to /admin/announcements to add Announcements
+# Login at /en/admin/login (create the first admin at /en/admin/setup on a fresh DB)
+# Navigate to /en/admin/reports/financial to add Financial Reports
+# Navigate to /en/admin/announcements to add Announcements
 ```
+
+> **Note:** all admin routes are **locale-prefixed** (`/en/admin/...`, `/zh/admin/...`) because the whole
+> app lives under `[locale]`. The `/api/*` routes are NOT locale-prefixed.
 
 ### 7.2 Key Files & Their Purpose
 
+> Legend: 🟦 **already exists** (Phase 1/2A/2B) — reuse/extend · 🟩 **new in Phase 3**
+
 | File | Purpose |
 |------|---------|
-| `src/app/admin/reports/financial/page.tsx` | Financial Reports management UI |
-| `src/app/admin/reports/esg/page.tsx` | ESG Reports management UI |
-| `src/app/admin/announcements/page.tsx` | Announcements management UI |
-| `src/app/[locale]/financial-reports/page.tsx` | Financial Reports public page (updated from Phase 2A placeholder) |
-| `src/app/[locale]/esg-reports/page.tsx` | ESG Reports public page (updated from Phase 2A placeholder) |
-| `src/app/[locale]/announcements/page.tsx` | Announcements public page (updated from Phase 2A placeholder) |
-| `src/app/[locale]/contact/page.tsx` | Contact form page (updated from Phase 2A placeholder) |
-| `src/components/contact/ContactForm.tsx` | Contact form component with validation |
-| `src/lib/email.ts` | Nodemailer transport + send function |
-| `src/lib/hkex-metadata.ts` | HKEX URL metadata fetcher |
-| `src/app/api/reports/route.ts` | Reports CRUD API (GET, POST) |
-| `src/app/api/reports/[id]/route.ts` | Reports CRUD API (PUT, DELETE) |
-| `src/app/api/announcements/route.ts` | Announcements CRUD API (GET, POST) |
-| `src/app/api/announcements/[id]/route.ts` | Announcements CRUD API (PUT, DELETE) |
-| `src/app/api/announcements/fetch-metadata/route.ts` | HKEX metadata fetch proxy |
-| `src/app/api/contact/send/route.ts` | Contact form email sending API |
-| `src/app/api/upload/report/route.ts` | Report PDF upload API endpoint |
+| 🟦 `src/components/admin/ReportsEditor.tsx` | Shared report row editor (date + document + PDF upload) built in Phase 2B — reuse as the Phase-3 Excel/edit form, or extend into a dedicated reports dashboard that CRUDs the same JSON envelope. |
+| 🟦 `src/app/api/upload/pdf/route.ts` | PDF upload → `uploads/reports/<locale>/` (Phase 2B) — reuse for report PDFs. |
+| 🟦 `src/components/layout/ReportsTable.tsx` | Sortable + paginated Date/Document table (Phase 2A/2B) — used by the 3 report public pages. |
+| 🟦 `src/lib/report-rows.ts` | JSON-envelope parse/serialize for report rows (Phase 2B). |
+| 🟩 `src/app/[locale]/admin/reports/financial/page.tsx` | Financial Reports management UI |
+| 🟩 `src/app/[locale]/admin/reports/esg/page.tsx` | ESG Reports management UI |
+| 🟩 `src/app/[locale]/admin/announcements/page.tsx` | Announcements management UI |
+| 🟦 `src/app/[locale]/financial-reports/page.tsx` | Financial Reports public page (already `ReportsTable`-wired) |
+| 🟦 `src/app/[locale]/esg-reports/page.tsx` | ESG Reports public page (already `ReportsTable`-wired) |
+| 🟦 `src/app/[locale]/announcements/page.tsx` | Announcements public page (currently Datalink iframe → switch to table in Phase 3) |
+| 🟦 `src/app/[locale]/contact/page.tsx` | Contact page (renders `ContactForm`) |
+| 🟦 `src/components/layout/ContactForm.tsx` | **Existing** contact form component with validation (place at `src/components/layout/`, not `src/components/contact/`) |
+| 🟩 `src/lib/email.ts` | Nodemailer transport + send function |
+| 🟩 `src/lib/hkex-metadata.ts` | HKEX URL metadata fetcher |
+| 🟩 `src/app/api/reports/route.ts` | Reports CRUD API (GET, POST) |
+| 🟩 `src/app/api/reports/[id]/route.ts` | Reports CRUD API (PUT, DELETE) |
+| 🟩 `src/app/api/announcements/route.ts` | Announcements CRUD API (GET, POST) |
+| 🟩 `src/app/api/announcements/[id]/route.ts` | Announcements CRUD API (PUT, DELETE) |
+| 🟩 `src/app/api/announcements/fetch-metadata/route.ts` | HKEX metadata fetch proxy |
+| 🟩 `src/app/api/contact/send/route.ts` | Contact form email sending API |
+| 🟦 `src/app/api/upload/pdf/route.ts` | Report PDF upload already exists — no new `upload/report` route needed (TD-22) |
 
 ### 7.3 Database / Data Models
 
 Active tables for this phase:
-- **`reports`** — CRUD operations for Financial and ESG reports
+- **`reports`** — (optional, see TD-30) CRUD operations for Financial and ESG reports **if** migrating
+  away from the Phase-2B JSON envelope.
   - Fields: `id`, `category` (financial/esg), `locale` (en/zh), `title`, `year_period`, `description`, `file_path`, `file_size`, `is_visible`, `sort_order`
   - PDF files stored at `/uploads/reports/`
+  - **Recommended (TD-30):** keep report rows in `page_contents.contentHtml` (JSON envelope via
+    `src/lib/report-rows.ts`) and CRUD the envelope from the Phase-3 admin UI — no migration needed.
 - **`announcements`** — CRUD operations for HKEX-linked announcements
   - Fields: `id`, `locale` (en/zh), `title`, `external_url` (HKEX link), `announcement_date`, `is_visible`, `sort_order`
   - No file uploads — all announcements are external links
 
 ### 7.4 API Endpoints
 
+> Legend: 🟦 **already exists (Phase 2B)** · 🟩 **new in Phase 3**
+
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/reports` | GET | List reports (supports `?category=financial` or `?category=esg`) |
-| `/api/reports` | POST | Create new report entry |
-| `/api/reports/[id]` | PUT | Update report |
-| `/api/reports/[id]` | DELETE | Delete report (also deletes PDF file) |
-| `/api/upload/report` | POST | Upload report PDF, returns file path |
+| 🟩 `/api/reports` | GET | List reports (supports `?category=financial` or `?category=esg`) |
+| 🟩 `/api/reports` | POST | Create new report entry |
+| 🟩 `/api/reports/[id]` | PUT | Update report |
+| 🟩 `/api/reports/[id]` | DELETE | Delete report (also deletes PDF file) |
+| 🟦 `/api/upload/pdf` | POST | Report PDF upload (Phase 2B, `?locale=en` or `zh`) — reuse; no separate `/api/upload/report` needed |
 | `/api/announcements` | GET | List announcements |
 | `/api/announcements` | POST | Create new announcement |
 | `/api/announcements/[id]` | PUT | Update announcement |

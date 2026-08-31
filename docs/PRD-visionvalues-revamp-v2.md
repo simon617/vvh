@@ -3,7 +3,7 @@
 > **Version**: 2.1 (Grill-Reviewed)  
 > **Date**: 2026-07-28  
 > **Status**: Final — Implementation Ready  
-> **Implementation Status**: **Phase 1 (Foundation & Infrastructure)** ✅ (2026-08-02) · **Phase 2A (Page Templates & Public Site)** ✅ (see `docs/phase-2a-implementation.md`) · Phase 2B (Admin CMS), Phase 2.5 (Content Migration), Phase 3 (Reports/Announcements/Contact), Phase 4 (SEO/Polish) — pending.  
+> **Implementation Status**: **Phase 1 (Foundation & Infrastructure)** ✅ (2026-08-02) · **Phase 2A (Page Templates & Public Site)** ✅ (2026-08-11) · **Phase 2B (Admin CMS Editor)** ✅ (2026-08-31, see `docs/phase-2b-tasklist.md`) · Phase 2.5 (Content Migration) 🔄 baseline seeded, manual entry in progress · Phase 3 (Reports/Announcements/Contact) — pending · Phase 4 (SEO/Polish) — pending.  
 > **Based on**: Full audit of live website at `https://www.visionvalues.com.hk/` + Grilling session (16 decisions)
 
 ---
@@ -503,23 +503,28 @@ locale          TEXT NULL                  (NULL = applies to both)
 > **Phase 2A status (2026-08-11):** All 18 tasks complete — `93` tests passing, `npm run build` + `npm run lint` clean, and all 20 public URL variants (`/en/*` + `/zh/*`) return 200 at runtime. All 10 routes implemented as server components with `generateMetadata`, locale-aware templates, i18n fixes (Footer/MobileMenu), and data layers (`src/lib/reports.ts`, `announcements.ts`, `directors.ts`, `corporateCommunications.ts`) ready for the Phase 2B/3 DB swap. Post-2A refinements: the announcements page embeds the Datalink announcements page in an `<iframe>`; corporate-communications renders a Date/Document table with **local PDF links**; `ReportsTable` is sortable **and paginated**. Note: the public *page templates* for reports/announcements/contact were built here with placeholder/static data; the **DB-driven backend** (PDF upload, HKEX fetch, SMTP) is Phase 3. See `docs/phrase-2a-checklists.md` and `docs/phase-2a-implementation.md`.
 
 ### Phase 2B — Admin CMS Editor (Week 4)
-- [ ] Build admin pages listing at `/admin/pages`
-- [ ] Build page editor at `/admin/pages/[slug]`:
+- [x] Build admin pages listing at `/admin/pages`
+- [x] Build page editor at `/admin/pages/[slug]`:
   - EN/ZH tabbed editing
   - TipTap WYSIWYG (bold, italic, paragraphs, links only)
   - Header image upload per page
   - SEO meta fields (title, description)
   - Independent publish toggle per locale (Decision D8)
-- [ ] Logo upload in admin settings
-- [ ] In-app password change
-- [ ] CLI password reset command: `npm run reset-password`
-- [ ] Admin settings page (GA4 tracking ID, site name)
+- [x] Logo upload in admin settings
+- [x] In-app password change
+- [x] CLI password reset command: `npm run reset-password`
+- [x] Admin settings page (GA4 tracking ID, site name)
+
+> **Phase 2B status (2026-08-31):** All 26 planned tasks + follow-ups (Tasks 27–30) complete — **239 tests passing**, lint clean, build exit 0. Follow-up enhancements beyond the original scope: a **key/value editor** for `corporate-details` and a **shared report editor** (`financial-reports` / `esg-reports` / `corporate-communications`) with PDF upload + paginated display. Unpublished locales now fall back to placeholder content (no 404). Full trace: `docs/phase-2b-tasklist.md`.
 
 ### Phase 2.5 — Content Migration (Separate Task, ~1 Week)
-- [ ] Manually copy all existing content from live site into CMS for all 10 pages × 2 languages
+- [x] Baseline content seeded into `page_contents` for all 10 pages × 2 languages (via `npm run seed`) — includes director cards, governance PDF links, and report rows
+- [ ] Manually copy all existing content from live site into CMS for all 10 pages × 2 languages (ongoing — edit via `/en/admin/pages`)
 - [ ] Download existing header images from old site and upload to CMS
 - [ ] Verify PDF links and re-add via WYSIWYG where needed
 - [ ] Cross-check against content inventory (PRD Section 2)
+
+> **Phase 2.5 status (2026-08-31):** baseline seeded + CMS editors ready (see `docs/phase-2-content-migration.md` §5.1 for the how-to). Remaining is manual/editorial content entry and verification.
 
 ### Phase 3 — Reports, Announcements & Contact (Week 5-6)
 - [ ] Build report management admin UI (`/admin/reports/financial`, `/admin/reports/esg`):
