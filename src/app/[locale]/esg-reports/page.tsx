@@ -3,7 +3,6 @@ import { useTranslations } from "next-intl";
 import TemplateShell from "@/components/layout/TemplateShell";
 import ReportsTable from "@/components/layout/ReportsTable";
 import type { ReportRow } from "@/components/layout/ReportsTable";
-import { getEsgReports } from "@/lib/reports";
 import { getPageData } from "@/lib/pages";
 import { getReportRows } from "@/lib/report-rows";
 import type { Locale } from "@/lib/navigation";
@@ -55,7 +54,9 @@ export default async function EsgReportsPage({ params }: Props) {
   const data = await getPageData("esg-reports", locale);
   if (!data) notFound();
 
-  const rows = getReportRows(data.contentHtml) ?? getEsgReports(locale);
+  // contentHtml is always populated (DB or placeholder) and both carry the report
+  // envelope, so getReportRows always yields rows here.
+  const rows = getReportRows(data.contentHtml) ?? [];
 
   return (
     <EsgReportsView

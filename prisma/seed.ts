@@ -4,11 +4,6 @@ import {
   PLACEHOLDER_SLUGS,
 } from "../src/lib/placeholders";
 import { getDirectors } from "../src/lib/directors";
-import {
-  getCorporateCommunications,
-} from "../src/lib/corporateCommunications";
-import { getFinancialReports, getEsgReports } from "../src/lib/reports";
-import { buildReportContent } from "../src/lib/report-rows";
 import type { Locale } from "../src/lib/navigation";
 
 const prisma = new PrismaClient();
@@ -146,12 +141,8 @@ async function migratePageContent(): Promise<void> {
       let contentHtml = ph.contentHtml;
       if (slug === "board-of-directors") contentHtml = directorCardsHtml(locale);
       else if (slug === "corporate-governance") contentHtml = governanceHtml(locale);
-      else if (slug === "financial-reports")
-        contentHtml = buildReportContent(getFinancialReports(locale));
-      else if (slug === "esg-reports")
-        contentHtml = buildReportContent(getEsgReports(locale));
-      else if (slug === "corporate-communications")
-        contentHtml = buildReportContent(getCorporateCommunications(locale));
+      // financial-reports / esg-reports / corporate-communications already carry
+      // the report envelope in their placeholder contentHtml — nothing to override.
 
       const data = {
         title: ph.title,

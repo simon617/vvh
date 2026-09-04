@@ -1,4 +1,5 @@
 import { NAV_SLUGS, type NavSlug } from "./navigation";
+import { buildReportContent, type ReportRowItem } from "./report-rows";
 
 export interface PagePlaceholder {
   title: string;
@@ -12,6 +13,52 @@ export interface PagePlaceholder {
 }
 
 export const PLACEHOLDER_SLUGS = NAV_SLUGS;
+
+/* ------------------------------------------------------------------ *
+ * Canonical default report rows (single source of truth for the report
+ * pages). These feed the placeholder contentHtml as a JSON envelope
+ * ({"__type":"reports","rows":[...]}) so `getReportRows()` can read the
+ * same shape from BOTH the static placeholder and the CMS DB rows.
+ * ------------------------------------------------------------------ */
+
+const DEFAULT_FINANCIAL_REPORTS: Record<"en" | "zh", ReportRowItem[]> = {
+  en: [
+    { id: "fin-2025", date: "October 2025", title: "Annual Report 2025", url: "/pdf/AnnualReport2025.pdf" },
+    { id: "fin-2025-interim", date: "March 2025", title: "Interim Report 2024/2025", url: "/pdf/InterimReport2025.pdf" },
+  ],
+  zh: [
+    { id: "fin-2025", date: "2025年10月", title: "2025年報", url: "/pdf/AnnualReport2025.pdf" },
+    { id: "fin-2025-interim", date: "2025年3月", title: "2024/2025年中期報告", url: "/pdf/InterimReport2025.pdf" },
+  ],
+};
+
+const REPORT_ESG_REPORTS: Record<"en" | "zh", ReportRowItem[]> = {
+  en: [
+    { id: "esg-2025", date: "2025", title: "ESG Report 2025", url: "/pdf/ESGReport2025.pdf" },
+  ],
+  zh: [
+    { id: "esg-2025", date: "2025", title: "2025環境、社會及管治報告", url: "/pdf/ESGReport2025.pdf" },
+  ],
+};
+
+const REPORT_CORPORATE_COMMUNICATIONS: Record<"en" | "zh", ReportRowItem[]> = {
+  en: [
+    {
+      id: "comm-202401",
+      date: "January 2024",
+      title: "Arrangements Regarding Dissemination of Corporate Communications",
+      url: "/pdf/communication/e_Communications202401.pdf",
+    },
+  ],
+  zh: [
+    {
+      id: "comm-202401",
+      date: "2024年1月",
+      title: "有關發佈公司通訊之安排",
+      url: "/pdf/communication/c_Communications202401.pdf",
+    },
+  ],
+};
 
 const HOME_EN = `
 <p>Vision Values Holdings Limited (Hong Kong stock code: 862) is a public company listed in The Stock Exchange of Hong Kong Limited.</p>
@@ -238,34 +285,14 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaTitle: "Financial Reports | Vision Values Holdings Limited",
       metaDescription: "Financial reports of Vision Values Holdings Limited",
       breadcrumb: "Financial Reports",
-      contentHtml: `
-<table>
-  <thead>
-    <tr><th>Date</th><th>Document</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>2025</td><td><a href="/pdf/AnnualReport2025.pdf" target="_blank">Annual Report 2025</a></td></tr>
-    <tr><td>2025 Interim</td><td><a href="/pdf/InterimReport2025.pdf" target="_blank">Interim Report 2025</a></td></tr>
-  </tbody>
-</table>
-`,
+      contentHtml: buildReportContent(DEFAULT_FINANCIAL_REPORTS.en),
     },
     zh: {
       title: "財務報告",
       metaTitle: "財務報告 | 遠見控股有限公司",
       metaDescription: "遠見控股有限公司之財務報告",
       breadcrumb: "財務報告",
-      contentHtml: `
-<table>
-  <thead>
-    <tr><th>日期</th><th>文件</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>2025</td><td><a href="/pdf/AnnualReport2025.pdf" target="_blank">2025年報</a></td></tr>
-    <tr><td>2025中期</td><td><a href="/pdf/InterimReport2025.pdf" target="_blank">2025中期報告</a></td></tr>
-  </tbody>
-</table>
-`,
+      contentHtml: buildReportContent(DEFAULT_FINANCIAL_REPORTS.zh),
     },
   },
   "esg-reports": {
@@ -274,32 +301,14 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaTitle: "ESG Reports | Vision Values Holdings Limited",
       metaDescription: "Environmental, Social and Governance reports of Vision Values Holdings Limited",
       breadcrumb: "ESG Reports",
-      contentHtml: `
-<table>
-  <thead>
-    <tr><th>Date</th><th>Document</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>2025</td><td><a href="/pdf/ESGReport2025.pdf" target="_blank">ESG Report 2025</a></td></tr>
-  </tbody>
-</table>
-`,
+      contentHtml: buildReportContent(REPORT_ESG_REPORTS.en),
     },
     zh: {
       title: "環境、社會及管治報告",
       metaTitle: "環境、社會及管治報告 | 遠見控股有限公司",
       metaDescription: "遠見控股有限公司之環境、社會及管治報告",
       breadcrumb: "環境、社會及管治報告",
-      contentHtml: `
-<table>
-  <thead>
-    <tr><th>日期</th><th>文件</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>2025</td><td><a href="/pdf/ESGReport2025.pdf" target="_blank">2025環境、社會及管治報告</a></td></tr>
-  </tbody>
-</table>
-`,
+      contentHtml: buildReportContent(REPORT_ESG_REPORTS.zh),
     },
   },
   "lost-share-certificates": {
@@ -331,36 +340,14 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaDescription:
         "Corporate communications and dissemination arrangements of Vision Values Holdings Limited",
       breadcrumb: "Corporate Communications",
-      contentHtml: `
-<p>The Company disseminates corporate communications to shareholders in accordance with the disclosure requirements of The Stock Exchange of Hong Kong Limited.</p>
-<table>
-  <thead>
-    <tr><th>Date</th><th>Document</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>January 2024</td><td><a href="/pdf/communication/e_Communications202401.pdf" target="_blank" rel="noopener noreferrer">Arrangements Regarding Dissemination of Corporate Communications</a></td></tr>
-  </tbody>
-</table>
-<p>If you want to view PDF files, please download Acrobat Reader.</p>
-`,
+      contentHtml: buildReportContent(REPORT_CORPORATE_COMMUNICATIONS.en),
     },
     zh: {
       title: "公司通訊",
       metaTitle: "公司通訊 | 遠見控股有限公司",
       metaDescription: "遠見控股有限公司之公司通訊及發佈安排",
       breadcrumb: "公司通訊",
-      contentHtml: `
-<p>本公司按照香港聯合交易所有限公司之披露規定向股東發佈公司通訊。</p>
-<table>
-  <thead>
-    <tr><th>發佈日期</th><th>文件</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>2024年1月</td><td><a href="/pdf/communication/c_Communications202401.pdf" target="_blank" rel="noopener noreferrer">有關發佈公司通訊之安排</a></td></tr>
-  </tbody>
-</table>
-<p>如欲檢視 PDF 檔案，請下載 Acrobat Reader。</p>
-`,
+      contentHtml: buildReportContent(REPORT_CORPORATE_COMMUNICATIONS.zh),
     },
   },
   contact: {

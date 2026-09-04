@@ -88,4 +88,12 @@ Refinements applied after the initial Phase 2A completion review (kept here so t
 
 ---
 
+---
+
+> **Phase 2B follow-up note (2026-09):** the standalone report data layers `src/lib/reports.ts` and
+> `src/lib/corporateCommunications.ts` (referenced above) have since been **consolidated into
+> `src/lib/placeholders.ts`**, which is now the single static-content source for report rows
+> (stored as a JSON report envelope via `buildReportContent`). The public report pages read rows
+> through `getReportRows()` (`src/lib/report-rows.ts`) from DB content or the placeholder envelope —
+> no separate `reports.ts`/`corporateCommunications.ts` fallback remains. See the developer guide.
 *End of Phase 2A Implementation Progress — all tasks complete.*

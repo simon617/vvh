@@ -35,6 +35,7 @@ export interface PageContentInput {
   breadcrumbLabel?: string | null;
 }
 
+// Combines a page with both language versions in one object
 export interface PageWithContentSummary {
   id: number;
   slug: string;

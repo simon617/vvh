@@ -3,7 +3,6 @@ import { useTranslations } from "next-intl";
 import TemplateShell from "@/components/layout/TemplateShell";
 import ReportsTable from "@/components/layout/ReportsTable";
 import type { ReportRow } from "@/components/layout/ReportsTable";
-import { getCorporateCommunications } from "@/lib/corporateCommunications";
 import { getPageData } from "@/lib/pages";
 import { getReportRows } from "@/lib/report-rows";
 import type { Locale } from "@/lib/navigation";
@@ -58,8 +57,9 @@ export default async function CorporateCommunicationsPage({ params }: Props) {
   const data = await getPageData("corporate-communications", locale);
   if (!data) notFound();
 
-  const rows =
-    getReportRows(data.contentHtml) ?? getCorporateCommunications(locale);
+  // contentHtml is always populated (DB or placeholder) and both carry the report
+  // envelope, so getReportRows always yields rows here.
+  const rows = getReportRows(data.contentHtml) ?? [];
 
   return (
     <CorporateCommunicationsView

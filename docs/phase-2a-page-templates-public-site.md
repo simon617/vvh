@@ -119,7 +119,7 @@ npm run dev
 | `src/lib/placeholders.ts` | Placeholder content for each page × locale |
 | `src/lib/pages.ts` | `getPageData(slug, locale)` data-fetching layer (Phase 2B DB swap point) |
 | `src/lib/breadcrumbs.ts` | `getBreadcrumbs(pathname, locale)` pure breadcrumb logic |
-| `src/lib/reports.ts` | Financial/ESG report placeholder rows per locale |
+| `src/lib/reports.ts` | Financial/ESG report placeholder rows per locale — *(consolidated into `src/lib/placeholders.ts` in Phase 2B follow-up; file removed — see `docs/phase-2a-implementation.md` note)* |
 | `src/lib/announcements.ts` | Announcement placeholder rows per locale |
 | `src/lib/directors.ts` | Board of Directors data (10 directors, localized) |
 

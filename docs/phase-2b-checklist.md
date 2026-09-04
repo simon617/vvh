@@ -113,7 +113,7 @@ docker-compose up -d --build
 | `src/lib/placeholders.ts` | `PagePlaceholder` per `{slug, locale}` (title, metaTitle, metaDescription, breadcrumb, heroImage?, contentHtml) | Serves as the shape for the DB read path and the **fallback** until Phase 2.5 content migration. |
 | `src/app/[locale]/<slug>/page.tsx` (×10 templates) | Each calls `generateMetadata` + a template component that uses `getPageData` | All 10 must keep working after the DB swap. See §2.4 for template-specific caveats. |
 | `src/components/layout/ContentWithSidebar.tsx` | Renders `contentHtml` via `dangerouslySetInnerHTML` + `.prose` | The render path WYSIWYG HTML flows through. Already expects HTML body content. |
-| `reports.ts` / `directors.ts` / `corporateCommunications.ts` / `announcements.ts` (+ `ReportsTable.tsx`, `DirectorCards.tsx`…) | Phase 2A data/layout layers for specialized pages | ⚠️ Not all content is simple `contentHtml` — see §2.4 scope caveat. |
+| `src/lib/directors.ts` / `src/lib/announcements.ts` | Phase 2A data layers for the Board page fallback + Announcements iframe URL | ⚠️ `directors.ts` drives the Board **fallback** cards; the CMS-driven card grid is the primary render. Report rows (`financial/esg/communications`) are now **consolidated into `placeholders.ts`** as a JSON envelope. |
 
 ### 2.3 Files to CREATE in Phase 2B
 
@@ -142,7 +142,7 @@ The Phase 2A public pages are **not all driven by a single `contentHtml` field**
 
 - **Rich-text / content-with-sidebar pages** (`corporate-governance`, `lost-share-certificates`, `corporate-details`, `board-of-directors`) → map naturally to `PageContent.contentHtml`. ✅ CMS-editable in 2B.
 - **Home** → HTML body from `contentHtml`; hero is currently a gradient `div`. Decide whether hero image/metrics are CMS fields or just `heroImage`.
-- **Reports pages** (`financial-reports`, `esg-reports`), **corporate-communications**, **announcements** → use **separate data layers** (`reports.ts`, `corporateCommunications.ts`, announcements **iframe**), not plain `contentHtml`. These map to the `reports` / `announcement` tables in **Phase 3**. In 2B, keep them on placeholders (or map only their intro/body to `contentHtml`) — do **not** build the Phase 3 report-management UI here.
+- **Reports pages** (`financial-reports`, `esg-reports`), **corporate-communications**, **announcements** → report pages now render **`page_contents.contentHtml`** (a JSON report envelope consumed by `getReportRows` → `ReportsTable`); the default rows live in `placeholders.ts` (single source). Announcements still use the **Datalink iframe**. These map to the `reports` / `announcement` tables in **Phase 3** — do **not** build the Phase 3 report-management UI in 2B.
 
 > **Recommended 2B scope (confirm with PM):** wire the `contentHtml`-driven pages to the DB; leave reports/announcements for Phase 3. Update this section when decided.
 

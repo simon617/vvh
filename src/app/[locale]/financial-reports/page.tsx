@@ -3,7 +3,6 @@ import { useTranslations } from "next-intl";
 import TemplateShell from "@/components/layout/TemplateShell";
 import ReportsTable from "@/components/layout/ReportsTable";
 import type { ReportRow } from "@/components/layout/ReportsTable";
-import { getFinancialReports } from "@/lib/reports";
 import { getPageData } from "@/lib/pages";
 import { getReportRows } from "@/lib/report-rows";
 import type { Locale } from "@/lib/navigation";
@@ -55,8 +54,9 @@ export default async function FinancialReportsPage({ params }: Props) {
   const data = await getPageData("financial-reports", locale);
   if (!data) notFound();
 
-  // DB-driven rows when published content is present; else the hardcoded default.
-  const rows = getReportRows(data.contentHtml) ?? getFinancialReports(locale);
+  // contentHtml is always populated (DB or placeholder) and both carry the report
+  // envelope, so getReportRows always yields rows here.
+  const rows = getReportRows(data.contentHtml) ?? [];
 
   return (
     <FinancialReportsView

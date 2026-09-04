@@ -45,7 +45,7 @@ This is the **orientation guide** for any developer who needs to work on this co
 ┌────────────────────────────────────────────┐
 │  Data layer  src/lib                        │
 │  - pure helpers: navigation, placeholders,  │
-│    reports, directors, key-value, report-rows│
+│    directors, key-value, report-rows        │
 │  - server-only DB access: page-content,     │
 │    site-settings, auth, pages               │
 │  - singleton Prisma client  src/lib/prisma   │
@@ -131,15 +131,13 @@ This is the **orientation guide** for any developer who needs to work on this co
 | `page-content-validation.ts` | pure | Validates PUT body shape. Kept **out** of the route (Next requires route files to export only HTTP handlers). | `/api/pages/[slug]`. |
 | `site-settings.ts` | server | Global settings (`getSiteSetting`, `setSiteSetting`, `getSiteSettings`). | `/api/settings`, admin settings page. |
 | `pages.ts` | server | `getPageData(slug, locale)` → `PagePlaceholder` with DB/placeholder resolution + `isDbContent`. | Every public page. |
-| `placeholders.ts` | pure | Static default content for all 10 pages × 2 locales (the "until migrated" fallback). | `pages.ts`, seed, tests. |
+| `placeholders.ts` | pure | Static default content for all 10 pages × 2 locales (the "until migrated" fallback) — **single source** for default content. The 3 report pages' default rows are stored here as a JSON report envelope (via `buildReportContent`). | `pages.ts`, seed, tests. |
 | `navigation.ts` | pure | `NAV_SLUGS`, nav groups, labels (DRY source-of-truth for slugs). | All layouts, placeholders, seed. |
-| `reports.ts` | pure | Default Financial + ESG report rows (fallback). | Financial/ESG public pages, seed. |
-| `corporateCommunications.ts` | pure | Default corporate-communications rows. | Corporate-communications page, seed. |
 | `announcements.ts` | pure | HKEX Datalink iframe URL builder. | Announcements page. |
 | `directors.ts` | pure | Director names/titles/categories/bios (fallback data). | Board page (fallback) + seed (→ CMS cards). |
 | `breadcrumbs.ts` | pure | Breadcrumb item resolution. | `Breadcrumb` component. |
 | `key-value.ts` | pure | Parse/build the `<table>` HTML used by the **corporate-details** key-value editor. | `KeyValueEditor`, tests. |
-| `report-rows.ts` | pure | JSON envelope (`{"__type":"reports","rows":[...]}`) stored in `contentHtml` for report pages; parse/serialize. | `ReportsEditor`, report public pages, seed. |
+| `report-rows.ts` | pure | JSON envelope (`{"__type":"reports","rows":[...]}`) stored in `contentHtml` for report pages; parse/serialize. | `placeholders.ts` (builds placeholder envelope), `ReportsEditor`, report public pages, seed. |
 | `uploads.ts` | pure | Upload validation/path helpers (images + documents), `resolveUploadPath`, `sanitizeFilename`, `getUploadUrl`. | Upload routes, `/uploads` serving, `logo.ts`. |
 | `logo.ts` | pure | Logo file-path + write helpers. | `/api/logo`, tests. |
 
@@ -206,7 +204,7 @@ Each public page is an async Server Component that:
 | Corporate Governance | `corporate-governance/` | `ContentWithSidebar` (rich text + PDF links). |
 | Lost Share Certificates | `lost-share-certificates/` | `ContentWithSidebar`. |
 | Announcements | `announcements/` | `TemplateShell` + Datalink iframe (`getAnnouncementsUrl`). |
-| Financial Reports | `financial-reports/` | `TemplateShell` + `ReportsTable` (DB rows via `report-rows.ts`, fallback to `reports.ts`). |
+| Financial Reports | `financial-reports/` | `TemplateShell` + `ReportsTable` (rows via `getReportRows` from DB or placeholder envelope). |
 | ESG Reports | `esg-reports/` | `TemplateShell` + `ReportsTable`. |
 | Corporate Communications | `corporate-communications/` | `TemplateShell` + `ReportsTable`. |
 | Contact | `contact/` | `TemplateShell` + `ContactForm`. |
@@ -408,10 +406,11 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
     entirely — every API route calls `getSession()` and returns 401 when absent. Keep this pattern
     for new endpoints.
 
-11. **PDFs / reports.** Public reports come from `page_contents.contentHtml` (JSON) or fall back to
-    `src/lib/reports.ts` / `corporateCommunications.ts`. The `Report`/`Announcement` tables are Phase 3.
-    Within the CMS: D11 — policy PDFs are pasted as WYSIWYG links; D6 — files live under
-    `uploads/reports/<locale>/`.
+11. **PDFs / reports.** Public reports come from `page_contents.contentHtml` — a JSON report
+    envelope read by `getReportRows()` (`src/lib/report-rows.ts`). The default rows live in
+    `placeholders.ts` (the single static-content source) as an envelope too. The `Report`/`Announcement`
+    tables are Phase 3. Within the CMS: D11 — policy PDFs are pasted as WYSIWYG links; D6 — files live
+    under `uploads/reports/<locale>/`.
 
 12. **Slug sync.** When adding a page, keep slugs in sync across `navigation.ts` (nav source of truth),
     `placeholders.ts` (fallback content), and `prisma/seed.ts` (seed). They share `NAV_SLUGS`.
