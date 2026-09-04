@@ -2,7 +2,7 @@
 
 > **Project:** Vision Values Holdings Limited — Website Revamp
 > **Phase:** 2B — Admin CMS Editor
-> **Status:** ✅ **COMPLETE** — all 26 tasks executed from `docs/phase-2b-implementation.md` + follow-up enhancements; suite at **239 tests passing**.
+> **Status:** ✅ **COMPLETE** — all 26 tasks executed from `docs/phase-2b-implementation.md` + follow-up enhancements; suite at **232 tests passing**.
 > **Baseline:** 27 test files / **93 tests passing** (Phase 2A) · branch `phase-2b` at `1ab1763`.
 > **Companion docs:** `docs/phase-2b-checklist.md` (handoff) · `docs/phase-2b-implementation.md` (plan)
 
@@ -44,6 +44,7 @@
 | 30 | Shared paginated report editor for `financial-reports` / `esg-reports` / `corporate-communications` (date + document title + PDF upload) | ✅ `cd2afe6`, `dbf4913` | `src/lib/report-rows.ts` (+`report-rows.test.ts`), `src/app/api/upload/pdf/route.ts` (+`route.test.ts`), `src/components/admin/ReportsEditor.tsx` (+`ReportsEditor.test.tsx`), `src/components/admin/PageEditor.tsx` (+`PageEditor.test.tsx`), public `page.tsx` + `page.test.tsx` for all 3 report pages, `src/lib/uploads.ts` (document validation), `prisma/seed.ts` (seed report rows) |
 | 31 | Developer guide — folder map, per-file purposes & linkages, conventions, env vars, testing | ✅ `01dc033` | `docs/developerGuide/developer-guide.md` (+`README.md`) |
 | 32 | Pre-Phase-3 doc alignment — PRD status/checklists, Phase 3 plan updated to build on Phase 2B report editor/PDF upload, locale-prefixed admin paths | ✅ `ffccc09` | `docs/PRD-visionvalues-revamp-v2.md`, `docs/phase-3-reports-announcements-contact.md`, `docs/phase-2a-implementation.md` (director-bio CMS note) |
+| 33 | Consolidate static content — report rows moved into `placeholders.ts` as the single source; deleted `reports.ts` + `corporateCommunications.ts`; public report pages read rows via `getReportRows` (no separate fallback module) | ✅ `301c7fe` | `src/lib/placeholders.ts`, `src/lib/report-rows.ts`, 3 report `page.tsx`, `prisma/seed.ts`, deleted `src/lib/reports.ts`(+test), `src/lib/corporateCommunications.ts`(+test); docs updated (`developerGuide`, `phase-2b-checklist`, `phase-2a-implementation`, `phase-2a-page-templates-public-site`) |
 
 ## Commits
 
@@ -58,6 +59,7 @@
 | `dbf4913` | 30 | DB-driven rows test coverage for esg-reports + corporate-communications |
 | `01dc033` | 31 | Developer guide: folder/file map, linkages, conventions |
 | `ffccc09` | 32 | Pre-Phase-3 doc alignment: PRD + Phase 3 plan updated |
+| `301c7fe` | 33 | Consolidate static content into placeholders.ts (single source) — removed reports.ts / corporateCommunications.ts |
 
 ---
 

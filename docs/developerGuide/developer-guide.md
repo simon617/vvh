@@ -4,7 +4,7 @@
 > **Stack:** Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · Prisma (SQLite) · next-intl · TipTap · Vitest · Docker
 > **Repo:** https://github.com/simon617/vvh (branch `phase-2b`)
 > **Docs:** `docs/` contains the phase plans (PRD, phase-1…phase-4), checklists, task lists and this guide.
-> **Tests:** 55 test files / **239 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0
+> **Tests:** 53 test files / **232 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0
 
 ---
 
@@ -415,7 +415,7 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 12. **Slug sync.** When adding a page, keep slugs in sync across `navigation.ts` (nav source of truth),
     `placeholders.ts` (fallback content), and `prisma/seed.ts` (seed). They share `NAV_SLUGS`.
 
-13. **Tests to keep green.** Target the current count on `npm test` (55 files / 239 tests);
+13. **Tests to keep green.** Target the current count on `npm test` (53 files / 232 tests);
     `npm run lint` should be clean apart from the two pre-existing Phase-1 warnings
     (`admin/setup` useEffect deps, `Logo` `<img>`); `npm run build` exits 0.
 
