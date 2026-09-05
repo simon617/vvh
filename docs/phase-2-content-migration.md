@@ -1,6 +1,7 @@
 # Phase 2.5: Content Migration (Separate Follow-Up Task)
 
-> **Status:** 🔄 **IN PROGRESS** — baseline content seeded ✅ (see §5.1). All 10 pages × EN/ZH now have editable `page_contents` rows; remaining work is refining text via the CMS editor and the manual verification list (§7.8).
+> **Status:** 🔄 **IN PROGRESS** — baseline content seeded ✅ (see §5.1). All 10 pages × EN/ZH now have editable `page_contents` rows. **Follow the per-task checklist in
+> `docs/phase-2-content-migration-checklist.md`** — it marks what Phase 2B already did and lists what's left (real bios, header images, Financial/ESG/Comms PDFs, verification).
 
 **Duration:** ~1 week (manual copy-paste task)  
 **Complexity:** Low (tedious but straightforward)  
@@ -15,6 +16,7 @@
 
 | # | Task | Files Modified |
 |---|------|----------------|
+| 8 | Create the per-task **Content Migration Context Checklist** (marks Phase-2B-done items, remaining work: real bios, header images, Financial/ESG/Comms PDFs, verification). | `docs/phase-2-content-migration-checklist.md` (new), pointer added in `docs/phase-2-content-migration.md` |
 | 1 | Make Board-of-Directors page render the CMS `content_html` as a responsive **card grid** once a published DB row exists (each `<p>` = one director card, each `<h2>` = a full-width category row); keep the hardcoded `DirectorCards` component as a fallback only. | `src/app/[locale]/board-of-directors/page.tsx`, `.../page.test.tsx` |
 | 2 | Card-grid styling for the DB director content. | `src/app/globals.css` (`.director-cards .prose`) |
 | 3 | Add `application/pdf` MIME to the `/uploads` serving route so stored PDFs open/download. | `src/app/uploads/[...path]/route.ts`, `.../route.test.ts` |
