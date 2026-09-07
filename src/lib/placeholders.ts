@@ -1,5 +1,6 @@
-import { NAV_SLUGS, type NavSlug } from "./navigation";
+import { NAV_SLUGS, type NavSlug, type Locale } from "./navigation";
 import { buildReportContent, type ReportRowItem } from "./report-rows";
+import { getDirectors } from "./directors";
 
 export interface PagePlaceholder {
   title: string;
@@ -60,6 +61,99 @@ const REPORT_CORPORATE_COMMUNICATIONS: Record<"en" | "zh", ReportRowItem[]> = {
   ],
 };
 
+/* ------------------------------------------------------------------ *
+ * Builders for structured page content that must match the DB baseline
+ * (board-of-directors card grid + corporate-governance PDF link list).
+ * Keeping them here (instead of in the seed) makes placeholders.ts the
+ * single static-content source — the seed writes getPlaceholder() verbatim.
+ * ------------------------------------------------------------------ */
+
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Board of Directors content: category <h2> + one card <p> per director,
+ *  plus the Role-and-Functions PDF link. Rendered as cards by
+ *  .director-cards in globals.css. */
+function directorCardsHtml(locale: Locale): string {
+  const groups = new Map<string, { name: string; title: string; bio: string }[]>();
+  for (const d of getDirectors(locale)) {
+    const list = groups.get(d.category) ?? [];
+    list.push(d);
+    groups.set(d.category, list);
+  }
+
+  const blocks: string[] = [];
+  for (const [category, list] of Array.from(groups.entries())) {
+    blocks.push(`<h2>${escHtml(category)}</h2>`);
+    for (const d of list) {
+      const titleHtml = d.title ? `<br/><em>${escHtml(d.title)}</em>` : "";
+      blocks.push(
+        `<p><strong>${escHtml(d.name)}</strong>${titleHtml}<br/>${escHtml(d.bio)}</p>`
+      );
+    }
+  }
+
+  const roleLabel =
+    locale === "zh" ? "董事之角色與職能" : "Directors' Roles and Functions";
+  const roleHeader = locale === "en" ? "Roles & Responsibilities" : "角色與職責";
+  blocks.push(
+    `<p><strong>${escHtml(roleHeader)}</strong><br/>` +
+      `<a href="/uploads/reports/${locale}/RoleAndFunction.pdf" target="_blank" rel="noopener noreferrer">` +
+      `${escHtml(roleLabel)} (PDF)</a></p>`
+  );
+
+  return blocks.join("\n");
+}
+
+/** Corporate Governance documentation links (point to locally uploaded PDFs). */
+const GOVERNANCE_DOCS: Record<Locale, { label: string; file: string }[]> = {
+  en: [
+    { label: "Memorandum & Articles of Association", file: "MoAandAoA (3).pdf" },
+    { label: "Board Diversity Policy", file: "E-20180800-Board Diversity PolicyV2.pdf" },
+    { label: "Terms of Reference of the Nomination Committee", file: "e_Terms of Reference of Nomination Committee.pdf" },
+    { label: "Nomination Policy", file: "E-Nomination Policy.pdf" },
+    { label: "Workforce Diversity Policy", file: "e_Workforce Diversity Policy.pdf" },
+    { label: "Terms of Reference of the Audit Committee", file: "TOR-AuditCommittee (1).pdf" },
+    { label: "Terms of Reference of the Remuneration Committee", file: "TOR-RemunerationCommittee.pdf" },
+    { label: "Whistleblowing Policy", file: "WHISTLEBLOWING POLICY MEC (eng) (1).pdf" },
+    { label: "Anti-Corruption Policy", file: "VVH Anti-corruption policy (eng).pdf" },
+    { label: "Code for Securities Transactions", file: "CodeForSecuritiesTransactions.pdf" },
+    { label: "Dividend Policy", file: "E-dividend policy.pdf" },
+  ],
+  zh: [
+    { label: "組織章程大綱及細則", file: "MoAandAoA (3).pdf" },
+    { label: "董事會多元化政策", file: "C-20181205-Board Diversity Policy (chi).pdf" },
+    { label: "提名委員會職權範圍", file: "c_Terms of Reference of Nomination Committee.pdf" },
+    { label: "提名政策", file: "C-Nomination Policy.pdf" },
+    { label: "員工多元化政策", file: "c_Workforce Diversity Policy.pdf" },
+    { label: "審核委員會職權範圍", file: "TOR-AuditCommittee (1).pdf" },
+    { label: "薪酬委員會職權範圍", file: "TOR-RemunerationCommittee.pdf" },
+    { label: "舉報政策", file: "WHISTLEBLOWING POLICY MEC (chi).pdf" },
+    { label: "反貪污政策", file: "VVH Anti-corruption policy (chi).pdf" },
+    { label: "證券交易守則", file: "CodeForSecuritiesTransactions.pdf" },
+    { label: "股息政策", file: "C-dividend policy.pdf" },
+  ],
+};
+
+function governanceHtml(locale: Locale): string {
+  const intro =
+    locale === "zh"
+      ? "本公司致力維持嚴謹之企業管治。以下為相關政策及文件，歡迎下載查閱。"
+      : "The Company is committed to maintaining the highest standards of corporate governance. The following policies and documents are available for download.";
+  const items = GOVERNANCE_DOCS[locale]
+    .map(
+      (doc) =>
+        `<li><a href="/uploads/reports/${locale}/${encodeURI(doc.file)}" target="_blank" rel="noopener noreferrer">${escHtml(doc.label)}</a></li>`
+    )
+    .join("\n");
+  const heading = locale === "en" ? "Policies & Documents" : "政策及文件";
+  return `<p>${intro}</p>\n<h2>${heading}</h2>\n<ul>\n${items}\n</ul>`;
+}
 const HOME_EN = `
 <p>Vision Values Holdings Limited (Hong Kong stock code: 862) is a public company listed in The Stock Exchange of Hong Kong Limited.</p>
 <p>The Group is principally engaged in the provision of property investment, logistics business, minerals exploration and private jet management services.</p>
@@ -95,50 +189,14 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaDescription:
         "Board of Directors of Vision Values Holdings Limited - Executive and Independent Non-Executive Directors",
       breadcrumb: "Board of Directors",
-      contentHtml: `
-<h2>Executive Directors</h2>
-<ul>
-  <li>Mr. Lo Luen Chuen (Chairman)</li>
-  <li>Mr. Ho Hau Cheung</li>
-  <li>Ms. Yung Yee Wai</li>
-  <li>Mr. Lo Sze Ki</li>
-  <li>Mr. Lo Sze Wai</li>
-  <li>Mr. Lo Sze Chung</li>
-</ul>
-<h2>Independent Non-Executive Directors</h2>
-<ul>
-  <li>Mr. Tsui Hing Chuen (JP)</li>
-  <li>Mr. Lau Wai Biu</li>
-  <li>Mr. Li Kai Wai</li>
-  <li>Mr. Ngai Hin Foon</li>
-</ul>
-<p>Download: <a href="/pdf/RoleAndFunction.pdf" target="_blank">Directors' Roles and Functions (PDF)</a></p>
-`,
+      contentHtml: directorCardsHtml("en"),
     },
     zh: {
       title: "董事會",
       metaTitle: "董事會 | 遠見控股有限公司",
       metaDescription: "遠見控股有限公司董事會 — 執行董事及獨立非執行董事",
       breadcrumb: "董事會",
-      contentHtml: `
-<h2>執行董事</h2>
-<ul>
-  <li>魯連城先生（主席）</li>
-  <li>何厚鏘先生</li>
-  <li>翁綺慧女士</li>
-  <li>魯士奇先生</li>
-  <li>魯士偉先生</li>
-  <li>魯士中先生</li>
-</ul>
-<h2>獨立非執行董事</h2>
-<ul>
-  <li>徐慶全先生（太平紳士）</li>
-  <li>劉偉彪先生</li>
-  <li>李企偉先生</li>
-  <li>魏啟寬先生</li>
-</ul>
-<p><a href="/pdf/RoleAndFunction.pdf" target="_blank">董事名單與其角色和職能（PDF）</a></p>
-`,
+      contentHtml: directorCardsHtml("zh"),
     },
   },
   "corporate-details": {
@@ -197,50 +255,14 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaTitle: "Corporate Governance | Vision Values Holdings Limited",
       metaDescription: "Corporate governance policies of Vision Values Holdings Limited",
       breadcrumb: "Corporate Governance",
-      contentHtml: `
-<p>Corporate governance documents of the Company are available for download below.</p>
-<table>
-  <tbody>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/MoAandAoA.pdf" target="_blank" rel="noopener noreferrer">Memorandum of Association and Articles of Association</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/TOR-AuditCommittee.pdf" target="_blank" rel="noopener noreferrer">Audit Committee - Terms of Reference</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/TOR-RemunerationCommittee.pdf" target="_blank" rel="noopener noreferrer">Remuneration Committee - Terms of Reference</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/e_Terms of Reference of Nomination Committee.pdf" target="_blank" rel="noopener noreferrer">Nomination Committee - Terms of Reference</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/CodeForSecuritiesTransactions.pdf" target="_blank" rel="noopener noreferrer">Code for Securities Transaction by Directors and Employees</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/e-20161025.pdf" target="_blank" rel="noopener noreferrer">Procedures for Shareholders to Propose a Person for Election as a Director of the Company at a general meeting</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/E-Nomination Policy.pdf" target="_blank" rel="noopener noreferrer">Nomination Policy for Recruitment of Board Members</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/VVH Anti-corruption policy (eng).pdf" target="_blank" rel="noopener noreferrer">Anti-Corruption Policy</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/E-20180800-Board Diversity PolicyV2.pdf" target="_blank" rel="noopener noreferrer">Board Diversity Policy</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/E-dividend policy.pdf" target="_blank" rel="noopener noreferrer">Dividend Policy</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/WHISTLEBLOWING POLICY MEC (eng).pdf" target="_blank" rel="noopener noreferrer">Whistleblowing Policy</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/eng/pdf/governance/e_Workforce Diversity Policy.pdf" target="_blank" rel="noopener noreferrer">Workforce Diversity Policy</a></td></tr>
-  </tbody>
-</table>
-`,
+      contentHtml: governanceHtml("en"),
     },
     zh: {
       title: "企業管治",
       metaTitle: "企業管治 | 遠見控股有限公司",
       metaDescription: "遠見控股有限公司之企業管治政策",
       breadcrumb: "企業管治",
-      contentHtml: `
-<p>本公司之企業管治文件可供下列下載。</p>
-<table>
-  <tbody>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/MoAandAoA.pdf" target="_blank" rel="noopener noreferrer">公司組織章程大綱及組織章程細則</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/TOR-AuditCommittee.pdf" target="_blank" rel="noopener noreferrer">審核委員會 - 職權範圍書</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/TOR-RemunerationCommittee.pdf" target="_blank" rel="noopener noreferrer">薪酬委員會 - 職權範圍書</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/c_Terms of Reference of Nomination Committee.pdf" target="_blank" rel="noopener noreferrer">提名委員會 - 職權範圍書</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/CodeForSecuritiesTransactions.pdf" target="_blank" rel="noopener noreferrer">董事及員工進行證券交易守則 (只提供英文版)</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/c-20161025.pdf" target="_blank" rel="noopener noreferrer">股東於股東大會上提名個別人士參選董事職位之程序</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/C-Nomination Policy.pdf" target="_blank" rel="noopener noreferrer">提名政策招聘董事會成員</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/VVH Anti-corruption policy (chi).pdf" target="_blank" rel="noopener noreferrer">反貪污政策</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/C-20181205-Board Diversity Policy (chi).pdf" target="_blank" rel="noopener noreferrer">董事會多元化政策</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/C-dividend policy.pdf" target="_blank" rel="noopener noreferrer">股息政策</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/WHISTLEBLOWING POLICY MEC (chi).pdf" target="_blank" rel="noopener noreferrer">舉報政策</a></td></tr>
-    <tr><td><a href="https://www.visionvalues.com.hk/chi/pdf/governance/c_Workforce Diversity Policy.pdf" target="_blank" rel="noopener noreferrer">員工多元化政策</a></td></tr>
-  </tbody>
-</table>
-`,
+      contentHtml: governanceHtml("zh"),
     },
   },
   announcements: {

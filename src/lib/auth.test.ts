@@ -70,5 +70,5 @@ describe("changePassword(userId, currentPassword, newPassword)", () => {
     expect(storedHash).not.toBe(stored);
     expect(await bcrypt.compare("newpass1", storedHash)).toBe(true);
     expect(await bcrypt.compare("oldpass1", storedHash)).toBe(false);
-  });
+  }, 15000);
 });

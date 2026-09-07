@@ -58,7 +58,7 @@ describe("ContentWithSidebar", () => {
   it("renders the page content body", async () => {
     render(await ContentWithSidebar({ slug: "corporate-governance", locale: "en" }));
     expect(
-      screen.getByText("Memorandum of Association and Articles of Association")
+      screen.getByText("Memorandum & Articles of Association")
     ).toBeInTheDocument();
   });
 
@@ -67,7 +67,7 @@ describe("ContentWithSidebar", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "企業管治" })
     ).toBeInTheDocument();
-    expect(screen.getByText("公司組織章程大綱及組織章程細則")).toBeInTheDocument();
+    expect(screen.getByText("組織章程大綱及細則")).toBeInTheDocument();
   });
 
   it("renders the hero image when one is present", async () => {
