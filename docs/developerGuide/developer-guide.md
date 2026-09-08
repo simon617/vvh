@@ -287,8 +287,8 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 | `AdminUser` | Admin accounts. | Password = bcrypt hash (12 rounds). |
 | `Page` | One row per public page slug. | `slug` unique; `menuOrder` controls admin-listing order; `isVisible`. |
 | `PageContent` | Per-page × per-locale content. | **One row per `(pageId, locale)`** (`@@unique([pageId, locale])`). Fields: `title`, `metaTitle`, `metaDescription`, `heroImage`, `contentHtml`, `breadcrumbLabel`, `isPublished`. |
-| `Report` | Financial/ESG report metadata. | **Phase 3** — report pages currently use `contentHtml` JSON (`report-rows.ts`), not this table. |
-| `Announcement` | Announcement metadata. | **Phase 3** — announcements page uses Datalink iframe today. |
+| `Report` | Financial/ESG report metadata. | **NOT USED (TD-30 Option A)** — reports live in `contentHtml` JSON envelope (`report-rows.ts`). Reserved; candidate for removal. |
+| `Announcement` | Announcement metadata. | **NOT USED (TD-30 Option A)** — announcements use the Datalink iframe. Reserved; candidate for removal. |
 | `SiteSetting` | Global key/value settings. | `key` unique; `locale` nullable — global settings have `locale = NULL`. |
 
 ### 5.2 Seed (`prisma/seed.ts`) + `src/lib` helpers
@@ -409,7 +409,8 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 11. **PDFs / reports.** Public reports come from `page_contents.contentHtml` — a JSON report
     envelope read by `getReportRows()` (`src/lib/report-rows.ts`). The default rows live in
     `placeholders.ts` (the single static-content source) as an envelope too. The `Report`/`Announcement`
-    tables are Phase 3. Within the CMS: D11 — policy PDFs are pasted as WYSIWYG links; D6 — files live
+    tables are **NOT USED** (TD-30 Option A): announcements render the Datalink iframe; reports stay in
+    the envelope. Within the CMS: D11 — policy PDFs are pasted as WYSIWYG links; D6 — files live
     under `uploads/reports/<locale>/`.
 
 12. **Slug sync.** When adding a page, keep slugs in sync across `navigation.ts` (nav source of truth),

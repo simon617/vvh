@@ -21,19 +21,20 @@ Build the remaining admin features for managing Financial Reports, ESG Reports, 
 > - a **sortable + paginated `ReportsTable`** on the public pages,
 > - rows persisted as a JSON envelope in `page_contents.contentHtml` (`src/lib/report-rows.ts`).
 >
-> Phase 3 therefore **does not re-build** the report upload/table mechanics below — it builds the
-> **management dashboard(s)** and decides whether to (a) keep the JSON-in-`contentHtml` approach
-> (recommended — already working; extend it with a dedicated reports admin UI that CRUDs the same
-> envelope) or (b) migrate to the `reports` table CRUD originally planned (§ TD-30 below).
+> **DECIDED (2026, TD-30 Option A):** Phase 3 keeps the JSON-in-`contentHtml` approach and does **not**
+> migrate reports to the `reports` table. Phase 3 builds a **management dashboard** that reads/edits the
+> same envelope (reuse `ReportsEditor` / `getReportRows`; add a listing UI + `/api/reports*` routes over
+> the envelope). Announcements stay on the **Datalink iframe** (3rd-party content); the `announcements`
+> table is likewise **not** used. The `Report`/`Announcement` tables remain **reserved/unused**.
 
 | # | Deliverable | Description |
 |---|-------------|-------------|
-| 3.1 | Report management UI (Financial) | `/en/admin/reports/financial` — upload PDF, set title/description/year/locale, visible/hidden toggle, sort order, delete |
+| 3.1 | Report management UI (Financial) | `/en/admin/reports/financial` — listing + edit of the **JSON envelope** (date, document title, PDF upload, reorder, delete) — **no `reports` table** |
 | 3.2 | Report management UI (ESG) | `/en/admin/reports/esg` — same as Financial but separate dashboard |
-| 3.3 | Announcements management UI | `/en/admin/announcements` — paste HKEX URL, auto-fetch title/date, manual edit fallback, visible/hidden toggle |
-| 3.4 | Financial Reports public page | Sortable, paginated table with Date + Document (PDF download) columns (already wired to `ReportsTable`; Phase 3 connects the chosen data source) |
+| 3.3 | Announcements management UI | *Not built in Phase 3* — announcements stay on the Datalink iframe (3rd-party). *(Dropped under TD-30 Option A.)* |
+| 3.4 | Financial Reports public page | Sortable, paginated table with Date + Document (PDF download) columns (already wired to `ReportsTable`; reads `getReportRows` from DB or placeholder envelope) |
 | 3.5 | ESG Reports public page | Sortable, paginated table with Date + Document columns (already wired to `ReportsTable`) |
-| 3.6 | Announcements public page | Table with Date + title linking to HKEX, fetched from `announcements` table (replaces current Datalink iframe) |
+| 3.6 | Announcements public page | **Datalink iframe** (already implemented) — keep as-is. *(No HKEX table DB migration.)* |
 | 3.7 | Contact form (public) | Form with Name, Subject, Email, Message fields; client-side validation (EN + ZH messages); Submit + Reset buttons |
 | 3.8 | Contact form email sending | Nodemailer integration: send email via company SMTP (IP-based auth), success/failure notification to user |
 | 3.9 | SMTP configuration | Configured via `.env` variables (SMTP_HOST, SMTP_PORT, SMTP_RECIPIENT) |
@@ -69,7 +70,7 @@ Build the remaining admin features for managing Financial Reports, ESG Reports, 
 | TD-23 | Contact form email format | Plain text vs HTML email | Plain text is simpler and sufficient: include name, subject, email, message in email body |
 | TD-24 | Contact form spam prevention | Honeypot field vs CAPTCHA vs rate limiting | Honeypot field (hidden field that bots fill in) is simplest; rate limiting by IP if needed later |
 | TD-25 | Report table sorting | Client-side JS vs server-side query | ✅ **Already implemented in Phase 2B** — `ReportsTable` (src/components/layout/ReportsTable.tsx) is sortable + paginated client-side; no new work needed. |
-| TD-30 | Report data source (NEW) | Keep JSON envelope in `page_contents.contentHtml` vs migrate to `reports` table | **Recommended: keep the JSON envelope** (`src/lib/report-rows.ts`) and build the Phase-3 reports admin UI to CRUD the same envelope (reuse `ReportsEditor` for editing, add a dedicated listing dashboard). Avoids a data migration and re-uses tested code. Optionally leave the `reports` table for future expansion. |
+| TD-30 | Report data source (DECIDED) | Keep JSON envelope in `page_contents.contentHtml` vs migrate to `reports` table | ✅ **DECIDED — Option A**: keep the JSON envelope (`src/lib/report-rows.ts`) for reports, and build the Phase-3 reports admin UI to CRUD the same envelope (reuse `ReportsEditor`, add a listing dashboard over `/api/reports*`). **No** migration to the `reports` table. Announcements stay on the Datalink iframe (no `announcements` table). Both tables remain **reserved/unused**. |
 
 ---
 
@@ -136,16 +137,15 @@ npm run dev
 
 ### 7.3 Database / Data Models
 
-Active tables for this phase:
-- **`reports`** — (optional, see TD-30) CRUD operations for Financial and ESG reports **if** migrating
-  away from the Phase-2B JSON envelope.
-  - Fields: `id`, `category` (financial/esg), `locale` (en/zh), `title`, `year_period`, `description`, `file_path`, `file_size`, `is_visible`, `sort_order`
-  - PDF files stored at `/uploads/reports/`
-  - **Recommended (TD-30):** keep report rows in `page_contents.contentHtml` (JSON envelope via
-    `src/lib/report-rows.ts`) and CRUD the envelope from the Phase-3 admin UI — no migration needed.
-- **`announcements`** — CRUD operations for HKEX-linked announcements
-  - Fields: `id`, `locale` (en/zh), `title`, `external_url` (HKEX link), `announcement_date`, `is_visible`, `sort_order`
-  - No file uploads — all announcements are external links
+Active tables for this phase (TD-30 Option A — **no new tables used**):
+- **`page_contents.contentHtml`** — report rows live here as a JSON envelope
+  (`{"__type":"reports","rows":[...]}` via `src/lib/report-rows.ts`). The Phase-3 report
+  management dashboard reads/edits the **same envelope** (per page + locale).
+- **`reports`** — **NOT USED** under the decided architecture. Reserved; do not build CRUD against it
+  without revising this doc first.
+- **`announcements`** — **NOT USED** — announcements page renders the **Datalink iframe**
+  (3rd-party). Reserved for a possible future pivot.
+- **`site_settings`** — already used (SMTP/site name live here if needed for the contact form).
 
 ### 7.4 API Endpoints
 
@@ -153,16 +153,14 @@ Active tables for this phase:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| 🟩 `/api/reports` | GET | List reports (supports `?category=financial` or `?category=esg`) |
-| 🟩 `/api/reports` | POST | Create new report entry |
-| 🟩 `/api/reports/[id]` | PUT | Update report |
-| 🟩 `/api/reports/[id]` | DELETE | Delete report (also deletes PDF file) |
-| 🟦 `/api/upload/pdf` | POST | Report PDF upload (Phase 2B, `?locale=en` or `zh`) — reuse; no separate `/api/upload/report` needed |
-| `/api/announcements` | GET | List announcements |
-| `/api/announcements` | POST | Create new announcement |
-| `/api/announcements/[id]` | PUT | Update announcement |
-| `/api/announcements/[id]` | DELETE | Delete announcement |
-| `/api/announcements/fetch-metadata` | POST | Accept HKEX URL, return `{ title, date }` or error |
+| 🟩 `/api/reports` | GET | List report rows for a page/locale (read the envelope) |
+| 🟩 `/api/reports` | POST | Save report rows (write the envelope) |
+| 🟩 `/api/reports/[id]` | PUT | Update one report row (within the envelope) |
+| 🟩 `/api/reports/[id]` | DELETE | Delete one report row + its PDF file (within the envelope) |
+| 🟦 `/api/upload/pdf` | POST | Report PDF upload (Phase 2B, `?locale=en` or `zh`) — reuse as-is |
+| ~~`/api/announcements*`~~ | — | **Dropped** (TD-30 Option A) — announcements stay on the Datalink iframe |
+| ~~`/api/announcements/fetch-metadata`~~ | — | **Dropped** (TD-30 Option A) |
+| 🟩 `/api/contact/send` | POST | Accept form data, send email via SMTP, return success/failure |
 | `/api/contact/send` | POST | Accept form data, send email via SMTP, return success/failure |
 
 ### 7.5 Environment Variables / Configuration

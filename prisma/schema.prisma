@@ -43,6 +43,17 @@ model PageContent {
   @@unique([pageId, locale])
 }
 
+model SiteSetting {
+  id     Int     @id @default(autoincrement())
+  key    String  @unique
+  value  String?
+  locale String?
+}
+
+// ⚠️ RESERVED / NOT USED by the current architecture (decision TD-30 Option A, 2026):
+// Reports are stored as a JSON envelope in page_contents.contentHtml
+// (via src/lib/report-rows.ts), NOT in this table. Candidates for removal;
+// do not build against them without first revising docs/phase-3-reports-announcements-contact.md.
 model Report {
   id          Int      @id @default(autoincrement())
   category    String
@@ -58,6 +69,9 @@ model Report {
   updatedAt   DateTime @updatedAt
 }
 
+// ⚠️ RESERVED / NOT USED (decision TD-30 Option A, 2026):
+// Announcements render the Datalink iframe (3rd-party), not this table.
+// Candidate for removal.
 model Announcement {
   id               Int      @id @default(autoincrement())
   locale           String
@@ -68,11 +82,4 @@ model Announcement {
   sortOrder        Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-}
-
-model SiteSetting {
-  id     Int     @id @default(autoincrement())
-  key    String  @unique
-  value  String?
-  locale String?
 }
