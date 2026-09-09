@@ -115,6 +115,33 @@ Upserts the existing site content (the Phase-2A page content) for **all 10 pages
 **Corporate Governance PDF links** pointing at the PDFs already stored under
 `uploads/reports/{en,zh}/`. Re-running is safe (idempotent `upsert`).
 
+### Import the downloaded report PDFs (Financial / ESG)
+
+Four download scripts in `./tools` pull the report PDFs from the live site into
+`uploads/reports/{en,zh}/`:
+
+| Script | Content |
+|---|---|
+| `vvheng-frdownload.ps1` / `vvhchi-frdownload.ps1` | Annual + Interim Financial Reports (EN / ZH) |
+| `vvheng-esgdownload.ps1` / `vvhchi-esgdownload.ps1` | ESG Reports (EN / ZH) |
+
+After running them, import all downloaded PDFs as report rows with:
+
+```bash
+npm run import:content
+```
+
+- Reads `scripts/report-catalog.ts` (the catalog of every Financial/ESG PDF from the scripts),
+  matches it against the PDFs actually on disk in `uploads/reports/{en,zh}/`, and writes the
+  report JSON envelope into `page_contents.contentHtml` for the `financial-reports` /
+  `esg-reports` pages.
+- **Only rows whose PDF is present on disk are created** (never broken links), and the run is
+  **idempotent** — safe to re-run any time new PDFs are downloaded.
+- If a catalog entry has no matching PDF on disk it is **reported at the end** of the run so you
+  know which files are still missing (e.g. the Chinese ESG PDFs currently 404 on the live site).
+- After import, open `/en/admin/pages/financial-reports` and `/esg-reports` (EN + ZH tabs) to
+  review/edit rows in the Reports editor, or just verify the public pages.
+
 ### Retrieve & edit the seeded content
 
 1. Log in at `/en/admin/login` (create the admin first at `/en/admin/setup` on a fresh DB).

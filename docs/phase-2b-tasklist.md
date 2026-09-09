@@ -45,6 +45,7 @@
 | 31 | Developer guide — folder map, per-file purposes & linkages, conventions, env vars, testing | ✅ `01dc033` | `docs/developerGuide/developer-guide.md` (+`README.md`) |
 | 32 | Pre-Phase-3 doc alignment — PRD status/checklists, Phase 3 plan updated to build on Phase 2B report editor/PDF upload, locale-prefixed admin paths | ✅ `ffccc09` | `docs/PRD-visionvalues-revamp-v2.md`, `docs/phase-3-reports-announcements-contact.md`, `docs/phase-2a-implementation.md` (director-bio CMS note) |
 | 33 | Consolidate static content — report rows moved into `placeholders.ts` as the single source; deleted `reports.ts` + `corporateCommunications.ts`; public report pages read rows via `getReportRows` (no separate fallback module) | ✅ `301c7fe` | `src/lib/placeholders.ts`, `src/lib/report-rows.ts`, 3 report `page.tsx`, `prisma/seed.ts`, deleted `src/lib/reports.ts`(+test), `src/lib/corporateCommunications.ts`(+test); docs updated (`developerGuide`, `phase-2b-checklist`, `phase-2a-implementation`, `phase-2a-page-templates-public-site`) |
+| 34 | Report-PDF import tooling — catalog (`scripts/report-catalog.ts`) + `scripts/import-report-rows.ts` (`npm run import:content`). Imports downloaded Financial/ESG PDFs from `uploads/reports/{en,zh}/` into report rows in `page_contents.contentHtml` (EN FR 38 / ZH FR 38 / EN ESG 9; **ZH ESG blocked** — all CHI ESG PDFs 404 on live site). Idempotent; skips missing files & reports them | ✅ *(this commit)* | `scripts/report-catalog.ts` (created), `scripts/import-report-rows.ts` (created), `package.json` (`import:content`), `docs/phase-2-content-migration-checklist.md`, `docs/phase-2-content-migration.md`, `docs/developerGuide/developer-guide.md` |
 
 ## Commits
 
@@ -60,6 +61,7 @@
 | `01dc033` | 31 | Developer guide: folder/file map, linkages, conventions |
 | `ffccc09` | 32 | Pre-Phase-3 doc alignment: PRD + Phase 3 plan updated |
 | `301c7fe` | 33 | Consolidate static content into placeholders.ts (single source) — removed reports.ts / corporateCommunications.ts |
+| *(this commit)* | 34 | Report-PDF import tooling (`import:content`) — catalog + import script, docs (`phase-2-content-migration*`, developer guide) |
 
 ---
 

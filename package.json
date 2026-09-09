@@ -15,6 +15,7 @@
     "reset-password": "tsx scripts/reset-password.ts",
     "seed": "prisma db seed",
     "content:migrate": "prisma db seed",
+    "import:content": "tsx scripts/import-report-rows.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

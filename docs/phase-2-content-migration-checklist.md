@@ -18,8 +18,14 @@
 - [x] Board Role&Function PDF **uploaded** + linked (`uploads/reports/<locale>/RoleAndFunction.pdf`).
 - [x] Unpublished → placeholder fallback (no 404), so an unedited page still renders seeded content.
 
-**Remaining real work** = replace seed placeholders with TRUE content, migrate header images, and
-supply the missing PDFs (Financial/ESG/Comms) — itemized below.
+**Remaining real work** = replace seed placeholders with TRUE text copy, migrate header images, and
+supply the missing PDFs (ZH ESG, Corporate-Communications) — itemized below.
+
+> **Report-PDF import tooling added:** `scripts/report-catalog.ts` (catalog of all Financial/ESG PDFs
+> from the four `tools/*.ps1` download scripts) + `scripts/import-report-rows.ts` (`npm run
+> import:content`) which matches the catalog against `uploads/reports/{en,zh}/` and writes the report
+> JSON envelope into `page_contents.contentHtml` for `financial-reports` / `esg-reports`. It only
+> creates rows for PDFs actually on disk (no broken links) and is safe to re-run.
 
 ---
 
@@ -70,16 +76,15 @@ supply the missing PDFs (Financial/ESG/Comms) — itemized below.
 - [ ] Header image uploaded.
 
 ### 2.7 Financial Reports (`/en/admin/pages/financial-reports`, PRD §2.2.6)
-- [ ] **Upload Annual Report PDF(s)** (the `/pdf/AnnualReport2025.pdf` link is a placeholder) → Reports editor, EN.
-- [ ] Upload Interim Report PDF(s) → EN.
-- [ ] Chinese rows uploaded/updated → ZH tab.
-- [ ] A date + title per report row; links open.
+- [x] **PDFs downloaded** into `uploads/reports/{en,zh}/` (scripts in `./tools`).
+- [x] **Rows imported into DB** — `npm run import:content` → *EN 38 rows / ZH 38 rows* (all downloaded PDFs, Annual + Interim, from `ar_2007_eng/chi` through 2025 + interim 2025/26). To refresh after adding more PDFs, re-run the import (idempotent).
+- [ ] Verify a sample of links open in the CMS (Reports editor → each row's PDF).
 - [ ] Header image uploaded.
 
 ### 2.8 ESG Reports (`/en/admin/pages/esg-reports`, PRD §2.2.7)
-- [ ] **Upload ESG report PDF** (currently `/pdf/ESGReport2025.pdf` placeholder) → EN.
-- [ ] Chinese ESG report → ZH.
-- [ ] Links open; date + title correct.
+- [x] **English ESG PDFs downloaded + rows imported** — `npm run import:content` → *EN 9 rows* (ESG 2017–2025).
+- [x] ~~Chinese ESG report → ZH~~ **BLOCKED:** all `c_ESG Report …/LTN20171127266_C.pdf` return **HTTP 404** on the live site — the Chinese ESG PDFs are not downloadable at their published URLs, so **no ZH ESG rows were created** (ZH ESG page still shows the fallback placeholder). Needs the correct CHI ESG source URLs/files before rows can be imported.
+- [ ] When ZH ESG PDFs become available: place under `uploads/reports/zh/` and re-run `npm run import:content`.
 - [ ] Header image uploaded.
 
 ### 2.9 Announcements & Circulars (`/en/admin/pages/announcements`, PRD §2.2.5)
@@ -95,10 +100,12 @@ supply the missing PDFs (Financial/ESG/Comms) — itemized below.
 ---
 
 ## 3. PDF asset checklist (links must resolve)
-- [ ] Financial reports PDFs uploaded (`uploads/reports/{en,zh}/`).
-- [ ] ESG report PDFs uploaded (`uploads/reports/{en,zh}/`).
+- [x] Financial reports PDFs present in `uploads/reports/{en,zh}/` (downloaded by `tools/*frdownload.ps1`).
+- [x] Financial report rows **in DB** (EN 38 / ZH 38) — `npm run import:content`.
+- [x] English ESG report PDFs present + rows imported (EN 9).
+- [ ] **Chinese ESG report PDFs — MISSING (all 404 on live site)** — must be sourced before ZH ESG rows can be imported.
 - [ ] Corporate-communications PDFs uploaded (`uploads/reports/{en,zh}/`) OR `public/pdf/communication/`.
-- [ ] Governance + Role&Function PDFs already present — spot-verify each link opens.
+- [x] Governance + Role&Function PDFs already present — spot-verify each link opens.
 - [ ] No broken PDF links on the site (click every link).
 
 ---
@@ -126,4 +133,5 @@ supply the missing PDFs (Financial/ESG/Comms) — itemized below.
 - **D11:** Policy/static PDFs pasted as links in WYSIWYG (not uploaded as reports) — but our Reports editor uploads PDFs to `uploads/reports/`, which is fine for Financial/ESG/Comms.
 - **D14:** Director photos optional — can be embedded in content (no separate field).
 - **D12:** No decorative sub-photos.
+- **BLOCKER (data source):** Chinese ESG PDFs (`c_ESG Report 2019–2025.pdf`, `C-ESG Report 2018-v4.pdf`, `LTN20171127266_C.pdf`) return **HTTP 404** at their published URLs on 2026‑09‑09. The CHI-ESG download script (`tools/vvhchi-esgdownload.ps1`) therefore downloads nothing; ENG ESG reports (9) are unaffected. Rows for ZH ESG cannot be created until the files are sourced/provided.
 - Old site uses **Big5** for Chinese — if pasted text garbles, re-copy from the rendered page, not the HTML source.
