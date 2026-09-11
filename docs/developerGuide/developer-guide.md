@@ -245,7 +245,7 @@ Each public page is an async Server Component that:
 | File | Purpose | Links |
 |------|---------|-------|
 | `PageEditor.tsx` | Bilingual editor page controller. Holds EN/ZH drafts, dirty state, publish toggles, Save (PUT). **Chooses the content editor per slug** via `PAGE_EDITOR_TYPES` (`wysiwyg` | `keyvalue` | `reports`). | Admin `pages/[slug]` page; renders the editors below. |
-| `TipTapEditor.tsx` | Limited WYSIWYG (bold/italic/paragraph/heading/link; link auto `rel=noopener` `target=_blank`). | `PageEditor` (default). |
+| `TipTapEditor.tsx` | Limited WYSIWYG (bold/italic/paragraph/heading/link/subscript/superscript; link auto `rel=noopener` `target=_blank`). | `PageEditor` (default). |
 | `KeyValueEditor.tsx` | Row editor (Label/Value) that reads/writes the `<table>` HTML via `key-value.ts`. | `PageEditor` for `corporate-details`. |
 | `ReportsEditor.tsx` | Row editor (Date/Document/PDF upload) using `report-rows.ts`; uploads via `/api/upload/pdf`. | `PageEditor` for the 3 report pages. |
 | `LocaleTabs.tsx` | EN/ZH tab switch via `?tab=en|zh` URL param (with unsaved-changes guard). | `PageEditor`. |

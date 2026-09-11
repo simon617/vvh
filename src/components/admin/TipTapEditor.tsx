@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
 
 interface TipTapEditorProps {
   value: string;
@@ -16,7 +18,7 @@ const toolButtonActive = "bg-primary border-primary text-white";
 
 /**
  * Limited WYSIWYG editor (Decision D4 + TD-12):
- * toolbar = bold, italic, paragraph, heading, link — nothing else.
+ * toolbar = bold, italic, paragraph, heading, link, subscript, superscript — nothing else.
  * The stripped-down StarterKit prevents bullet lists, blockquotes, code etc.
  */
 export default function TipTapEditor({
@@ -42,6 +44,8 @@ export default function TipTapEditor({
           HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
         },
       }),
+      Subscript,
+      Superscript,
     ],
     content: value,
     onUpdate: ({ editor: e }) => onChange(e.getHTML()),
@@ -69,6 +73,8 @@ export default function TipTapEditor({
   const isItalic = editor.isActive("italic");
   const isHeading = editor.isActive("heading");
   const isParagraph = editor.isActive("paragraph");
+  const isSubscript = editor.isActive("subscript");
+  const isSuperscript = editor.isActive("superscript");
 
   function addLink() {
     const previousUrl = editor.getAttributes("link").href as string | undefined;
@@ -141,6 +147,26 @@ export default function TipTapEditor({
           className={toolButton}
         >
           🔗
+        </button>
+        <button
+          type="button"
+          title="Subscript"
+          aria-label="Subscript"
+          aria-pressed={isSubscript}
+          onClick={() => editor.chain().focus().toggleSubscript().run()}
+          className={`${toolButton} ${isSubscript ? toolButtonActive : ""}`}
+        >
+          X<sub>2</sub>
+        </button>
+        <button
+          type="button"
+          title="Superscript"
+          aria-label="Superscript"
+          aria-pressed={isSuperscript}
+          onClick={() => editor.chain().focus().toggleSuperscript().run()}
+          className={`${toolButton} ${isSuperscript ? toolButtonActive : ""}`}
+        >
+          X<sup>2</sup>
         </button>
       </div>
       <EditorContent editor={editor} />
