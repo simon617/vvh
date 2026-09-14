@@ -61,6 +61,9 @@
     "errSubject": "Please Enter your Subject",
     "errEmail": "Please Enter your Email Address",
     "errMessage": "Please Enter your Message",
+    "sending": "Sending...",
+    "success": "Your message has been sent. We will get back to you as soon as possible.",
+    "error": "Message could not be sent. Please try again later.",
     "info": "The online contact form will be enabled in a later phase. For enquiries, please contact us by email."
   },
   "admin": {

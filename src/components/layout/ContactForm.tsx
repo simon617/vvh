@@ -48,9 +48,16 @@ function Field({ id, label, value, onChange, error, textarea }: FieldProps) {
   );
 }
 
+/** Honeypot field name — hidden from humans, tempting to bots (TD-24). */
+const HONEYPOT_FIELD = "company_website";
+
+type SendState = "idle" | "sending" | "success" | "error";
+
 /**
- * Static contact form UI for Phase 2A.
- * Client-side validation only; no backend submission until Phase 3.
+ * Contact form with client-side validation + SMTP submission (Phase 3).
+ * On submit, POSTs the four fields to /api/contact/send and reflects
+ * success/failure locally. A filled honeypot is silently "accepted"
+ * without calling the API (no DB storage — decision D7).
  */
 export default function ContactForm() {
   const t = useTranslations("contact");
@@ -60,8 +67,9 @@ export default function ContactForm() {
     email: "",
     message: "",
   });
+  const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [accepted, setAccepted] = useState(false);
+  const [state, setState] = useState<SendState>("idle");
 
   const set = (field: keyof typeof values) => (value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -73,27 +81,66 @@ export default function ContactForm() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Honeypot filled → silently pretend success, send nothing. Checked BEFORE
+    // validation so bots learn nothing about the form's real rules (TD-24).
+    if (honeypot.trim() !== "") {
+      setState("success");
+      return;
+    }
+
     const next: Record<string, string> = {};
     if (!values.name.trim()) next.name = t("errName");
     if (!values.subject.trim()) next.subject = t("errSubject");
     if (!values.email.trim()) next.email = t("errEmail");
     if (!values.message.trim()) next.message = t("errMessage");
     setErrors(next);
-    setAccepted(Object.keys(next).length === 0);
+    if (Object.keys(next).length > 0) {
+      setState("idle");
+      return;
+    }
+
+    setState("sending");
+    try {
+      const res = await fetch("/api/contact/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...values, [HONEYPOT_FIELD]: honeypot }),
+      });
+      if (res.ok) {
+        setState("success");
+      } else {
+        setState("error");
+      }
+    } catch {
+      setState("error");
+    }
   };
 
   const handleReset = () => {
     setValues({ name: "", subject: "", email: "", message: "" });
+    setHoneypot("");
     setErrors({});
-    setAccepted(false);
+    setState("idle");
   };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <p className="mb-6 text-sm text-gray-600">{t("intro")}</p>
       <form onSubmit={handleSubmit} noValidate>
+        {/* Honeypot — invisible to humans, filled by bots (TD-24). */}
+        <input
+          type="text"
+          name={HONEYPOT_FIELD}
+          aria-hidden="true"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          className="absolute left-[-9999px] h-0 w-0 opacity-0"
+        />
         <Field
           id="name"
           label={`${t("name")} *`}
@@ -126,9 +173,10 @@ export default function ContactForm() {
         <div className="flex gap-3">
           <button
             type="submit"
-            className="min-h-[44px] rounded bg-secondary px-6 py-2 text-sm font-semibold text-white hover:bg-secondary/90 transition-colors"
+            disabled={state === "sending"}
+            className="min-h-[44px] rounded bg-secondary px-6 py-2 text-sm font-semibold text-white hover:bg-secondary/90 transition-colors disabled:opacity-50"
           >
-            {t("submit")}
+            {state === "sending" ? t("sending") : t("submit")}
           </button>
           <button
             type="button"
@@ -138,9 +186,20 @@ export default function ContactForm() {
             {t("reset")}
           </button>
         </div>
-        {accepted && (
-          <p role="status" className="mt-4 rounded bg-background-light p-3 text-sm text-primary">
-            {t("info")}
+        {state === "success" && (
+          <p
+            role="status"
+            className="mt-4 rounded bg-background-light p-3 text-sm text-primary"
+          >
+            {t("success")}
+          </p>
+        )}
+        {state === "error" && (
+          <p
+            role="alert"
+            className="mt-4 rounded bg-red-50 p-3 text-sm text-red-700"
+          >
+            {t("error")}
           </p>
         )}
       </form>
