@@ -4,7 +4,7 @@
 > **Stack:** Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · Prisma (SQLite) · next-intl · TipTap · Vitest · Docker
 > **Repo:** https://github.com/simon617/vvh (branch `phase-2b`)
 > **Docs:** `docs/` contains the phase plans (PRD, phase-1…phase-4), checklists, task lists and this guide.
-> **Tests:** 53 test files / **232 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0
+> **Tests:** 55 test files / **247 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0
 
 ---
 
@@ -138,6 +138,7 @@ This is the **orientation guide** for any developer who needs to work on this co
 | `breadcrumbs.ts` | pure | Breadcrumb item resolution. | `Breadcrumb` component. |
 | `key-value.ts` | pure | Parse/build the `<table>` HTML used by the **corporate-details** key-value editor. | `KeyValueEditor`, tests. |
 | `report-rows.ts` | pure | JSON envelope (`{"__type":"reports","rows":[...]}`) stored in `contentHtml` for report pages; parse/serialize. | `placeholders.ts` (builds placeholder envelope), `ReportsEditor`, report public pages, seed. |
+| `email.ts` | server | Nodemailer transport + `sendContactEmail()` for the public contact form (SMTP env: `SMTP_HOST/PORT/RECIPIENT` with `SMTP_USER/PASS` fallback, decision D10). | `/api/contact/send`. |
 | `uploads.ts` | pure | Upload validation/path helpers (images + documents), `resolveUploadPath`, `sanitizeFilename`, `getUploadUrl`. | Upload routes, `/uploads` serving, `logo.ts`. |
 | `logo.ts` | pure | Logo file-path + write helpers. | `/api/logo`, tests. |
 
@@ -238,7 +239,7 @@ Each public page is an async Server Component that:
 | `ReportsTable.tsx` | Sortable + paginated Date/Document table (client). | The 3 report pages. |
 | `DirectorCards.tsx` | Interactive director card grid (client, expandable bios) — **fallback** before CMS content exists. | Board page (only when `isDbContent === false`). |
 | `Breadcrumb.tsx` | Breadcrumb from `x-pathname` + `getBreadcrumbItems`. | TemplateShell/ContentWithSidebar. |
-| `ContactForm.tsx` | Contact form UI (submit is Phase 3). | Contact page. |
+| `ContactForm.tsx` | Contact form with client-side validation + SMTP submit (POST `/api/contact/send`; honeypot `company_website`; sending/success/error states). | Contact page. |
 
 ### 4.4 Admin components (`src/components/admin/`)
 
@@ -268,6 +269,7 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 | `/api/logo` | `logo/route.ts` | POST | Replaces the site logo (writes via `src/lib/logo.ts`). |
 | `/api/upload/image` | `upload/image/route.ts` | POST | Header/hero image → `UPLOAD_DIR/images/`. |
 | `/api/upload/pdf` | `upload/pdf/route.ts` | POST | Report document → `UPLOAD_DIR/reports/<locale>/`. |
+| `/api/contact/send` | `contact/send/route.ts` | POST | **Public** (no session): validates Name/Subject/Email/Message, checks the honeypot (`company_website`), sends via `src/lib/email.ts`. 200 `{ok:true}` / 400 invalid / 502 SMTP failure (generic message). |
 | `/uploads/[...path]` | `uploads/[...path]/route.ts` | GET | Serves uploaded files (MIME map incl. `application/pdf`; path-traversal guarded). |
 
 > **Next.js route-module rule:** a `route.ts` may only export HTTP handler functions
@@ -349,7 +351,7 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 | `UPLOAD_DIR` | upload helpers/routes | Uploads root (default `./uploads`). |
 | `MAX_FILE_SIZE` | upload helpers | Image upload limit (default 5 MB). |
 | `MAX_DOC_SIZE` | upload helpers | Report/document upload limit (default 50 MB). |
-| `SMTP_HOST`/`SMTP_PORT`/`SMTP_RECIPIENT` | (future contact form) | Phase 3. |
+| `SMTP_HOST`/`SMTP_PORT`/`SMTP_RECIPIENT` | `src/lib/email.ts` | Contact-form email (IP-based auth, D10; `SMTP_USER`/`SMTP_PASS` opt-in fallback). Missing `SMTP_RECIPIENT` → 502. |
 | `LOGO_FILE_PATH` | `src/lib/logo.ts` | Test-only override for logo writes. |
 
 ---
