@@ -45,6 +45,7 @@ describe("sendContactEmail", () => {
       host: "192.168.0.10",
       port: 25,
       secure: false,
+      ignoreTLS: true,
     });
     expect(mockSendMail).toHaveBeenCalledTimes(1);
 
@@ -68,6 +69,7 @@ describe("sendContactEmail", () => {
       host: "192.168.0.10",
       port: 25,
       secure: false,
+      ignoreTLS: true,
       auth: { user: "cms", pass: "secret" },
     });
   });

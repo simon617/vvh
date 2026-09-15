@@ -28,10 +28,17 @@ export function transportOptions() {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
-  const options: { host: string; port: number; secure: boolean; auth?: { user: string; pass: string } } = {
+  const options: {
+    host: string;
+    port: number;
+    secure: boolean;
+    ignoreTLS: boolean;
+    auth?: { user: string; pass: string };
+  } = {
     host,
     port,
     secure: false, // port 25, no STARTTLS requirement (D10)
+    ignoreTLS: true, // IP-based auth, no TLS (D10)
   };
   if (user && pass) {
     options.auth = { user, pass };
