@@ -6,6 +6,7 @@ import {
   assertAllowedDocument,
   sanitizeFilename,
   uploadsDir,
+  resolveUploadPath,
 } from "@/lib/uploads";
 
 const REPORTS_SUBDIR = "reports";
@@ -60,4 +61,48 @@ export async function POST(request: NextRequest) {
   await fs.writeFile(path.join(localeDir, uniqueName), bytes);
 
   return NextResponse.json({ path: relativePath }, { status: 200 });
+}
+
+/**
+ * DELETE /api/upload/pdf?path=/uploads/reports/<locale>/<file>
+ * — delete a report document from disk (used when a report row is removed).
+ *
+ * The path is resolved against UPLOAD_DIR with `resolveUploadPath`, which
+ * guards against `..` traversal escaping the uploads root. Idempotent: a
+ * missing file returns ok too (the editor's row-delete is best-effort).
+ */
+export async function DELETE(request: NextRequest) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const RESERVED_UPLOAD_PREFIX = `/uploads/${REPORTS_SUBDIR}/`;
+
+  const url = new URL(request.url);
+  const uploadPath = url.searchParams.get("path");
+  if (!uploadPath || !uploadPath.startsWith(RESERVED_UPLOAD_PREFIX)) {
+    return NextResponse.json(
+      { error: 'path must be a "/uploads/reports/..." path' },
+      { status: 400 }
+    );
+  }
+
+  const relative = uploadPath.replace(/^\/uploads\//, "");
+  const filePath = resolveUploadPath(relative);
+  if (!filePath) {
+    return NextResponse.json(
+      { error: "Invalid path" },
+      { status: 400 }
+    );
+  }
+
+  await fs.unlink(filePath).catch((error: NodeJS.ErrnoException) => {
+    // ENOENT = already deleted → idempotent success.
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+  });
+
+  return NextResponse.json({ ok: true }, { status: 200 });
 }

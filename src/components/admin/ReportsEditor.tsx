@@ -48,7 +48,24 @@ export default function ReportsEditor({
     commit([...rows, { id: makeRowId(), date: "", title: "", url: "" }]);
   }
 
+  function moveRow(index: number, delta: -1 | 1) {
+    const target = index + delta;
+    if (target < 0 || target >= rows.length) return;
+    const next = [...rows];
+    [next[index], next[target]] = [next[target], next[index]];
+    commit(next);
+  }
+
   function removeRow(index: number) {
+    const row = rows[index];
+    if (row.url && row.url.startsWith("/uploads/")) {
+      // Best effort: also delete the uploaded PDF on the server (authed,
+      // path-traversal-safe DELETE route). Never block the editor on it.
+      void fetch(
+        `/api/upload/pdf?path=${encodeURIComponent(row.url)}`,
+        { method: "DELETE" }
+      ).catch(() => {});
+    }
     commit(rows.filter((_, i) => i !== index));
   }
 
@@ -97,6 +114,9 @@ export default function ReportsEditor({
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 w-64">
                 {t("upload")}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 w-20">
+                {t("move")}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 w-24">
                 {t("remove")}
@@ -155,6 +175,28 @@ export default function ReportsEditor({
                   )}
                 </td>
                 <td className="px-4 py-2 align-top">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label={t("moveUp")}
+                      disabled={index === 0}
+                      onClick={() => moveRow(index, -1)}
+                      className="px-2 py-1 text-sm border border-border rounded hover:border-primary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t("moveDown")}
+                      disabled={index === rows.length - 1}
+                      onClick={() => moveRow(index, 1)}
+                      className="px-2 py-1 text-sm border border-border rounded hover:border-primary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      ↓
+                    </button>
+                  </div>
+                </td>
+                <td className="px-4 py-2 align-top">
                   <button
                     type="button"
                     onClick={() => removeRow(index)}
@@ -168,7 +210,7 @@ export default function ReportsEditor({
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
+                <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
                   {t("noRows")}
                 </td>
               </tr>

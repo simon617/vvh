@@ -85,4 +85,87 @@ describe("ReportsEditor", () => {
     expect(onChange).toHaveBeenCalled();
     unmount();
   });
+
+  it("moves a row down via the Move down button and commits the new order", () => {
+    const onChange = vi.fn();
+    renderWithLocale(
+      <ReportsEditor value={CONTENT} locale="en" onChange={onChange} />
+    );
+
+    // Row 1 (Annual Report 2025) is "a"; row 2 is "b". Move row 1 down.
+    const downButtons = screen.getAllByLabelText("Move down");
+    expect(downButtons).toHaveLength(2);
+    fireEvent.click(downButtons[0]);
+
+    const emitted = JSON.parse(
+      onChange.mock.calls[onChange.mock.calls.length - 1][0] as string
+    );
+    expect(emitted.rows.map((r: { id: string }) => r.id)).toEqual(["b", "a"]);
+  });
+
+  it("moves the last row up via the Move up button", () => {
+    const onChange = vi.fn();
+    renderWithLocale(
+      <ReportsEditor value={CONTENT} locale="en" onChange={onChange} />
+    );
+
+    const upButtons = screen.getAllByLabelText("Move up");
+    expect(upButtons).toHaveLength(2);
+    fireEvent.click(upButtons[1]);
+
+    const emitted = JSON.parse(
+      onChange.mock.calls[onChange.mock.calls.length - 1][0] as string
+    );
+    expect(emitted.rows.map((r: { id: string }) => r.id)).toEqual(["b", "a"]);
+  });
+
+  it("disables Move up on the first row and Move down on the last row", () => {
+    renderWithLocale(<ReportsEditor value={CONTENT} locale="en" onChange={vi.fn()} />);
+
+    const upButtons = screen.getAllByLabelText("Move up");
+    const downButtons = screen.getAllByLabelText("Move down");
+    expect(upButtons[0]).toBeDisabled();
+    expect(downButtons.at(-1)).toBeDisabled();
+  });
+
+  it("removing a row with an uploaded PDF DELETE-requests the file on the server", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const onChange = vi.fn();
+    renderWithLocale(
+      <ReportsEditor value={CONTENT} locale="en" onChange={onChange} />
+    );
+
+    fireEvent.click(screen.getAllByLabelText("Remove row")[0]);
+    // The row is removed from the envelope immediately…
+    const emitted = JSON.parse(
+      onChange.mock.calls[onChange.mock.calls.length - 1][0] as string
+    );
+    expect(emitted.rows.map((r: { id: string }) => r.id)).toEqual(["b"]);
+    // …and the PDF is deleted on the server (path-traversal safe, authed route).
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/upload/pdf?"),
+        expect.objectContaining({ method: "DELETE" })
+      )
+    );
+    expect(decodeURIComponent(
+      fetchMock.mock.calls[0][0] as string
+    )).toContain("/uploads/reports/en/a.pdf");
+  });
+
+  it("removing a row without an uploaded PDF does not call the API", () => {
+    const onChange = vi.fn();
+    renderWithLocale(
+      <ReportsEditor
+        value={buildReportContent([{ id: "x", date: "2025", title: "Draft", url: "" }])}
+        locale="en"
+        onChange={onChange}
+      />
+    );
+
+    fireEvent.click(screen.getAllByLabelText("Remove row")[0]);
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
 });
