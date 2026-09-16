@@ -13,6 +13,8 @@
  *
  * The script only creates rows for PDFs found on disk (so no broken links are
  * seeded), and reports which catalog entries could not be found.
+ *  Filename matching is tolerant (see `canonicalName`): lowercase, ignores a
+ *  CMS-upload `<epochMs>-` prefix, treats separator runs as equivalent.
  */
 import { PrismaClient } from "@prisma/client";
 import fs from "fs";
@@ -23,6 +25,18 @@ import { REPORT_CATALOG, type ReportCatalogEntry } from "./report-catalog";
 const prisma = new PrismaClient();
 
 const UPLOAD_ROOT = path.resolve("uploads", "reports");
+
+/**
+ * Canonical file key for matching catalog filenames against files on disk:
+ * - lowercases,
+ * - ignores a CMS-upload timestamp prefix (`<epochMs>-`, see
+ *   `POST /api/upload/pdf` in src/app/api/upload/pdf/route.ts),
+ * - treats any run of non-alphanumerics as `-` so `C-ESG_Report_2018-v4.pdf`
+ *   matches the catalog's `C-ESG Report 2018-v4.pdf`.
+ */
+function canonicalName(name: string): string {
+  return name.toLowerCase().replace(/^\d+-/, "").replace(/[^a-z0-9]+/g, "-");
+}
 
 /** Recursively gather every *.pdf path (POSIX, relative to locale dir). */
 function scanLocaleDir(locale: string): Map<string, string> {
@@ -37,7 +51,7 @@ function scanLocaleDir(locale: string): Map<string, string> {
         walk(full);
       } else if (entry.name.toLowerCase().endsWith(".pdf")) {
         const rel = path.relative(root, full).split(path.sep).join("/");
-        found.set(entry.name.toLowerCase(), rel);
+        found.set(canonicalName(entry.name), rel);
       }
     }
   };
@@ -71,7 +85,7 @@ async function importRows(): Promise<void> {
 
   for (const entry of REPORT_CATALOG) {
     const disk = onDisk[entry.locale];
-    const rel = disk.get(entry.file.toLowerCase());
+    const rel = disk.get(canonicalName(entry.file));
     if (!rel) {
       missing.push({ file: entry.file, date: entry.date, name: entry.name, locale: entry.locale });
       continue;

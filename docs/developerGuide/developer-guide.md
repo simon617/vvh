@@ -180,7 +180,7 @@ into a client component; call `/api` instead. Pure modules (no server imports) a
 |------|---------|----------|
 | `backup.ts` | Archive SQLite + uploads. | `npm run backup`. |
 | `reset-password.ts` | CLI admin password reset (bcrypt 12). | `npm run reset-password`. |
-| `import-report-rows.ts` | **Report-PDF import.** Matches `scripts/report-catalog.ts` against PDFs on disk in `uploads/reports/{en,zh}/`, then upserts the report JSON envelope into `page_contents.contentHtml` for `financial-reports` / `esg-reports`. Only rows with an actual file are created; missing catalog entries are reported. Idempotent. | `npm run import:content`; uses `report-rows.buildReportContent` + Prisma. |
+| `import-report-rows.ts` | **Report-PDF import.** Matches `scripts/report-catalog.ts` against PDFs on disk in `uploads/reports/{en,zh}/`, then upserts the report JSON envelope into `page_contents.contentHtml` for `financial-reports` / `esg-reports`. Only rows with an actual file are created; missing catalog entries are reported. Idempotent. Filename matching is **tolerant** (`canonicalName`): lowercase, ignores a CMS-upload `<epochMs>-` prefix, treats separators as equivalent — so both raw downloads and files uploaded via `POST /api/upload/pdf` import. | `npm run import:content`; uses `report-rows.buildReportContent` + Prisma. |
 | `report-catalog.ts` | **Catalog** of every Financial/ESG report PDF (96 entries: date/title/file per locale) — generated from the four `tools/*.ps1` download scripts so the import knows each file's display title/date/URL. | `import-report-rows.ts`. Regenerate if the download scripts gain/change entries. |
 ---
 
@@ -340,7 +340,7 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 | `postinstall` | `prisma generate` | Auto-generates Prisma client on install. |
 | `backup` | `tsx scripts/backup.ts` | Archives SQLite + uploads. |
 | `reset-password` | `tsx scripts/reset-password.ts` | CLI admin password reset (bcrypt 12 rounds — compat with in-app change). |
-| `import:content` | `tsx scripts/import-report-rows.ts` | Imports downloaded Financial/ESG report PDFs into DB report rows (see below). |
+| `import:content` | `tsx scripts/import-report-rows.ts` | Imports downloaded Financial/ESG report PDFs into DB report rows (idempotent; tolerant filename matching — see §3.8). |
 ---
 
 ## 7. Environment Variables

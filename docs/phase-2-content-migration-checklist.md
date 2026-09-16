@@ -19,7 +19,7 @@
 - [x] Unpublished → placeholder fallback (no 404), so an unedited page still renders seeded content.
 
 **Remaining real work** = replace seed placeholders with TRUE text copy, migrate header images, and
-supply the missing PDFs (ZH ESG, Corporate-Communications) — itemized below.
+supply the remaining missing PDFs (Corporate-Communications) — itemized below.
 
 > **Report-PDF import tooling added:** `scripts/report-catalog.ts` (catalog of all Financial/ESG PDFs
 > from the four `tools/*.ps1` download scripts) + `scripts/import-report-rows.ts` (`npm run
@@ -83,8 +83,8 @@ supply the missing PDFs (ZH ESG, Corporate-Communications) — itemized below.
 
 ### 2.8 ESG Reports (`/en/admin/pages/esg-reports`, PRD §2.2.7)
 - [x] **English ESG PDFs downloaded + rows imported** — `npm run import:content` → *EN 9 rows* (ESG 2017–2025).
-- [x] ~~Chinese ESG report → ZH~~ **BLOCKED:** all `c_ESG Report …/LTN20171127266_C.pdf` return **HTTP 404** on the live site — the Chinese ESG PDFs are not downloadable at their published URLs, so **no ZH ESG rows were created** (ZH ESG page still shows the fallback placeholder). Needs the correct CHI ESG source URLs/files before rows can be imported.
-- [ ] When ZH ESG PDFs become available: place under `uploads/reports/zh/` and re-run `npm run import:content`.
+- [x] **Chinese ESG PDFs sourced → ZH rows imported** — ✅ **DONE 2026-09-16**: the CHI ESG PDFs are now under `uploads/reports/zh/` and `npm run import:content` created **ZH 9 rows** (ESG 2017–2025). Originally "blocked" (all CHI ESG PDFs returned 404 on the live site); unblocked once the files were placed on disk. Note: the files were uploaded via the CMS and carry a `<epochMs>-` prefix + underscore separators — the importer's **tolerant filename matching** (`canonicalName`) imports them anyway.
+- [ ] Any new catalog PDFs (e.g. `ar_2026_eng/chi.pdf` Annual Report 2026) — place under `uploads/reports/<locale>/` and re-run `npm run import:content` (idempotent).
 - [ ] Header image uploaded.
 
 ### 2.9 Announcements & Circulars (public page only — Datalink iframe, PRD §2.2.5)
@@ -104,7 +104,7 @@ supply the missing PDFs (ZH ESG, Corporate-Communications) — itemized below.
 - [x] Financial reports PDFs present in `uploads/reports/{en,zh}/` (downloaded by `tools/*frdownload.ps1`).
 - [x] Financial report rows **in DB** (EN 38 / ZH 38) — `npm run import:content`.
 - [x] English ESG report PDFs present + rows imported (EN 9).
-- [ ] **Chinese ESG report PDFs — MISSING (all 404 on live site)** — must be sourced before ZH ESG rows can be imported.
+- [x] **Chinese ESG report PDFs — sourced + rows imported (ZH 9)** — added 2026-09-16 (importer tolerant of CMS-uploaded names).
 - [ ] Corporate-communications PDFs uploaded (`uploads/reports/{en,zh}/`) OR `public/pdf/communication/`.
 - [x] Governance + Role&Function PDFs already present — spot-verify each link opens.
 - [ ] No broken PDF links on the site (click every link).

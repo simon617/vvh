@@ -5,7 +5,7 @@
 > **Branch:** `main` (latest: `9eaa040` — ReportsEditor reorder + row-delete removes PDF)
 > **Baseline:** 53 test files / **233 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0
 > **Companion docs:** `docs/phase-3-reports-announcements-contact.md` (the plan — **do not modify**) · `docs/developerGuide/developer-guide.md` (living guide) · `docs/phase-2b-tasklist.md` (work log, tasks 1–35) · `docs/PRD-visionvalues-revamp-v2.md` (requirements)
-> **Status:** 🟡 **IN PROGRESS** — contact deliverables **9.6–9.8 complete** (`0e73811`, `ea9a5e6`, `38e81b3`). **§9.1–9.3 (report management API + dashboards) are EXPLICITLY DROPPED** (2026-09-15) — the Phase 2B `ReportsEditor` already satisfies the PRD's dashboards, so **§9.3b** (move rows up/down + row-delete removes the PDF) was delivered instead (`9eaa040`). **Announcements was removed from the CMS** (no placeholder, no admin page — public Datalink iframe unchanged). Suite: **55 files / 258 tests green** · `npm run lint` clean (2 pre-existing warnings).
+> **Status:** 🟡 **IN PROGRESS** — contact deliverables **9.6–9.8 complete** (`0e73811`, `ea9a5e6`, `38e81b3`). **§9.1–9.3 (report management API + dashboards) are EXPLICITLY DROPPED** (2026-09-15) — the Phase 2B `ReportsEditor` already satisfies the PRD's dashboards, so **§9.3b** (move rows up/down + row-delete removes the PDF) was delivered instead (`9eaa040`). **Announcements was removed from the CMS** (no placeholder, no admin page — public Datalink iframe unchanged). **Real report rows re-imported 2026-09-16** (38 FR / 38 FR / 9 ESG / 9 ESG across EN/ZH — ZH ESG unblocked via tolerant filename matching). Suite: **55 files / 258 tests green** · `npm run lint` clean (2 pre-existing warnings).
 
 ---
 
@@ -42,7 +42,7 @@ Work through it in this order:
 | `npm run build` | exit 0 (all public routes + admin routes + API routes) |
 | `npm run dev` | dev server on `http://localhost:3000` |
 | `npm run seed` | `prisma db seed` (upserts the **9 CMS pages** + EN/ZH content rows; **prunes** pages no longer CMS-managed — e.g. `announcements`; `PageContent` rows cascade) |
-| `npm run import:content` | `tsx scripts/import-report-rows.ts` — imports report PDFs from `uploads/reports/<locale>/` into the envelope (idempotent) |
+| `npm run import:content` | `tsx scripts/import-report-rows.ts` — imports report PDFs from `uploads/reports/<locale>/` into the envelope (idempotent; **tolerant filename matching** — CMS `<timestamp>-` prefixes & separator differences) |
 | `npm run backup` / `reset-password` | ops scripts |
 
 ### 2.2 Current data state (live SQLite `prisma/data/vvh.db`)
@@ -50,9 +50,17 @@ Work through it in this order:
 | Page (`page_contents`) | EN rows | ZH rows | Note |
 |------------------------|---------|---------|------|
 | `financial-reports` | 38 | 38 | fully imported (`npm run import:content`) |
-| `esg-reports` | 9 | 9 | EN **and** ZH imported |
+| `esg-reports` | 9 | 9 | EN **and** ZH imported — ZH ESG **re-imported 2026-09-16** (was blocked; PDFs are now on disk) |
 | `corporate-communications` | 1 | 1 | still the default placeholder row — **no PDFs migrated yet** (deliverable 3.10 open) |
 | all other pages | published placeholder content | | DB rows exist via seed |
+
+> **2026-09-16 re-import note:** `npm run import:content` was re-run over the real PDFs under
+> `uploads/reports/{en,zh}/` → **38 EN FR / 38 ZH FR / 9 EN ESG / 9 ZH ESG rows, 0 broken URLs**.
+> The importer now matches catalog filenames **tolerantly** (`canonicalName` in `scripts/import-report-rows.ts`):
+> it ignores a CMS-upload `<epochMs>-` prefix and treats separator differences as equivalent, so the
+> timestamp-prefixed ZH ESG uploads import too. The only catalog entries still without a file on disk are
+> `ar_2026_eng.pdf` / `ar_2026_chi.pdf` (Annual Report 2026, EN+ZH) — they are reported as missing by the
+> import and will be picked up automatically once downloaded (re-run the same command).
 
 - All report rows live as `{"__type":"reports","rows":[...]}` in `page_contents.contentHtml`
   (module: `src/lib/report-rows.ts`).
@@ -152,8 +160,8 @@ page_contents.contentHtml  (one row per {page_id, locale})
 - `url` is a relative upload path (`/uploads/reports/en/…`) — served by the `/uploads` route.
 - Default/fallback rows are built in `src/lib/placeholders.ts` via the same envelope functions, so
   **placeholder and DB content flow through the identical shape**.
-- `seed.ts` writes the placeholder envelope for all 20 page×locale rows; `import-report-rows.ts` upserts
-  real imported rows. Keep this "single source" approach — don't introduce a parallel store.
+- `seed.ts` writes the placeholder envelope for the 18 page×locale rows (9 CMS pages × 2); `import-report-rows.ts`
+  upserts real imported rows. Keep this "single source" approach — don't introduce a parallel store.
 ---
 
 ## 6. Existing files you will reuse (do not rebuild)
@@ -282,6 +290,9 @@ stays reserved/unused. This is the same treatment as the announcements UI (3.3).
 - [x] **TDD** for both — `ReportsEditor.test.tsx` (reorder up/down, disabled ends, DELETE fetch on remove, no fetch when no upload) mocking `fetch`; `route.test.ts` covers the DELETE endpoint (401, invalid path, ENOENT idempotent). — `9eaa040`
 
 ### 9.4 Public Financial/ESG pages (3.4, 3.5) — VERIFY ONLY
+
+> Rows are in the DB (verified 2026-09-16: 38 EN FR / 38 ZH FR / 9 EN ESG / 9 ZH ESG, 0 broken file URLs) —
+> the checks below are the runtime/visual pass.
 
 - [ ] `/en|zh/financial-reports` renders 38 rows in the sortable/paginated `ReportsTable` (published=true).
 - [ ] `/en|zh/esg-reports` renders 9 rows EN / 9 rows ZH.
