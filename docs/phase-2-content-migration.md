@@ -1,6 +1,6 @@
 # Phase 2.5: Content Migration (Separate Follow-Up Task)
 
-> **Status:** 🔄 **IN PROGRESS** — baseline content seeded ✅ (see §5.1) **and aligned to the SQLite content** ✅ (2026: `placeholders.ts` + `prisma/seed.ts` now match the DB baseline, see §0 row 9). All 10 pages × EN/ZH have editable `page_contents` rows. **Follow the per-task checklist in
+> **Status:** 🔄 **IN PROGRESS** — baseline content seeded ✅ (see §5.1) **and aligned to the SQLite content** ✅ (2026: `placeholders.ts` + `prisma/seed.ts` now match the DB baseline, see §0 row 9). All **9 CMS pages** × EN/ZH have editable `page_contents` rows (`announcements` is the one public page that is **not** CMS-managed — Datalink iframe, removed 2026-09-15). **Follow the per-task checklist in
 > `docs/phase-2-content-migration-checklist.md`** — it marks what Phase 2B already did and lists what's left (real bios, header images, Financial/ESG/Comms PDFs, verification).
 
 **Duration:** ~1 week (manual copy-paste task)  
@@ -110,8 +110,9 @@ This is a **data entry task**, not a development task. It can be performed by a 
 npm run seed              # OR: npm run content:migrate  (same command, idempotent)
 ```
 
-Upserts the existing site content (the Phase-2A page content) for **all 10 pages × EN/ZH into
-`page_contents`** (20 rows), including the **Board-of-Directors director cards** and the
+Upserts the existing site content (the Phase-2A page content) for **all 9 CMS pages × EN/ZH into
+`page_contents`** (18 rows; `announcements` is excluded — Datalink iframe only), including the
+**Board-of-Directors director cards** and the
 **Corporate Governance PDF links** pointing at the PDFs already stored under
 `uploads/reports/{en,zh}/`. Re-running is safe (idempotent `upsert`).
 

@@ -2,10 +2,10 @@
 
 > **Project:** Vision Values Holdings Limited (HKEX: 862) — corporate website revamp
 > **Phase:** 3 — Reports, Announcements & Contact
-> **Branch:** `main` (latest: `dcc84af` — TipTap sub/superscript committed)
+> **Branch:** `main` (latest: `9eaa040` — ReportsEditor reorder + row-delete removes PDF)
 > **Baseline:** 53 test files / **233 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0
 > **Companion docs:** `docs/phase-3-reports-announcements-contact.md` (the plan — **do not modify**) · `docs/developerGuide/developer-guide.md` (living guide) · `docs/phase-2b-tasklist.md` (work log, tasks 1–35) · `docs/PRD-visionvalues-revamp-v2.md` (requirements)
-> **Status:** 🟡 **IN PROGRESS** — contact deliverables **9.6, 9.7, 9.8 complete** (commits `0e73811`, `ea9a5e6`, `38e81b3`); suite now **55 files / 247 tests green**. **⚠️ §9.1–9.3 (report management API + dashboards) were believed done but are NOT present in the repo** — see §9 and §13.
+> **Status:** 🟡 **IN PROGRESS** — contact deliverables **9.6–9.8 complete** (`0e73811`, `ea9a5e6`, `38e81b3`). **§9.1–9.3 (report management API + dashboards) are EXPLICITLY DROPPED** (2026-09-15) — the Phase 2B `ReportsEditor` already satisfies the PRD's dashboards, so **§9.3b** (move rows up/down + row-delete removes the PDF) was delivered instead (`9eaa040`). **Announcements was removed from the CMS** (no placeholder, no admin page — public Datalink iframe unchanged). Suite: **55 files / 258 tests green** · `npm run lint` clean (2 pre-existing warnings).
 
 ---
 
@@ -37,11 +37,11 @@ Work through it in this order:
 
 | Command | Result (verified) |
 |---------|-------------------|
-| `npm test` (vitest) | 53 files / **233 tests** passing |
+| `npm test` (vitest) | 55 files / **258 tests** passing |
 | `npm run lint` | clean — only 2 **pre-existing** Phase-1 warnings (`admin/setup` useEffect deps; `Logo <img>`) |
-| `npm run build` | exit 0 (all 10 public routes + admin routes + API routes) |
+| `npm run build` | exit 0 (all public routes + admin routes + API routes) |
 | `npm run dev` | dev server on `http://localhost:3000` |
-| `npm run seed` | `prisma db seed` (upserts 10 pages + EN/ZH content rows) |
+| `npm run seed` | `prisma db seed` (upserts the **9 CMS pages** + EN/ZH content rows; **prunes** pages no longer CMS-managed — e.g. `announcements`; `PageContent` rows cascade) |
 | `npm run import:content` | `tsx scripts/import-report-rows.ts` — imports report PDFs from `uploads/reports/<locale>/` into the envelope (idempotent) |
 | `npm run backup` / `reset-password` | ops scripts |
 
@@ -56,14 +56,16 @@ Work through it in this order:
 
 - All report rows live as `{"__type":"reports","rows":[...]}` in `page_contents.contentHtml`
   (module: `src/lib/report-rows.ts`).
+- `announcements` is **NOT CMS-managed** (removed 2026-09-15): no `placeholders.ts` entry, no
+  `page_contents` row, no `/admin/pages/announcements` page (404). The public page is a static
+  Datalink iframe (`src/app/[locale]/announcements/page.tsx` + `src/lib/announcements.ts`).
 - `corporate-governance` still links to **old-server absolute PDF URLs** (`https://www.visionvalues.com.hk/...`)
   and `corporate-communications` links to `/pdf/communication/...` paths that **do not exist yet**
   → deliverable **3.10** must fix both.
 
 ### 2.3 Git/workspace hygiene
 
-- Recent commits: `dcc84af` (sub/superscript), `4c871f5` (data import), `1f033fd` (import tooling),
-  `a0d1cb4` (TD-30 decision), `fbbba46` (Phase 2 complete).
+- Recent commits: `9eaa040` (ReportsEditor reorder + row-delete removes PDF), `0e73811`/`ea9a5e6`/`38e81b3` (contact), `f13b86b` (SMTP), `cc536d8` (docs sync), `dcc84af` (sub/superscript), `4c871f5` (data import), `1f033fd` (import tooling).
 - `myNotes.docx` + a deleted `~WRL*.tmp` are unrelated user files — do not stage them.
 - Docs discipline (developer-guide §3 convention 14): every code change updates `docs/phase-2b-tasklist.md`
   (Files Modified + commit) and keeps the phase docs in sync.
@@ -161,7 +163,7 @@ page_contents.contentHtml  (one row per {page_id, locale})
 | File | What it does | How Phase 3 uses it |
 |------|--------------|---------------------|
 | `src/lib/report-rows.ts` (+ `.test.ts`) | Envelope parse/serialize + `makeRowId()` | Reuse for ALL report CRUD |
-| `src/components/admin/ReportsEditor.tsx` (+ `.test.tsx`) | Row editor: date/title + PDF upload (locale-aware), add/remove | Reuse as the edit surface inside the Phase-3 report dashboards (or factor the shared logic) |
+| `src/components/admin/ReportsEditor.tsx` (+ `.test.tsx`) | Row editor: date/title + PDF upload (locale-aware), add/remove, **move up/down (reorder)**, row-delete also removes the PDF server-side | Reused as-is — this IS the Phase-3 report management surface (`9eaa040`) |
 | `src/app/api/upload/pdf/route.ts` (+ `route.test.ts`) | `POST /api/upload/pdf?locale=en|zh` → writes `uploads/reports/<locale>/<timestamp>-<sanitized>` | Reuse as-is (TD-22) |
 | `src/components/layout/ReportsTable.tsx` (+ `.test.tsx`) | Sortable + paginated Date/Document table | Already rendered by `financial-reports`, `esg-reports`, `corporate-communications` public pages |
 | `src/lib/uploads.ts` | `assertAllowedDocument` (pdf/doc/docx/xls/xlsx, max `MAX_DOC_SIZE` default **50 MB**), `sanitizeFilename`, `uploadsDir()` | Reuse for any new upload/delete logic |
@@ -174,14 +176,17 @@ page_contents.contentHtml  (one row per {page_id, locale})
 > (and per-row PUT/DELETE keyed by the string row `id` if you want granular endpoints).
 > Keep the JSON shape EXACTLY compatible with `ReportRowItem` so `ReportsTable`/`ReportsEditor` keep working.
 
-### 6.2 Announcements (3.6 — keep as-is)
+### 6.2 Announcements (3.6 — public only, NOT CMS-editable)
 
 | File | What it does |
 |------|--------------|
 | `src/lib/announcements.ts` | Per-locale Datalink iframe URLs (`en`/`zh`) |
-| `src/app/[locale]/announcements/page.tsx` (+ test) | Renders the iframe inside `TemplateShell` |
+| `src/app/[locale]/announcements/page.tsx` (+ test) | Renders the iframe inside `TemplateShell` — **static** page (no `getPageData`, no placeholder) |
 
-**No changes expected.** Verify `/en/announcements` and `/zh/announcements` still render the iframe.
+**Announcements was removed from the CMS (2026-09-15):** no `placeholders.ts` entry, no `page_contents` row,
+no `/admin/pages/announcements` page (404s). The public page keeps the same localised title/meta and renders
+the Datalink iframe via `getAnnouncementsUrl`. Verify `/en/announcements` and `/zh/announcements` still
+render the iframe.
 
 ### 6.3 Contact (3.7–3.9)
 
@@ -246,27 +251,35 @@ npm run dev                   # dev server
 
 ## 9. Deliverable checklist (work in this order)
 
-### 9.1 Report management API (do this first — everything else depends on it)
+### 9.1 Report management API (3.1) — ❌ **EXPLICITLY DROPPED** (2026-09-14)
 
-- [ ] `GET /api/reports?page=<slug>&locale=en|zh` → `{ rows: ReportRowItem[] }` (reads `getPageContent` + `getReportRows`).
-- [ ] `POST /api/reports` → body `{ page, locale, rows }` → `upsertPageContent(slug, locale, { contentHtml: buildReportContent(rows), isPublished: true })` (preserves title/SEO/breadcrumb).
-- [ ] *(optional granular)* `PUT /api/reports/[id]` and `DELETE /api/reports/[id]` operating on one row inside the envelope; DELETE also removes the PDF file from `uploads/reports/<locale>/` (use `fs.unlink` guarded by `resolveUploadPath` — path-traversal safe).
-- [ ] 401 when unauthenticated; 400 on invalid `page`/`locale`/`rows`.
-- [ ] **TDD:** mock `@/lib/page-content` — assert row round-trip and envelope integrity.
+**Decision:** the Phase 2B `ReportsEditor` (reachable at `/admin/pages/financial-reports` and
+`/admin/pages/esg-reports` via `PAGE_EDITOR_TYPES`) already manages the same JSON envelope (date/document/PDF
+upload/add/remove/save). The dedicated `/api/reports*` API and `/admin/reports/*` dashboards are **not built**;
+the PRD's REP-01/REP-02 "dashboards" are considered **satisfied by the Phase 2B editor**. The `Report` table
+stays reserved/unused. This is the same treatment as the announcements UI (3.3).
 
-### 9.2 Financial report management UI (3.1)
+- [x] ~~`GET /api/reports?page=<slug>&locale=en|zh`~~ → dropped
+- [x] ~~`POST /api/reports`~~ → dropped
+- [x] ~~`PUT/DELETE /api/reports/[id]` incl. PDF deletion~~ → dropped (PDF deletion moved into the editor via a small file-DELETE endpoint — see 9.3b)
+- [x] ~~401/400 handling~~ → dropped
+- [x] ~~TDD envelope round-trip API~~ → dropped
 
-- [ ] `/en/admin/reports/financial` lists both locales (LocaleTabs pattern) with the envelope's rows (or "no reports yet").
-- [ ] Edit surface = **reuse `ReportsEditor`** (date + document + PDF upload) or a thin dashboard wrapping it.
-- [ ] Save → `POST /api/reports`; show saved/error state.
-- [ ] Reorder = move rows up/down in the array (REP-05: numeric/array order; **no drag-drop P1**).
-- [ ] Row delete removes the row (and its PDF) → saved via API.
-- [ ] **TDD:** render list, add/remove row interaction, save POST payload.
+### 9.2 Financial report management UI (3.1) — ❌ **EXPLICITLY DROPPED**
 
-### 9.3 ESG report management UI (3.2)
+- [x] ~~`/en/admin/reports/financial`~~ → dropped; **use the existing Phase 2B editor** (`/admin/pages/financial-reports`)
+- [x] ~~reuse `ReportsEditor`/list/save/reorder/delete~~ → superseded by 9.3b (editor enhancements)
 
-- [ ] Same as 9.2 but for slug `esg-reports` at `/en/admin/reports/esg`.
-- [ ] **TDD:** separate tests; shared editor component reused.
+### 9.3 ESG report management UI (3.2) — ❌ **EXPLICITLY DROPPED**
+
+- [x] ~~`/en/admin/reports/esg`~~ → dropped; **use the existing Phase 2B editor** (`/admin/pages/esg-reports`)
+- [x] ~~separate dashboard/tests~~ → superseded by 9.3b
+
+### 9.3b ReportsEditor enhancements (adopted in place of 9.1–9.3) — ✅ DONE `9eaa040`
+
+- [x] **Reorder** rows in the editor — move up/down buttons on each row (REP-05 numeric/array order preserved; no drag-drop P1). `moveRow()` swaps in-place and commits the new order; buttons disabled at the ends. — `9eaa040`
+- [x] **Row delete also deletes its PDF** from `uploads/reports/<locale>/` on the server — the client calls the authed `DELETE /api/upload/pdf?path=<row.url>` (path-traversal safe via `resolveUploadPath` in `src/app/api/upload/pdf/route.ts`; idempotent on a missing file; **best-effort** — never blocks the editor). Only `/uploads/reports/...` URLs are ever deleted. — `9eaa040`
+- [x] **TDD** for both — `ReportsEditor.test.tsx` (reorder up/down, disabled ends, DELETE fetch on remove, no fetch when no upload) mocking `fetch`; `route.test.ts` covers the DELETE endpoint (401, invalid path, ENOENT idempotent). — `9eaa040`
 
 ### 9.4 Public Financial/ESG pages (3.4, 3.5) — VERIFY ONLY
 
@@ -301,10 +314,10 @@ npm run dev                   # dev server
 
 ### 9.9 AdminNav & i18n
 
-- [ ] Add a Reports link to `AdminNav` (label `admin.reports` already exists in en/zh i18n). — ⚠️ BLOCKED: the reports management dashboards (§9.1–9.3) do not exist yet; link only after they are built
+- [x] ~~Add a Reports link to `AdminNav`~~ → **dropped** with §9.1–9.3 (no `/admin/reports/*` dashboards; report editing lives at `/admin/pages/<slug>`)
 - [x] Add all new keys to **both** `messages/en.json` + `messages/zh.json`:
-      `contact.sending`, `contact.success`, `contact.error`. — `38e81b3` (`admin.reportsFinancial`/`admin.reportsEsg` added when §9.2/9.3 dashboards land)
-- [ ] Update `AdminNav.test.tsx` if it asserts the link set. — ⚠️ blocked by the same missing Reports link
+      `contact.sending`, `contact.success`, `contact.error`. — `38e81b3` (~~`admin.reportsFinancial`/`admin.reportsEsg`~~ not needed — dashboards dropped)
+- [x] ~~Update `AdminNav.test.tsx` if it asserts the link set~~ → N/A (no new link; AdminNav test untouched and green)
 
 ### 9.10 Local PDF migration — governance & communications (3.10) ⚠️ manual/data task
 
@@ -357,10 +370,11 @@ npm run dev                   # dev server
 - [x] `npm run lint` — no NEW warnings beyond the 2 pre-existing ones. — verified
 - [x] `npm run build` — exit 0. — verified
 - [ ] Manual pass at 320 / 768 / 1920 px:
-  - [ ] `/en/admin/reports/financial` + `/zh/...` (via locale tabs) — add/edit/reorder/delete a row, upload a PDF, save, reload. — ⚠️ blocked (§9.1–9.3 not built)
-  - [ ] `/en/admin/reports/esg` — same. — ⚠️ blocked (§9.1–9.3 not built)
+  - [ ] `/en/admin/pages/financial-reports` + `/zh/...` (via locale tabs) — add/edit/**move up/down**/delete a row, upload a PDF (**row delete also removes the PDF file**), save, reload.
+  - [ ] `/en/admin/pages/esg-reports` — same.
+  - [ ] `/en/admin/pages` listing shows **9 CMS pages** (no announcements row); `/en/admin/pages/announcements` → 404.
   - [ ] `/en|zh/financial-reports` + `/en|zh/esg-reports` — 38/38/9/9 rows, sort + pagination.
-  - [ ] `/en|zh/announcements` — iframe renders.
+  - [ ] `/en|zh/announcements` — iframe renders (static page, no DB row).
   - [ ] `/en|zh/contact` — validation, submit → success; `SMTP_HOST` unreachable → error message; honeypot filled → silent success; contact page forwards a real test email to `SMTP_RECIPIENT`.
   - [ ] `/en|zh/corporate-governance` + `corporate-communications` — migrated PDFs open.
 
@@ -383,9 +397,10 @@ npm run dev                   # dev server
 
 ## 13. Sign-off checklist
 
-- [ ] Deliverables 3.1, 3.2, 3.7, 3.8, 3.9 done; 3.4, 3.5, 3.6 verified; 3.10 clarified (`uploads` vs `public`) and executed.
-- [ ] No new tables/migrations; envelope + iframe architecture respected.
+- [x] **§9.1–9.3 explicitly dropped** (2026-09-15) — the Phase 2B `ReportsEditor` satisfies the PRD's report dashboards; the enhancements (reorder + PDF delete, §9.3b) are delivered in `9eaa040`.
+- [ ] Deliverables 3.7, 3.8, 3.9 done; 3.4, 3.5, 3.6 verified; 3.10 clarified (`uploads` vs `public`) and executed.
+- [x] No new tables/migrations; envelope + iframe architecture respected.
 - [ ] All §11.2 acceptance checks pass.
-- [ ] `docs/phase-2b-tasklist.md` (or a new phase-3 tasklist) updated with files + commits.
-- [ ] `docs/developerGuide/developer-guide.md` updated for any new files/endpoints (addresses the "keep docs in sync" convention).
-- [ ] This checklist's Status header flipped to ✅ COMPLETE.
+- [x] This checklist is the **Phase-3 work log** — updated with files + commits (§2.3, §6, §9).
+- [x] `docs/developerGuide/developer-guide.md` updated for new behavior (`DELETE /api/upload/pdf`, ReportsEditor reorder, announcements removed from CMS/placeholders/seed).
+- [ ] This checklist's Status header flipped to ✅ COMPLETE. (not yet — 3.4/3.5/3.6 verification + 3.10 PDF migration remain)

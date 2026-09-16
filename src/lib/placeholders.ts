@@ -13,7 +13,14 @@ export interface PagePlaceholder {
   isDbContent?: boolean;
 }
 
-export const PLACEHOLDER_SLUGS = NAV_SLUGS;
+/**
+ * Slugs backed by static placeholder content. `announcements` is intentionally
+ * NOT here: that page is a 3rd-party Datalink iframe (TD-30 Option A) with no
+ * placeholder fallback, no `page_contents` row and no CMS editor.
+ */
+export const PLACEHOLDER_SLUGS = NAV_SLUGS.filter(
+  (slug) => slug !== "announcements"
+);
 
 /* ------------------------------------------------------------------ *
  * Canonical default report rows (single source of truth for the report
@@ -164,7 +171,10 @@ const HOME_ZH = `
 <p>集團主要提供物業投資、物流業務、勘探礦藏業務及私人飛機管理服務。</p>
 `;
 
-const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }> = {
+/** CMS-editable slugs = nav slugs minus the iframe-only `announcements` page. */
+type CmsSlug = Exclude<NavSlug, "announcements">;
+
+const PLACEHOLDERS: Record<CmsSlug, { en: PagePlaceholder; zh: PagePlaceholder }> = {
   home: {
     en: {
       title: "Vision Values Holdings Limited",
@@ -263,42 +273,6 @@ const PLACEHOLDERS: Record<NavSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaDescription: "遠見控股有限公司之企業管治政策",
       breadcrumb: "企業管治",
       contentHtml: governanceHtml("zh"),
-    },
-  },
-  announcements: {
-    en: {
-      title: "Announcements & Circulars",
-      metaTitle: "Announcements & Circulars | Vision Values Holdings Limited",
-      metaDescription: "Announcements and circulars of Vision Values Holdings Limited",
-      breadcrumb: "Announcements & Circulars",
-      contentHtml: `
-<table>
-  <thead>
-    <tr><th>Date</th><th>Document</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>2026-01-15</td><td><a href="https://www1.hkexnews.hk/" target="_blank">Announcement of Annual Results</a></td></tr>
-    <tr><td>2025-12-01</td><td><a href="https://www1.hkexnews.hk/" target="_blank">Circular</a></td></tr>
-  </tbody>
-</table>
-`,
-    },
-    zh: {
-      title: "公告及通函",
-      metaTitle: "公告及通函 | 遠見控股有限公司",
-      metaDescription: "遠見控股有限公司之公告及通函",
-      breadcrumb: "公告及通函",
-      contentHtml: `
-<table>
-  <thead>
-    <tr><th>日期</th><th>文件</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>2026-01-15</td><td><a href="https://www1.hkexnews.hk/" target="_blank">全年業績公告</a></td></tr>
-    <tr><td>2026-12-01</td><td><a href="https://www1.hkexnews.hk/" target="_blank">通函</a></td></tr>
-  </tbody>
-</table>
-`,
     },
   },
   "financial-reports": {
@@ -414,7 +388,7 @@ export function getPlaceholder(
   slug: string,
   locale: "en" | "zh"
 ): PagePlaceholder | null {
-  const entry = PLACEHOLDERS[slug as NavSlug];
+  const entry = PLACEHOLDERS[slug as CmsSlug];
   if (!entry) return null;
   return entry[locale];
 }

@@ -11,7 +11,7 @@
 
 ## 0. What Phase 2B already did (do NOT redo)
 
-- [x] Seeded all 20 `page_contents` rows (10 pages × EN/ZH), all **published** — `npm run seed` (or `content:migrate`).
+- [x] Seeded all `page_contents` rows (**9 CMS pages** × EN/ZH = 18 rows), all **published** — `npm run seed` (or `content:migrate`). `announcements` is **NOT** CMS-managed (Datalink iframe page — no placeholder/row/editor, removed 2026-09-15; `/en/admin/pages/announcements` 404s).
 - [x] CMS editors wired: WYSIWYG (most pages), **Key-value** (`corporate-details`), **Reports** (`financial-reports` / `esg-reports` / `corporate-communications`).
 - [x] PDF upload available: `POST /api/upload/pdf` → `uploads/reports/<locale>/` (used by Reports editor).
 - [x] Corporate-Governance PDFs **uploaded** + linked: all 12 policy PDFs under `uploads/reports/{en,zh}/`.
@@ -36,7 +36,7 @@ supply the missing PDFs (ZH ESG, Corporate-Communications) — itemized below.
 - [ ] Header banner image assets per page (best quality available; brand color tones).
 ---
 
-## 2. Per-page content migration (10 pages × EN/ZH)
+## 2. Per-page content migration (9 CMS pages × EN/ZH — `announcements` is iframe-only, no CMS)
 
 ### 2.1 Home (`/en/admin/pages/home`, PRD §2.2.1)
 - [ ] EN intro text matches live site exactly (`contentHtml`).
@@ -87,9 +87,10 @@ supply the missing PDFs (ZH ESG, Corporate-Communications) — itemized below.
 - [ ] When ZH ESG PDFs become available: place under `uploads/reports/zh/` and re-run `npm run import:content`.
 - [ ] Header image uploaded.
 
-### 2.9 Announcements & Circulars (`/en/admin/pages/announcements`, PRD §2.2.5)
-- [ ] Confirm the Datalink **iframe** approach is acceptable for launch (table/HKEX CRUD = Phase 3).
-- [ ] If keeping iframe, verify it loads EN + ZH.
+### 2.9 Announcements & Circulars (public page only — Datalink iframe, PRD §2.2.5)
+- [x] Announcements are **not CMS-managed** — the public page embeds the 3rd-party Datalink iframe (`src/lib/announcements.ts`); there is **no `/admin/pages/announcements`** (removed 2026-09-15).
+- [ ] Confirm the Datalink **iframe** approach is acceptable for launch (table/HKEX CRUD = dropped, TD-30 Option A).
+- [ ] Verify it loads EN + ZH.
 - [ ] Header image uploaded.
 
 ### 2.10 Contact Us (`/en/admin/pages/contact`, PRD §2.2.10)

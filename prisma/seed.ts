@@ -16,7 +16,6 @@ const PAGES = [
   { slug: "board-of-directors", menuOrder: 2 },
   { slug: "corporate-details", menuOrder: 3 },
   { slug: "corporate-governance", menuOrder: 4 },
-  { slug: "announcements", menuOrder: 5 },
   { slug: "financial-reports", menuOrder: 6 },
   { slug: "esg-reports", menuOrder: 7 },
   { slug: "lost-share-certificates", menuOrder: 8 },
@@ -81,6 +80,19 @@ async function main() {
       },
     });
     console.log(`  upserted page '${page.slug}' (menuOrder=${page.menuOrder})`);
+  }
+
+  // Remove pages that are no longer CMS-managed (e.g. `announcements` — Datalink
+  // iframe only: no placeholder, no editor, no page_contents). Idempotent:
+  // PageContent rows cascade-delete with the page.
+  const canonicalSlugs = PAGES.map((p) => p.slug);
+  const stale = await prisma.page.findMany({
+    where: { slug: { notIn: [...canonicalSlugs] } },
+    select: { slug: true },
+  });
+  for (const stalePage of stale) {
+    await prisma.page.delete({ where: { slug: stalePage.slug } });
+    console.log(`  pruned page '${stalePage.slug}' (removed from CMS)`);
   }
 
   const count = await prisma.page.count();

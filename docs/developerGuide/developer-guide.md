@@ -131,7 +131,7 @@ This is the **orientation guide** for any developer who needs to work on this co
 | `page-content-validation.ts` | pure | Validates PUT body shape. Kept **out** of the route (Next requires route files to export only HTTP handlers). | `/api/pages/[slug]`. |
 | `site-settings.ts` | server | Global settings (`getSiteSetting`, `setSiteSetting`, `getSiteSettings`). | `/api/settings`, admin settings page. |
 | `pages.ts` | server | `getPageData(slug, locale)` → `PagePlaceholder` with DB/placeholder resolution + `isDbContent`. | Every public page. |
-| `placeholders.ts` | pure | Static default content for all 10 pages × 2 locales (the "until migrated" fallback) — **single source** for default content. The 3 report pages' default rows are stored here as a JSON report envelope (via `buildReportContent`). | `pages.ts`, seed, tests. |
+| `placeholders.ts` | pure | Static default content for the **9 CMS pages** × 2 locales (the "until migrated" fallback) — **single source** for default content. `announcements` is **intentionally absent** (Datalink iframe page — no placeholder). The 3 report pages' default rows are stored here as a JSON report envelope (via `buildReportContent`). | `pages.ts`, seed, tests. |
 | `navigation.ts` | pure | `NAV_SLUGS`, nav groups, labels (DRY source-of-truth for slugs). | All layouts, placeholders, seed. |
 | `announcements.ts` | pure | HKEX Datalink iframe URL builder. | Announcements page. |
 | `directors.ts` | pure | Director names/titles/categories/bios (fallback data). | Board page (fallback) + seed (→ CMS cards). |
@@ -214,7 +214,7 @@ Each public page is an async Server Component that:
 | Corporate Details | `corporate-details/` | `ContentWithSidebar` (renders `contentHtml` — a key/value table when edited via CMS). |
 | Corporate Governance | `corporate-governance/` | `ContentWithSidebar` (rich text + PDF links). |
 | Lost Share Certificates | `lost-share-certificates/` | `ContentWithSidebar`. |
-| Announcements | `announcements/` | `TemplateShell` + Datalink iframe (`getAnnouncementsUrl`). |
+| Announcements | `announcements/` | `TemplateShell` + Datalink iframe (`getAnnouncementsUrl`) — **static page, NOT CMS-editable** (no placeholder, no `page_contents` row — removed from `/admin/pages`). |
 | Financial Reports | `financial-reports/` | `TemplateShell` + `ReportsTable` (rows via `getReportRows` from DB or placeholder envelope). |
 | ESG Reports | `esg-reports/` | `TemplateShell` + `ReportsTable`. |
 | Corporate Communications | `corporate-communications/` | `TemplateShell` + `ReportsTable`. |
@@ -248,7 +248,7 @@ Each public page is an async Server Component that:
 | `PageEditor.tsx` | Bilingual editor page controller. Holds EN/ZH drafts, dirty state, publish toggles, Save (PUT). **Chooses the content editor per slug** via `PAGE_EDITOR_TYPES` (`wysiwyg` | `keyvalue` | `reports`). | Admin `pages/[slug]` page; renders the editors below. |
 | `TipTapEditor.tsx` | Limited WYSIWYG (bold/italic/paragraph/heading/link/subscript/superscript; link auto `rel=noopener` `target=_blank`). | `PageEditor` (default). |
 | `KeyValueEditor.tsx` | Row editor (Label/Value) that reads/writes the `<table>` HTML via `key-value.ts`. | `PageEditor` for `corporate-details`. |
-| `ReportsEditor.tsx` | Row editor (Date/Document/PDF upload) using `report-rows.ts`; uploads via `/api/upload/pdf`. | `PageEditor` for the 3 report pages. |
+| `ReportsEditor.tsx` | Row editor (Date/Document/PDF upload) using `report-rows.ts`; uploads via `/api/upload/pdf`. Rows can be **moved up/down** (reorder) and removing a row **deletes its PDF** server-side (`DELETE /api/upload/pdf?path=…`, best-effort). | `PageEditor` for the 3 report pages. |
 | `LocaleTabs.tsx` | EN/ZH tab switch via `?tab=en|zh` URL param (with unsaved-changes guard). | `PageEditor`. |
 | `ImageUploader.tsx` | File picker + client validation + preview; POST to a configurable endpoint. | `PageEditor` (hero), `SettingsForm` (logo). |
 | `SettingsForm.tsx` | Admin settings form (site_name, GA4, logo). Uses i18n namespace `admin.settingsForm`. | `/admin/settings` page. |
@@ -268,7 +268,7 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 | `/api/settings` | `settings/route.ts` | GET/PUT | Reads / saves global `site_name`, `ga4_tracking_id` (locale `null`). |
 | `/api/logo` | `logo/route.ts` | POST | Replaces the site logo (writes via `src/lib/logo.ts`). |
 | `/api/upload/image` | `upload/image/route.ts` | POST | Header/hero image → `UPLOAD_DIR/images/`. |
-| `/api/upload/pdf` | `upload/pdf/route.ts` | POST | Report document → `UPLOAD_DIR/reports/<locale>/`. |
+| `/api/upload/pdf` | `upload/pdf/route.ts` | POST / **DELETE** | POST: report document → `UPLOAD_DIR/reports/<locale>/`. DELETE `?path=/uploads/reports/<locale>/<file>`: removes the PDF (used when a report row is deleted) — path-traversal safe via `resolveUploadPath`, idempotent on missing file. |
 | `/api/contact/send` | `contact/send/route.ts` | POST | **Public** (no session): validates Name/Subject/Email/Message, checks the honeypot (`company_website`), sends via `src/lib/email.ts`. 200 `{ok:true}` / 400 invalid / 502 SMTP failure (generic message). |
 | `/uploads/[...path]` | `uploads/[...path]/route.ts` | GET | Serves uploaded files (MIME map incl. `application/pdf`; path-traversal guarded). |
 
@@ -306,13 +306,15 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 ### 5.2 Seed (`prisma/seed.ts`) + `src/lib` helpers
 
 - `prisma/seed.ts` upserts:
-  - the **10 `Page` rows** (slugs come from `src/lib/navigation.ts` `NAV_SLUGS`), and
-  - **20 `PageContent` rows** (10 pages × `en`/`zh`) using the placeholder content, custom builders for:
+  - the **9 CMS `Page` rows** (from its own `PAGES` array — `announcements` is excluded: Datalink iframe, no editor), and
+  - **18 `PageContent` rows** (9 pages × `en`/`zh`) using the placeholder content, custom builders for:
     - `board-of-directors` → director-card HTML (`directorCardsHtml`),
     - `corporate-governance` → governance PDF-link HTML (`governanceHtml`),
     - `financial-reports` / `esg-reports` / `corporate-communications` → report JSON envelope
       (`buildReportContent`).
-- Re-running the seed is **idempotent** (`upsert`).
+- Re-running the seed is **idempotent** (`upsert`) and **prunes** `Page` rows that are no longer
+  CMS-managed (their `PageContent` rows cascade-delete) — keeping the admin pages listing free of
+  pages like `announcements`.
 
 ### 5.3 Data files
 
@@ -426,10 +428,9 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
     the envelope. Within the CMS: D11 — policy PDFs are pasted as WYSIWYG links; D6 — files live
     under `uploads/reports/<locale>/`.
 
-12. **Slug sync.** When adding a page, keep slugs in sync across `navigation.ts` (nav source of truth),
-    `placeholders.ts` (fallback content), and `prisma/seed.ts` (seed). They share `NAV_SLUGS`.
+12. **Slug sync.** When adding a page, keep slugs in sync across `navigation.ts` (nav source of truth — includes `announcements`, which is **public-only**), `placeholders.ts` (fallback content — **exclude** `announcements`), and `prisma/seed.ts` (CMS pages — **exclude** `announcements`).
 
-13. **Tests to keep green.** Target the current count on `npm test` (53 files / 232 tests);
+13. **Tests to keep green.** Target the current count on `npm test` (55 files / 258 tests);
     `npm run lint` should be clean apart from the two pre-existing Phase-1 warnings
     (`admin/setup` useEffect deps, `Logo` `<img>`); `npm run build` exits 0.
 

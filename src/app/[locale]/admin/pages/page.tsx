@@ -7,7 +7,7 @@ interface AdminPagesPageProps {
 
 /**
  * Admin pages listing (deliverable 2B.1).
- * Shows all 10 pages with per-locale published status and an edit link.
+ * Shows every CMS page with per-locale published status and an edit link.
  * Rendered inside the protected [locale]/admin layout.
  */
 export default async function AdminPagesPage({ params }: AdminPagesPageProps) {

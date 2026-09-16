@@ -3,8 +3,9 @@ import { getPlaceholder, PLACEHOLDER_SLUGS } from "./placeholders";
 import { NAV_SLUGS } from "./navigation";
 
 describe("placeholders", () => {
-  it("provides placeholder content for every nav slug in both locales", () => {
+  it("provides placeholder content for every CMS nav slug in both locales", () => {
     for (const slug of NAV_SLUGS) {
+      if (slug === "announcements") continue; // iframe-only — no placeholder
       for (const locale of ["en", "zh"] as const) {
         const data = getPlaceholder(slug, locale);
         expect(data, `${slug} (${locale}) should have data`).not.toBeNull();
@@ -14,8 +15,17 @@ describe("placeholders", () => {
     }
   });
 
-  it("exposes the same slugs as navigation", () => {
-    expect(PLACEHOLDER_SLUGS.toSorted()).toEqual([...NAV_SLUGS].sort());
+  it("has no placeholder for the iframe-only announcements page", () => {
+    for (const locale of ["en", "zh"] as const) {
+      expect(getPlaceholder("announcements", locale)).toBeNull();
+    }
+  });
+
+  it("exposes every nav slug except announcements", () => {
+    const expected = [...NAV_SLUGS]
+      .filter((slug) => slug !== "announcements")
+      .sort();
+    expect(PLACEHOLDER_SLUGS.toSorted()).toEqual(expected);
   });
 
   it("returns null for unknown slug", () => {
