@@ -56,7 +56,7 @@ Work through it in this order:
 
 - All report rows live as `{"__type":"reports","rows":[...]}` in `page_contents.contentHtml`
   (module: `src/lib/report-rows.ts`).
-- `announcements` is **NOT CMS-managed** (removed 2026-09-15): no `placeholders.ts` entry, no
+- `announcements` is **NOT CMS-managed** (removed `c77dcee`): no `placeholders.ts` entry, no
   `page_contents` row, no `/admin/pages/announcements` page (404). The public page is a static
   Datalink iframe (`src/app/[locale]/announcements/page.tsx` + `src/lib/announcements.ts`).
 - `corporate-governance` still links to **old-server absolute PDF URLs** (`https://www.visionvalues.com.hk/...`)
@@ -65,7 +65,7 @@ Work through it in this order:
 
 ### 2.3 Git/workspace hygiene
 
-- Recent commits: `9eaa040` (ReportsEditor reorder + row-delete removes PDF), `0e73811`/`ea9a5e6`/`38e81b3` (contact), `f13b86b` (SMTP), `cc536d8` (docs sync), `dcc84af` (sub/superscript), `4c871f5` (data import), `1f033fd` (import tooling).
+- Recent commits: `c77dcee` (announcements removed from CMS + docs sync), `9eaa040` (ReportsEditor reorder + row-delete removes PDF), `0e73811`/`ea9a5e6`/`38e81b3` (contact), `f13b86b` (SMTP), `cc536d8` (docs sync), `dcc84af` (sub/superscript), `4c871f5` (data import), `1f033fd` (import tooling).
 - `myNotes.docx` + a deleted `~WRL*.tmp` are unrelated user files — do not stage them.
 - Docs discipline (developer-guide §3 convention 14): every code change updates `docs/phase-2b-tasklist.md`
   (Files Modified + commit) and keeps the phase docs in sync.
@@ -183,7 +183,7 @@ page_contents.contentHtml  (one row per {page_id, locale})
 | `src/lib/announcements.ts` | Per-locale Datalink iframe URLs (`en`/`zh`) |
 | `src/app/[locale]/announcements/page.tsx` (+ test) | Renders the iframe inside `TemplateShell` — **static** page (no `getPageData`, no placeholder) |
 
-**Announcements was removed from the CMS (2026-09-15):** no `placeholders.ts` entry, no `page_contents` row,
+**Announcements was removed from the CMS (`c77dcee`):** no `placeholders.ts` entry, no `page_contents` row,
 no `/admin/pages/announcements` page (404s). The public page keeps the same localised title/meta and renders
 the Datalink iframe via `getAnnouncementsUrl`. Verify `/en/announcements` and `/zh/announcements` still
 render the iframe.
@@ -403,4 +403,5 @@ stays reserved/unused. This is the same treatment as the announcements UI (3.3).
 - [ ] All §11.2 acceptance checks pass.
 - [x] This checklist is the **Phase-3 work log** — updated with files + commits (§2.3, §6, §9).
 - [x] `docs/developerGuide/developer-guide.md` updated for new behavior (`DELETE /api/upload/pdf`, ReportsEditor reorder, announcements removed from CMS/placeholders/seed).
+- [x] Announcements removed from the CMS admin (`c77dcee`) — no `pages` row, no placeholder, public static iframe page.
 - [ ] This checklist's Status header flipped to ✅ COMPLETE. (not yet — 3.4/3.5/3.6 verification + 3.10 PDF migration remain)
