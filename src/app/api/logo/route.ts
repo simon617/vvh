@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import { assertAllowedImage } from "@/lib/uploads";
 import { writeLogo } from "@/lib/logo";
+import { assertFileAllowed, fileFromFormData } from "@/lib/upload-http";
 
 /**
  * POST /api/logo — replace the site logo (deliverable 2B.7).
@@ -12,25 +13,19 @@ import { writeLogo } from "@/lib/logo";
  * HTTP handlers.
  */
 export async function POST(request: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error } = await requireSession();
+  if (error) {
+    return error;
   }
 
-  const formData = await request.formData().catch(() => null);
-  const rawFile = formData?.get("file");
-  const file = rawFile && typeof rawFile !== "string" ? rawFile : null;
-  if (!file || typeof file.name !== "string") {
-    return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+  const { file, error: fileError } = await fileFromFormData(request);
+  if (fileError) {
+    return fileError;
   }
 
-  try {
-    assertAllowedImage(file.name, file.size);
-  } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 400 }
-    );
+  const validationError = assertFileAllowed(assertAllowedImage, file);
+  if (validationError) {
+    return validationError;
   }
 
   const bytes = Buffer.from(await file.arrayBuffer());

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { prisma } from "./prisma";
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-change-me";
@@ -50,6 +51,29 @@ export async function getSession(): Promise<JwtPayload | null> {
   }
 
   return verifyToken(token);
+}
+
+/**
+ * API-route guard for CMS endpoints.
+ *
+ * Middleware does NOT run for /api/* (see docs/developerGuide §4.5), so every
+ * API route starts by resolving the session. Returns the session payload with a
+ * null error, or a null session with an "Unauthorized" response when the
+ * request is not authenticated.
+ */
+export type SessionResult =
+  | { session: JwtPayload; error: null }
+  | { session: null; error: NextResponse };
+
+export async function requireSession(): Promise<SessionResult> {
+  const session = await getSession();
+  if (!session) {
+    return {
+      session: null,
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+  return { session, error: null };
 }
 
 // Set auth cookie

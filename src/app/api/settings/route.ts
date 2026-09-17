@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import { getSiteSettings, setSiteSetting } from "@/lib/site-settings";
 
 /** Keys the admin settings page is allowed to manage. */
@@ -11,17 +11,17 @@ async function settingsToObject(): Promise<Record<string, string>> {
 }
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error } = await requireSession();
+  if (error) {
+    return error;
   }
   return NextResponse.json({ settings: await settingsToObject() });
 }
 
 export async function PUT(request: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error } = await requireSession();
+  if (error) {
+    return error;
   }
 
   const body = (await request.json().catch(() => null)) as unknown;

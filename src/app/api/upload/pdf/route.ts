@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-import { getSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { assertAllowedDocument } from "@/lib/uploads";
 import {
-  assertAllowedDocument,
-  sanitizeFilename,
-  uploadsDir,
-  resolveUploadPath,
-} from "@/lib/uploads";
+  assertFileAllowed,
+  deleteUpload,
+  fileFromFormData,
+  storeUpload,
+} from "@/lib/upload-http";
 
 const REPORTS_SUBDIR = "reports";
 const LOCALES = ["en", "zh"] as const;
+const RESERVED_UPLOAD_PREFIX = `/uploads/${REPORTS_SUBDIR}/`;
 
 /**
  * POST /api/upload/pdf?locale=en|zh — store a report document and return its URL.
@@ -21,9 +21,9 @@ const LOCALES = ["en", "zh"] as const;
  * by the /uploads route.
  */
 export async function POST(request: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error } = await requireSession();
+  if (error) {
+    return error;
   }
 
   const url = new URL(request.url);
@@ -35,31 +35,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const formData = await request.formData().catch(() => null);
-  const rawFile = formData?.get("file");
-  const file = rawFile && typeof rawFile !== "string" ? rawFile : null;
-  if (!file || typeof file.name !== "string") {
-    return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+  const { file, error: fileError } = await fileFromFormData(request);
+  if (fileError) {
+    return fileError;
   }
 
-  try {
-    assertAllowedDocument(file.name, file.size);
-  } catch (error) {
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 400 }
-    );
+  const validationError = assertFileAllowed(assertAllowedDocument, file);
+  if (validationError) {
+    return validationError;
   }
 
-  const localeDir = path.join(uploadsDir(), REPORTS_SUBDIR, locale);
-  await fs.mkdir(localeDir, { recursive: true });
-
-  const uniqueName = `${Date.now()}-${sanitizeFilename(file.name)}`;
-  const relativePath = `/uploads/${REPORTS_SUBDIR}/${locale}/${uniqueName}`;
-
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(path.join(localeDir, uniqueName), bytes);
-
+  const relativePath = await storeUpload(file, [REPORTS_SUBDIR, locale]);
   return NextResponse.json({ path: relativePath }, { status: 200 });
 }
 
@@ -67,42 +53,26 @@ export async function POST(request: NextRequest) {
  * DELETE /api/upload/pdf?path=/uploads/reports/<locale>/<file>
  * — delete a report document from disk (used when a report row is removed).
  *
- * The path is resolved against UPLOAD_DIR with `resolveUploadPath`, which
- * guards against `..` traversal escaping the uploads root. Idempotent: a
- * missing file returns ok too (the editor's row-delete is best-effort).
+ * Deletion is delegated to @/lib/upload-http#deleteUpload, which constrains
+ * paths to the /uploads/reports/ space, resolves against UPLOAD_DIR via
+ * `resolveUploadPath` (guards `..` traversal escaping the root) and is
+ * idempotent: removing an already-deleted file still returns ok (the editor's
+ * row-delete is best-effort).
  */
 export async function DELETE(request: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error } = await requireSession();
+  if (error) {
+    return error;
   }
-
-  const RESERVED_UPLOAD_PREFIX = `/uploads/${REPORTS_SUBDIR}/`;
 
   const url = new URL(request.url);
-  const uploadPath = url.searchParams.get("path");
-  if (!uploadPath || !uploadPath.startsWith(RESERVED_UPLOAD_PREFIX)) {
-    return NextResponse.json(
-      { error: 'path must be a "/uploads/reports/..." path' },
-      { status: 400 }
-    );
+  const deleteError = await deleteUpload(
+    url.searchParams.get("path") ?? "",
+    RESERVED_UPLOAD_PREFIX
+  );
+  if (deleteError) {
+    return deleteError;
   }
-
-  const relative = uploadPath.replace(/^\/uploads\//, "");
-  const filePath = resolveUploadPath(relative);
-  if (!filePath) {
-    return NextResponse.json(
-      { error: "Invalid path" },
-      { status: 400 }
-    );
-  }
-
-  await fs.unlink(filePath).catch((error: NodeJS.ErrnoException) => {
-    // ENOENT = already deleted → idempotent success.
-    if (error.code !== "ENOENT") {
-      throw error;
-    }
-  });
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

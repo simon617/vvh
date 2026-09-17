@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
-import path from "path";
-import { resolveUploadPath } from "@/lib/uploads";
+import { mimeTypeForUpload, resolveUploadPath } from "@/lib/uploads";
 
 /**
  * Serve uploaded files from UPLOAD_DIR (default ./uploads) at /uploads/<path>.
@@ -13,16 +12,6 @@ import { resolveUploadPath } from "@/lib/uploads";
  * - Docker maps a persistent volume to /app/uploads, so writes survive
  *   container restarts and are served from there.
  */
-
-const MIME_TYPES: Record<string, string> = {
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".webp": "image/webp",
-  ".pdf": "application/pdf",
-  ".txt": "text/plain",
-};
 
 export async function GET(
   _request: NextRequest,
@@ -37,11 +26,10 @@ export async function GET(
 
   try {
     const data = await fs.readFile(filePath);
-    const ext = path.extname(filePath).toLowerCase();
     return new NextResponse(data, {
       status: 200,
       headers: {
-        "Content-Type": MIME_TYPES[ext] ?? "application/octet-stream",
+        "Content-Type": mimeTypeForUpload(filePath),
         "Cache-Control": "public, max-age=31536000, immutable",
       },
     });

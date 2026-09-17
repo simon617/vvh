@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import {
   getPageBySlug,
   getPageContent,
@@ -12,9 +12,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error } = await requireSession();
+  if (error) {
+    return error;
   }
 
   const { slug } = params;
@@ -44,9 +44,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error } = await requireSession();
+  if (error) {
+    return error;
   }
 
   const { slug } = params;

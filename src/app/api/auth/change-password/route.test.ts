@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { POST } from "./route";
 
 const { mockGetSession, mockChangePassword } = vi.hoisted(() => ({
@@ -10,6 +10,15 @@ const { mockGetSession, mockChangePassword } = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({
   getSession: mockGetSession,
   changePassword: mockChangePassword,
+  requireSession: async () => {
+    const session = await mockGetSession();
+    return session
+      ? { session, error: null }
+      : {
+          session: null,
+          error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+        };
+  },
 }));
 
 const ADMIN_SESSION = { userId: 1, username: "admin", role: "admin" };

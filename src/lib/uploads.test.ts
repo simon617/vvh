@@ -5,6 +5,7 @@ import {
   getUploadUrl,
   isAllowedImage,
   maxFileSize,
+  mimeTypeForUpload,
   sanitizeFilename,
   uploadsDir,
 } from "@/lib/uploads";
@@ -117,5 +118,20 @@ describe("uploads lib", () => {
     expect(uploadsDir()).toBe("./uploads");
     process.env.UPLOAD_DIR = "./uploads-test";
     expect(uploadsDir()).toBe("./uploads-test");
+  });
+
+  describe("mimeTypeForUpload", () => {
+    it("maps known extensions case-insensitively", () => {
+      expect(mimeTypeForUpload("hero.jpg")).toBe("image/jpeg");
+      expect(mimeTypeForUpload("pic.PNG")).toBe("image/png");
+      expect(mimeTypeForUpload("logo.svg")).toBe("image/svg+xml");
+      expect(mimeTypeForUpload("report.pdf")).toBe("application/pdf");
+      expect(mimeTypeForUpload("notes.txt")).toBe("text/plain");
+    });
+
+    it("defaults to octet-stream for unknown extensions", () => {
+      expect(mimeTypeForUpload("archive.zip")).toBe("application/octet-stream");
+      expect(mimeTypeForUpload("noext")).toBe("application/octet-stream");
+    });
   });
 });

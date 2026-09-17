@@ -1,12 +1,23 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { POST, DELETE } from "./route";
 
 const { mockGetSession } = vi.hoisted(() => ({ mockGetSession: vi.fn() }));
-vi.mock("@/lib/auth", () => ({ getSession: mockGetSession }));
+vi.mock("@/lib/auth", () => ({
+  getSession: mockGetSession,
+  requireSession: async () => {
+    const session = await mockGetSession();
+    return session
+      ? { session, error: null }
+      : {
+          session: null,
+          error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+        };
+  },
+}));
 
 const ADMIN_SESSION = { userId: 1, username: "admin", role: "admin" };
 const TEST_DIR = "./uploads-doc-test";

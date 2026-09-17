@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { changePassword, getSession } from "@/lib/auth";
+import { changePassword, requireSession } from "@/lib/auth";
 
 /**
  * POST /api/auth/change-password — in-app password change for the logged-in
  * admin. Verifies the current password before writing a new bcrypt hash.
  */
 export async function POST(request: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error } = await requireSession();
+  if (error) {
+    return error;
   }
 
   const body = (await request.json().catch(() => null)) as {

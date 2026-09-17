@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import { listPagesWithContent } from "@/lib/page-content";
 
 /**
@@ -7,9 +7,9 @@ import { listPagesWithContent } from "@/lib/page-content";
  * Guarded manually: the middleware does NOT run for /api/* routes.
  */
 export async function GET() {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error } = await requireSession();
+  if (error) {
+    return error;
   }
 
   const pages = await listPagesWithContent();

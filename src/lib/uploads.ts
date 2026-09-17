@@ -112,3 +112,20 @@ export function getUploadUrl(relativePath: string): string {
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/+$/, "");
   return siteUrl ? `${siteUrl}${normalized}` : normalized;
 }
+
+/** Content-Type map for files served from the uploads directory. */
+const MIME_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+  ".pdf": "application/pdf",
+  ".txt": "text/plain",
+};
+
+/** Content-Type for a served upload file, derived from its extension. */
+export function mimeTypeForUpload(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  return MIME_TYPES[ext] ?? "application/octet-stream";
+}

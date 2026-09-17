@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { GET, PUT } from "./route";
 
 const { mockGetSession, mockGetSiteSettings, mockSetSiteSetting } =
@@ -9,7 +9,18 @@ const { mockGetSession, mockGetSiteSettings, mockSetSiteSetting } =
     mockSetSiteSetting: vi.fn(),
   }));
 
-vi.mock("@/lib/auth", () => ({ getSession: mockGetSession }));
+vi.mock("@/lib/auth", () => ({
+  getSession: mockGetSession,
+  requireSession: async () => {
+    const session = await mockGetSession();
+    return session
+      ? { session, error: null }
+      : {
+          session: null,
+          error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+        };
+  },
+}));
 vi.mock("@/lib/site-settings", () => ({
   getSiteSettings: mockGetSiteSettings,
   setSiteSetting: mockSetSiteSetting,

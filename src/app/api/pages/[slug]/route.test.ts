@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { GET, PUT } from "./route";
 import { validatePageContentBody } from "@/lib/page-content-validation";
 
@@ -11,7 +11,18 @@ const { mockGetSession, mockGetPageContent, mockGetPageBySlug, mockUpsertPageCon
     mockUpsertPageContent: vi.fn(),
   }));
 
-vi.mock("@/lib/auth", () => ({ getSession: mockGetSession }));
+vi.mock("@/lib/auth", () => ({
+  getSession: mockGetSession,
+  requireSession: async () => {
+    const session = await mockGetSession();
+    return session
+      ? { session, error: null }
+      : {
+          session: null,
+          error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+        };
+  },
+}));
 vi.mock("@/lib/page-content", () => ({
   getPageContent: mockGetPageContent,
   getPageBySlug: mockGetPageBySlug,

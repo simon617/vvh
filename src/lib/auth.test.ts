@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import bcrypt from "bcryptjs";
-import { changePassword } from "@/lib/auth";
+import { changePassword, requireSession, signToken } from "@/lib/auth";
 
-const { mockAdminUser } = vi.hoisted(() => ({
+const { mockAdminUser, mockCookies } = vi.hoisted(() => ({
   mockAdminUser: {
     findUnique: vi.fn(),
     update: vi.fn(),
   },
+  mockCookies: vi.fn(),
 }));
+
+vi.mock("next/headers", () => ({ cookies: mockCookies }));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: { adminUser: mockAdminUser },
@@ -71,4 +74,28 @@ describe("changePassword(userId, currentPassword, newPassword)", () => {
     expect(await bcrypt.compare("newpass1", storedHash)).toBe(true);
     expect(await bcrypt.compare("oldpass1", storedHash)).toBe(false);
   }, 15000);
+});
+
+describe("requireSession", () => {
+  beforeEach(() => {
+    mockCookies.mockReset();
+  });
+
+  it("returns a 401 response when there is no session cookie", async () => {
+    mockCookies.mockReturnValue({ get: () => undefined });
+    const result = await requireSession();
+    expect(result.session).toBeNull();
+    expect(result.error).not.toBeNull();
+    expect(result.error?.status).toBe(401);
+    expect(await result.error!.json()).toEqual({ error: "Unauthorized" });
+  });
+
+  it("returns the session when a valid cookie is present", async () => {
+    const token = signToken({ userId: 1, username: "admin", role: "admin" });
+    mockCookies.mockReturnValue({ get: () => ({ value: token }) });
+    const result = await requireSession();
+    expect(result.error).toBeNull();
+    expect(result.session?.userId).toBe(1);
+    expect(result.session?.role).toBe("admin");
+  });
 });

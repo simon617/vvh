@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { NextResponse } from "next/server";
 import { GET } from "./route";
 
 const { mockGetSession, mockListPagesWithContent } = vi.hoisted(() => ({
@@ -6,7 +7,18 @@ const { mockGetSession, mockListPagesWithContent } = vi.hoisted(() => ({
   mockListPagesWithContent: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({ getSession: mockGetSession }));
+vi.mock("@/lib/auth", () => ({
+  getSession: mockGetSession,
+  requireSession: async () => {
+    const session = await mockGetSession();
+    return session
+      ? { session, error: null }
+      : {
+          session: null,
+          error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+        };
+  },
+}));
 vi.mock("@/lib/page-content", () => ({
   listPagesWithContent: mockListPagesWithContent,
 }));
