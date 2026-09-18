@@ -3,6 +3,7 @@ import TemplateShell from "@/components/layout/TemplateShell";
 import DirectorCards from "@/components/layout/DirectorCards";
 import { getDirectors } from "@/lib/directors";
 import { getPageData } from "@/lib/pages";
+import { buildPageMetadata } from "@/lib/metadata";
 import type { PagePlaceholder } from "@/lib/pages";
 import type { Locale } from "@/lib/navigation";
 
@@ -12,7 +13,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const data = await getPageData("board-of-directors", params.locale as Locale);
-  return { title: data?.metaTitle, description: data?.metaDescription };
+  return data ? buildPageMetadata(data, params.locale as Locale) : {};
 }
 
 export default async function BoardOfDirectorsPage({ params }: Props) {

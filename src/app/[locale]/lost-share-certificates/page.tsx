@@ -1,5 +1,6 @@
 import ContentWithSidebar from "@/components/layout/ContentWithSidebar";
 import { getPageData } from "@/lib/pages";
+import { buildPageMetadata } from "@/lib/metadata";
 import type { Locale } from "@/lib/navigation";
 
 interface Props {
@@ -11,7 +12,7 @@ export async function generateMetadata({ params }: Props) {
     "lost-share-certificates",
     params.locale as Locale
   );
-  return { title: data?.metaTitle, description: data?.metaDescription };
+  return data ? buildPageMetadata(data, params.locale as Locale) : {};
 }
 
 export default async function LostShareCertificatesPage({ params }: Props) {

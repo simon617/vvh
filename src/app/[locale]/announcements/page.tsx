@@ -1,5 +1,6 @@
 import TemplateShell from "@/components/layout/TemplateShell";
 import { getAnnouncementsUrl } from "@/lib/announcements";
+import { buildPageMetadata } from "@/lib/metadata";
 import type { Locale } from "@/lib/navigation";
 
 interface Props {
@@ -34,8 +35,16 @@ const PAGE_INFO: Record<
 const toLocale = (value: string): Locale => (value === "zh" ? "zh" : "en");
 
 export function generateMetadata({ params }: Props) {
-  const info = PAGE_INFO[toLocale(params.locale)];
-  return { title: info.metaTitle, description: info.metaDescription };
+  const locale = toLocale(params.locale);
+  const info = PAGE_INFO[locale];
+  return buildPageMetadata(
+    {
+      title: info.title,
+      metaTitle: info.metaTitle,
+      metaDescription: info.metaDescription,
+    },
+    locale
+  );
 }
 
 export default function AnnouncementsPage({ params }: Props) {

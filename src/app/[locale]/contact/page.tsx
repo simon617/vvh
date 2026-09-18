@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import TemplateShell from "@/components/layout/TemplateShell";
 import ContactForm from "@/components/layout/ContactForm";
 import { getPageData } from "@/lib/pages";
+import { buildPageMetadata } from "@/lib/metadata";
 import type { Locale } from "@/lib/navigation";
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const data = await getPageData("contact", params.locale as Locale);
-  return { title: data?.metaTitle, description: data?.metaDescription };
+  return data ? buildPageMetadata(data, params.locale as Locale) : {};
 }
 
 export default async function ContactPage({ params }: Props) {

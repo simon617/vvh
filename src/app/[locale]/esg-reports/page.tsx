@@ -5,6 +5,7 @@ import ReportsTable from "@/components/layout/ReportsTable";
 import type { ReportRow } from "@/components/layout/ReportsTable";
 import { getPageData } from "@/lib/pages";
 import { getReportRows } from "@/lib/report-rows";
+import { buildPageMetadata } from "@/lib/metadata";
 import type { Locale } from "@/lib/navigation";
 
 interface Props {
@@ -13,7 +14,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const data = await getPageData("esg-reports", params.locale as Locale);
-  return { title: data?.metaTitle, description: data?.metaDescription };
+  return data ? buildPageMetadata(data, params.locale as Locale) : {};
 }
 
 /** Synchronous view (i18n hook must run inside the provider during render). */
