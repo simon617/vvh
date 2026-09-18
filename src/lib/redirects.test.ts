@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import nextConfig from "../../next.config.js";
 
+/** Redirect config entry as produced by `next.config.js redirects()`. */
+type Redirect = { source: string; destination: string; statusCode: number };
+
 const EXPECTED_MAPPING: Record<string, string> = {
   // PRD §11 — English old pages.
   "/eng/corp_board.asp": "/en/board-of-directors",
@@ -26,7 +29,7 @@ const EXPECTED_MAPPING: Record<string, string> = {
 
 describe("next.config redirects (PRD §11 / URL-02 / TD-26)", () => {
   it("maps every old ASP/PHP URL to the correct new clean URL", async () => {
-    const redirects = await nextConfig.redirects();
+    const redirects = (await nextConfig.redirects()) as Redirect[];
     const bySource = new Map(redirects.map((r) => [r.source, r.destination]));
     for (const [source, destination] of Object.entries(EXPECTED_MAPPING)) {
       expect(bySource.get(source), `no redirect for ${source}`).toBe(destination);
@@ -34,7 +37,7 @@ describe("next.config redirects (PRD §11 / URL-02 / TD-26)", () => {
   });
 
   it("serves every redirect as status 301 and only rewrites old /eng|/chi paths", async () => {
-    const redirects = await nextConfig.redirects();
+    const redirects = (await nextConfig.redirects()) as Redirect[];
     expect(redirects.length).toBeGreaterThan(0);
     for (const redirect of redirects) {
       expect(redirect.statusCode).toBe(301);
@@ -51,7 +54,7 @@ describe("next.config redirects (PRD §11 / URL-02 / TD-26)", () => {
   });
 
   it("provides catch-alls for unmatched old paths (fall back to locale home)", async () => {
-    const redirects = await nextConfig.redirects();
+    const redirects = (await nextConfig.redirects()) as Redirect[];
     expect(redirects).toContainEqual(
       expect.objectContaining({ source: "/eng/:path*", destination: "/en/" })
     );
@@ -61,7 +64,7 @@ describe("next.config redirects (PRD §11 / URL-02 / TD-26)", () => {
   });
 
   it("does not shadow new locale routes or the root path (4.2)", async () => {
-    const redirects = await nextConfig.redirects();
+    const redirects = (await nextConfig.redirects()) as Redirect[];
     for (const redirect of redirects) {
       expect(redirect.source.startsWith("/en/")).toBe(false);
       expect(redirect.source.startsWith("/zh/")).toBe(false);
