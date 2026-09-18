@@ -103,12 +103,13 @@ This is the **orientation guide** for any developer who needs to work on this co
 |------|---------|
 | `src/app/layout.tsx` | Root layout — loads global font + `globals.css`. |
 | `src/app/globals.css` | Tailwind base/components/utilities + custom component classes (`.director-cards`, buttons). |
-| `src/app/not-found.tsx` | Global 404 page. |
+| `src/app/not-found.tsx` | Global 404 fallback (English) — phase-4 localized 404 lives at `src/app/[locale]/not-found.tsx`. |
 | `src/app/[locale]/` | Everything locale-scoped lives here. Public routes: `page.tsx` (home) + 9 section pages. |
 | `src/app/[locale]/layout.tsx` | Public shell — Header, Sidebar, Footer, `NextIntlClientProvider`. |
-| `src/app/[locale]/admin/` | Admin area (see §4.6). |
+| `src/app/[locale]/admin/` | Admin area (see §4.7). |
 | `src/app/api/*` | REST endpoints (see §4.5). Auth-protected individually with `getSession()`. |
 | `src/app/uploads/[...path]/route.ts` | Serves files from `UPLOAD_DIR`, path-traversal guarded. |
+| `src/app/sitemap.xml/route.ts` · `src/app/robots.txt/route.ts` | SEO routes (Phase 4) — dynamic sitemap + robots.txt (see §4.6). |
 
 **Rule:** new public pages go under `src/app/[locale]/<slug>/` as Server Components by default.
 **Rule:** `/api` and `/uploads` are **not** locale-prefixed.
@@ -254,7 +255,8 @@ Each public page is an async Server Component that:
 | `SettingsForm.tsx` | Admin settings form (site_name, GA4, logo). Uses i18n namespace `admin.settingsForm`. | `/admin/settings` page. |
 ### 4.5 API routes (`src/app/api/`)
 
-All API routes must call `getSession()` themselves (middleware does not cover `/api/*`).
+All API routes guard themselves with `requireSession()` (a `{session, error}` result — 401
+`Unauthorized` when absent; see `src/lib/auth.ts`). Middleware does not cover `/api/*`.
 
 | Route | File | Method(s) | Purpose |
 |-------|------|-----------|---------|
@@ -276,7 +278,18 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 > (`GET/POST/PUT/…`). Any helper must live in `src/lib` (e.g. `logo.ts`, `page-content-validation.ts`,
 > `uploads.ts`). The build type-checks this and fails otherwise.
 
-### 4.6 Admin routes (`src/app/[locale]/admin/`)
+### 4.6 SEO routes & metadata (Phase 4)
+
+| Route / feature | File | Purpose |
+|-----------------|------|---------|
+| 301 redirects (old `/eng`·`/chi` ASP/PHP URLs → clean URLs) | `next.config.js` `redirects()` | PRD §11 mapping with `statusCode: 301` (Next's `permanent: true` maps to 308); catch-alls `/eng/:path*`→`/en/`, `/chi/:path*`→`/zh/`. Table asserted by `src/lib/redirects.test.ts`. Root `/`→`/en/` is done by the next-intl middleware (verify, don't duplicate). |
+| `/sitemap.xml` | `sitemap.xml/route.ts` + `src/lib/sitemap.ts` | Dynamic sitemap of **published** `page_contents` rows × locales plus the static `announcements` page; `dynamic = "force-dynamic"` (never statically optimized); absolute URLs from `NEXT_PUBLIC_SITE_URL`; `home` maps to `/en/`,`/zh/`. |
+| `/robots.txt` | `robots.txt/route.ts` + `src/lib/robots.ts` | `User-agent: *` / `Allow: /` + absolute `Sitemap:` URL. |
+| Open Graph tags | `src/lib/metadata.ts` → `buildPageMetadata(data, locale)` | `og:title/description/image` on every public page via `generateMetadata`; image = hero (`getUploadUrl`) else `/logo.svg` (TD-29); locale `en_HK`/`zh_HK`. |
+| GA4 analytics | `src/components/layout/GAScript.tsx` (rendered from `[locale]/layout.tsx`) | Loads `gtag` only when `site_settings.ga4_tracking_id` is set (D13); `strategy="afterInteractive"`. |
+| 404 pages | `[locale]/not-found.tsx` (localized) + `not-found.tsx` (English fallback) | Locale-aware Back-to-Home; App Router responds with HTTP 404. Copy lives in `messages/*.json` → `notFound.*`. |
+
+### 4.7 Admin routes (`src/app/[locale]/admin/`)
 
 | Route | File | Purpose |
 |-------|------|---------|
@@ -298,10 +311,10 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 |-------|---------|-------|
 | `AdminUser` | Admin accounts. | Password = bcrypt hash (12 rounds). |
 | `Page` | One row per public page slug. | `slug` unique; `menuOrder` controls admin-listing order; `isVisible`. |
-| `PageContent` | Per-page × per-locale content. | **One row per `(pageId, locale)`** (`@@unique([pageId, locale])`). Fields: `title`, `metaTitle`, `metaDescription`, `heroImage`, `contentHtml`, `breadcrumbLabel`, `isPublished`. |
+| `PageContent` | Per-page × per-locale content. | **One row per `(pageId, locale)`** (`@@unique([pageId, locale])`). Fields: `title`, `metaTitle`, `metaDescription`, `heroImage`, `contentHtml`, `breadcrumbLabel`, `isPublished`. `metaTitle`/`metaDescription` feed SEO title/description **and the OG tags** (Phase 4); `heroImage` → `og:image`; `isPublished` drives the sitemap. |
 | `Report` | Financial/ESG report metadata. | **NOT USED (TD-30 Option A)** — reports live in `contentHtml` JSON envelope (`report-rows.ts`). Reserved; candidate for removal. |
 | `Announcement` | Announcement metadata. | **NOT USED (TD-30 Option A)** — announcements use the Datalink iframe. Reserved; candidate for removal. |
-| `SiteSetting` | Global key/value settings. | `key` unique; `locale` nullable — global settings have `locale = NULL`. |
+| `SiteSetting` | Global key/value settings. | `key` unique; `locale` nullable — global settings have `locale = NULL`. Keys: `site_name`, `ga4_tracking_id` (GA4 measurement ID, D13 — consumed by `GAScript`). |
 
 ### 5.2 Seed (`prisma/seed.ts`) + `src/lib` helpers
 
@@ -349,7 +362,7 @@ All API routes must call `getSession()` themselves (middleware does not cover `/
 |-----|---------|---------|
 | `DATABASE_URL` | Prisma | SQLite file path (`file:./data/vvh.db`). |
 | `JWT_SECRET` | `src/lib/auth.ts` | Signs/verifies admin session tokens. |
-| `NEXT_PUBLIC_SITE_URL` | `src/lib/uploads.ts` (`getUploadUrl`) | Builds absolute upload URLs. |
+| `NEXT_PUBLIC_SITE_URL` | `src/lib/uploads.ts` (`getUploadUrl`), `src/lib/metadata.ts`, sitemap/robots routes | Absolute URLs for uploads, OG images, sitemap and robots.txt (Phase 4). |
 | `UPLOAD_DIR` | upload helpers/routes | Uploads root (default `./uploads`). |
 | `MAX_FILE_SIZE` | upload helpers | Image upload limit (default 5 MB). |
 | `MAX_DOC_SIZE` | upload helpers | Report/document upload limit (default 50 MB). |
