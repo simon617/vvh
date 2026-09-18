@@ -152,5 +152,11 @@
       "notFound": "Page not found",
       "backToHome": "Back to Home"
     }
+  },
+  "notFound": {
+    "title": "404",
+    "heading": "Page Not Found",
+    "message": "The page you are looking for does not exist or may have been moved.",
+    "backHome": "Back to Home"
   }
 }

@@ -152,5 +152,11 @@
       "notFound": "頁面未找到",
       "backToHome": "返回首頁"
     }
+  },
+  "notFound": {
+    "title": "404",
+    "heading": "頁面未找到",
+    "message": "您尋找的頁面不存在或已被移動。",
+    "backHome": "返回首頁"
   }
 }
