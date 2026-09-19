@@ -77,7 +77,7 @@ export function buildSitemapXml(
   for (const entry of entries) {
     unique.set(urlPathFor(entry), entry);
   }
-  const urls = [...unique.values()]
+  const urls = Array.from(unique.values())
     .sort((a, b) => urlPathFor(a).localeCompare(urlPathFor(b)))
     .map((entry) => {
       const loc = escapeXml(base + urlPathFor(entry));
