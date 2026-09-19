@@ -409,6 +409,8 @@ numbers if the Phase-3 refactor changes the test count before you start.*
 | 5 | `a6d1518` | 4.6 — `src/lib/metadata.ts` (`buildPageMetadata`) wired through all 10 public `generateMetadata` | `metadata.test.ts` (4) |
 | 6 | `ab650c9` | 4.7 — localized `[locale]/not-found.tsx` + polished root `not-found.tsx`; `notFound.*` i18n keys (en+zh) | `not-found.test.tsx` (2) |
 | 7 | `9035062` | test type fix — explicit `Redirect` cast so `npx tsc --noEmit` is clean | — |
+| 8 | `c6156fd` | sitemap builder fix — `Array.from(unique.values())` instead of spreading a `MapIterator` (fails under the default es5 tsconfig target) | — |
+| 9 | `ff3c15a` | docs — developer guide SEO section + this checklist's work log / decisions / status | — |
 
 ### 15.2 Decisions recorded during implementation
 
