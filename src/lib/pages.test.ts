@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getPageData } from "./pages";
+import { getLatestReports, getPageData, getReportRowsBySlug } from "./pages";
+import { buildReportContent } from "./report-rows";
 
 // The public read seam is pages.ts; the Prisma/DB boundary lives in
 // page-content.ts, which we stub here (database = system boundary).
@@ -80,5 +81,53 @@ describe("pages (DB-aware getPageData)", () => {
 
   it("returns null for an unknown locale", async () => {
     expect(await getPageData("home", "fr" as "en")).toBeNull();
+  });
+});
+
+describe("getReportRowsBySlug / getLatestReports (home latest reports)", () => {
+  beforeEach(() => {
+    mockGetPageContent.mockReset();
+  });
+
+  it("reads the rows from a report page's CMS envelope", async () => {
+    mockGetPageContent.mockResolvedValue(
+      dbRow({
+        contentHtml: buildReportContent([
+          { id: "a", date: "October 2025", title: "Annual Report 2025", url: "/r1.pdf" },
+          { id: "b", date: "March 2024", title: "Interim Report", url: "/r2.pdf" },
+        ]),
+      })
+    );
+    const rows = await getReportRowsBySlug("financial-reports", "en");
+    expect(rows).toHaveLength(2);
+    expect(rows[0].title).toBe("Annual Report 2025");
+  });
+
+  it("returns [] when the page content is not a report envelope", async () => {
+    mockGetPageContent.mockResolvedValue(
+      dbRow({ contentHtml: "<p>plain HTML</p>" })
+    );
+    expect(await getReportRowsBySlug("home", "en")).toEqual([]);
+  });
+
+  it("returns the newest financial and esg rows per locale, sorted by date desc and capped at limit", async () => {
+    const rows = Array.from({ length: 5 }, (_, i) => ({
+      id: `r${i}`,
+      date: `202${i}`,
+      title: `Report ${i}`,
+      url: `/r${i}.pdf`,
+    }));
+    mockGetPageContent.mockImplementation(async () =>
+      dbRow({ contentHtml: buildReportContent(rows) })
+    );
+
+    const latest = await getLatestReports("en", 3);
+    expect(latest.financial).toHaveLength(3);
+    expect(latest.esg).toHaveLength(3);
+    expect(latest.financial[0].date).toBe("2024");
+
+    await getLatestReports("zh");
+    expect(mockGetPageContent).toHaveBeenCalledWith("financial-reports", "zh");
+    expect(mockGetPageContent).toHaveBeenCalledWith("esg-reports", "zh");
   });
 });

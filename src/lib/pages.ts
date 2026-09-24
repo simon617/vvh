@@ -1,5 +1,10 @@
 import { getPlaceholder, type PagePlaceholder } from "./placeholders";
 import { getPageContent } from "./page-content";
+import {
+  getReportRows,
+  sortReportRowsByDate,
+  type ReportRowItem,
+} from "./report-rows";
 import type { Locale } from "./navigation";
 
 export type { PagePlaceholder };
@@ -46,5 +51,39 @@ export async function getPageData(
     heroImage: row.heroImage ?? placeholder.heroImage,
     contentHtml: row.contentHtml ?? placeholder.contentHtml,
     isDbContent: true,
+  };
+}
+
+/** Report rows (CMS envelope) for a report slug + locale, or [] when none. */
+export async function getReportRowsBySlug(
+  slug: string,
+  locale: Locale
+): Promise<ReportRowItem[]> {
+  const data = await getPageData(slug, locale);
+  return data ? (getReportRows(data.contentHtml) ?? []) : [];
+}
+
+export interface LatestReports {
+  financial: ReportRowItem[];
+  esg: ReportRowItem[];
+}
+
+/**
+ * Newest report rows per category for the home "Latest Reports" section.
+ * Reads the LIVE CMS envelopes (financial-reports / esg-reports) so the home
+ * page reflects the same rows as the public report pages, sorted by date
+ * descending (matching ReportsTable's default) and capped at `limit` rows each.
+ */
+export async function getLatestReports(
+  locale: Locale,
+  limit = 3
+): Promise<LatestReports> {
+  return {
+    financial: sortReportRowsByDate(
+      await getReportRowsBySlug("financial-reports", locale)
+    ).slice(0, limit),
+    esg: sortReportRowsByDate(
+      await getReportRowsBySlug("esg-reports", locale)
+    ).slice(0, limit),
   };
 }

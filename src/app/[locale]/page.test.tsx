@@ -4,14 +4,21 @@ import HomePage, { generateMetadata } from "./page";
 import { getPlaceholder } from "@/lib/placeholders";
 import { renderWithLocale } from "@/test/utils";
 
-const { mockGetPageData } = vi.hoisted(() => ({ mockGetPageData: vi.fn() }));
-vi.mock("@/lib/pages", () => ({ getPageData: mockGetPageData }));
+const { mockGetPageData, mockGetLatestReports } = vi.hoisted(() => ({
+  mockGetPageData: vi.fn(),
+  mockGetLatestReports: vi.fn(),
+}));
+vi.mock("@/lib/pages", () => ({
+  getPageData: mockGetPageData,
+  getLatestReports: mockGetLatestReports,
+}));
 
 describe("Home page template", () => {
   beforeEach(() => {
     mockGetPageData.mockImplementation(async (slug, locale) =>
       getPlaceholder(slug, locale)
     );
+    mockGetLatestReports.mockResolvedValue({ financial: [], esg: [] });
   });
 
   it("renders hero, metrics and reports in English", async () => {
@@ -23,6 +30,11 @@ describe("Home page template", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Latest Reports" })
     ).toBeInTheDocument();
+  });
+
+  it("passes the latest report rows for the locale to the template", async () => {
+    await HomePage({ params: { locale: "en" } });
+    expect(mockGetLatestReports).toHaveBeenCalledWith("en");
   });
 
   it("renders localized Chinese content", async () => {

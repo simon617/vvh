@@ -52,6 +52,14 @@ export function buildReportContent(rows: ReportRowItem[]): string {
   return JSON.stringify({ __type: TYPE, rows });
 }
 
+/**
+ * Sort a copy of report rows by date descending — mirrors `ReportsTable`'s
+ * default sort (date desc) and the report-import script ordering.
+ */
+export function sortReportRowsByDate(rows: ReportRowItem[]): ReportRowItem[] {
+  return [...rows].sort((a, b) => b.date.localeCompare(a.date));
+}
+
 /** Generate a stable id for a new row. */
 export function makeRowId(): string {
   return `row-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;

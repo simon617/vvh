@@ -47,7 +47,10 @@
     "headquartersValue": "香港",
     "businessValue": "多元業務",
     "reportsTitle": "最新報告",
-    "reportsBody": "財務及環境、社會及管治報告將於連接內容管理系統後在此顯示。"
+    "reportsFinancialCategory": "財務報告",
+    "reportsEsgCategory": "環境、社會及管治報告",
+    "viewAll": "查看全部 →",
+    "reportsBody": "暫無報告。"
   },
   "contact": {
     "intro": "請填寫以下表格與我們聯絡。標有 * 的欄位為必填。",

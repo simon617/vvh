@@ -1,12 +1,66 @@
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import type { PagePlaceholder } from "@/lib/pages";
+import type { LatestReports } from "@/lib/pages";
+import type { ReportRowItem } from "@/lib/report-rows";
 
 interface HomeTemplateProps {
   pageData: PagePlaceholder;
+  locale: "en" | "zh";
+  latestReports: LatestReports;
 }
 
-export default function HomeTemplate({ pageData }: HomeTemplateProps) {
+function ReportCategory({
+  title,
+  rows,
+  viewAllHref,
+  viewAllLabel,
+}: {
+  title: string;
+  rows: ReportRowItem[];
+  viewAllHref: string;
+  viewAllLabel: string;
+}) {
+  if (rows.length === 0) {
+    return null;
+  }
+  return (
+    <div>
+      <h3 className="font-semibold text-primary">{title}</h3>
+      <ul className="space-y-1">
+        {rows.map((row) => (
+          <li key={row.id} className="text-sm">
+            <a
+              href={row.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {row.title}
+            </a>
+            <span className="text-gray-500"> — {row.date}</span>
+          </li>
+        ))}
+      </ul>
+      <Link
+        href={viewAllHref}
+        className="text-sm font-medium text-primary hover:underline"
+      >
+        {viewAllLabel}
+      </Link>
+    </div>
+  );
+}
+
+export default function HomeTemplate({
+  pageData,
+  locale,
+  latestReports,
+}: HomeTemplateProps) {
   const t = useTranslations("home");
+  const pathLocale = locale === "zh" ? "zh" : "en";
+  const hasReports =
+    latestReports.financial.length > 0 || latestReports.esg.length > 0;
 
   const metrics = [
     { value: t("listedValue"), label: t("metrics.listed") },
@@ -62,7 +116,24 @@ export default function HomeTemplate({ pageData }: HomeTemplateProps) {
         <h2 className="text-xl font-semibold text-primary mb-4">
           {t("reportsTitle")}
         </h2>
-        <p className="text-sm text-gray-500">{t("reportsBody")}</p>
+        {hasReports ? (
+          <div className="space-y-4">
+            <ReportCategory
+              title={t("reportsFinancialCategory")}
+              rows={latestReports.financial}
+              viewAllHref={`/${pathLocale}/financial-reports`}
+              viewAllLabel={t("viewAll")}
+            />
+            <ReportCategory
+              title={t("reportsEsgCategory")}
+              rows={latestReports.esg}
+              viewAllHref={`/${pathLocale}/esg-reports`}
+              viewAllLabel={t("viewAll")}
+            />
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">{t("reportsBody")}</p>
+        )}
       </section>
     </div>
   );

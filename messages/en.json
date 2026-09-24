@@ -47,7 +47,10 @@
     "headquartersValue": "Hong Kong",
     "businessValue": "Multi-industry",
     "reportsTitle": "Latest Reports",
-    "reportsBody": "Financial and ESG reports will be displayed here once the CMS is connected."
+    "reportsFinancialCategory": "Financial Reports",
+    "reportsEsgCategory": "ESG Reports",
+    "viewAll": "View all →",
+    "reportsBody": "No reports available yet."
   },
   "contact": {
     "intro": "Please fill in the form below to contact us. Fields marked with * are required.",

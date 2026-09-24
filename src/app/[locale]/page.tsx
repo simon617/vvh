@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import HomeTemplate from "@/components/layout/HomeTemplate";
-import { getPageData } from "@/lib/pages";
+import { getPageData, getLatestReports } from "@/lib/pages";
 import { buildPageMetadata } from "@/lib/metadata";
 import type { Locale } from "@/lib/navigation";
 
@@ -17,5 +17,12 @@ export default async function HomePage({ params }: Props) {
   const locale = params.locale as Locale;
   const pageData = await getPageData("home", locale);
   if (!pageData) notFound();
-  return <HomeTemplate pageData={pageData} />;
+  const latestReports = await getLatestReports(locale);
+  return (
+    <HomeTemplate
+      pageData={pageData}
+      locale={locale}
+      latestReports={latestReports}
+    />
+  );
 }
