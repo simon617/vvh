@@ -5,7 +5,7 @@
 > **Branch:** `main` (HEAD `7c2ada5` — "Code Refactoring")
 > **Baseline:** 56 test files / **274 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0 (verified in Phase 3)
 > **Companion docs:** `docs/phase-4-seo-polish-deployment.md` (the plan — **do not modify**) · `docs/developerGuide/developer-guide.md` (living guide) · `docs/PRD-visionvalues-revamp-v2.md` (requirements) · `docs/phase-3-checklist.md` (previous phase handoff)
-> **Status:** 🟡 **IN PROGRESS** — code deliverables **4.1–4.7 complete** (2026-09-18): 4.1/4.2 `29a3956`, 4.3 `71a03ed`, 4.4 `32842a9`, 4.5 `b40b4b9`, 4.6 `a6d1518`, 4.7 `ab650c9` (+ test type fix `9035062`). Audits + operational items (4.8–4.12) remain — see §13 and §15. Verified: **64 test files / 300 tests passing** · `npx tsc --noEmit` clean · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0.
+> **Status:** 🟡 **IN PROGRESS** — code deliverables **4.1–4.7 complete** (2026-09-18): 4.1/4.2 `29a3956`, 4.3 `71a03ed`, 4.4 `32842a9`, 4.5 `b40b4b9`, 4.6 `a6d1518`, 4.7 `ab650c9` (+ test type fix `9035062`, sitemap build fix `c6156fd`). Follow-up: **home page "Latest Reports" now renders live CMS rows** (`cb18d5e`). Audits + operational items (4.8–4.12) remain — see §13 and §15. Verified: **64 test files / 305 tests passing** · `npx tsc --noEmit` clean · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0.
 
 ---
 
@@ -411,6 +411,7 @@ numbers if the Phase-3 refactor changes the test count before you start.*
 | 7 | `9035062` | test type fix — explicit `Redirect` cast so `npx tsc --noEmit` is clean | — |
 | 8 | `c6156fd` | sitemap builder fix — `Array.from(unique.values())` instead of spreading a `MapIterator` (fails under the default es5 tsconfig target) | — |
 | 9 | `ff3c15a` | docs — developer guide SEO section + this checklist's work log / decisions / status | — |
+| 10 | `cb18d5e` | **follow-up (home)** — `HomeTemplate` renders live latest Financial + ESG rows (from `getLatestReports` in `src/lib/pages.ts`); PDF links + localised view-all links; empty-state fallback (see §15.4) | `HomeTemplate.test.tsx` (4), `page.test.tsx` (4), `pages.test.ts` (10 incl. 3 new) |
 
 ### 15.2 Decisions recorded during implementation
 
