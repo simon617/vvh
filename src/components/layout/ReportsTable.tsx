@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { reportDateKey } from "@/lib/report-rows";
 
 export interface ReportRow {
   id: string;
@@ -56,7 +57,8 @@ export default function ReportsTable({ rows, labels }: ReportsTableProps) {
 
   const sortedRows = useMemo(() => {
     const sorted = [...rows].sort((a, b) => {
-      if (sortKey === "date") return a.date.localeCompare(b.date);
+      if (sortKey === "date")
+        return reportDateKey(a.date).localeCompare(reportDateKey(b.date));
       return a.title.localeCompare(b.title);
     });
     return sortDirection === "desc" ? sorted.reverse() : sorted;

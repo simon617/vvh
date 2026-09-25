@@ -32,6 +32,40 @@ describe("ReportsTable", () => {
     expect(links[2]).toHaveTextContent("Annual Report 2024");
   });
 
+  it("sorts localized EN month/year dates chronologically (not alphabetically)", () => {
+    const localized = [
+      { id: "a", date: "March 2024", title: "Interim 2023/24", url: "/i2324.pdf" },
+      { id: "b", date: "October 2024", title: "Annual 2024", url: "/a2024.pdf" },
+      { id: "c", date: "March 2025", title: "Interim 2024/25", url: "/i2425.pdf" },
+      { id: "d", date: "October 2025", title: "Annual 2025", url: "/a2025.pdf" },
+    ];
+    render(<ReportsTable rows={localized} />);
+    const links = screen.getAllByRole("link").map((l) => l.textContent);
+    expect(links).toEqual([
+      "Annual 2025",
+      "Interim 2024/25",
+      "Annual 2024",
+      "Interim 2023/24",
+    ]);
+  });
+
+  it("sorts localized ZH month/year dates chronologically (not alphabetically)", () => {
+    const localized = [
+      { id: "d", date: "2025年10月", title: "2025年報", url: "/a2025.pdf" },
+      { id: "c", date: "2025年3月", title: "2024/2025中期報告", url: "/i2425.pdf" },
+      { id: "b", date: "2024年10月", title: "2024年報", url: "/a2024.pdf" },
+      { id: "a", date: "2024年3月", title: "2023/2024中期報告", url: "/i2324.pdf" },
+    ];
+    render(<ReportsTable rows={localized} />);
+    const links = screen.getAllByRole("link").map((l) => l.textContent);
+    expect(links).toEqual([
+      "2025年報",
+      "2024/2025中期報告",
+      "2024年報",
+      "2023/2024中期報告",
+    ]);
+  });
+
   it("sorts by title when title header clicked", async () => {
     const user = userEvent.setup();
     render(<ReportsTable rows={rows} />);
