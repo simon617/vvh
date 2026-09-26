@@ -112,6 +112,46 @@ describe("ReportsTable", () => {
     expect(screen.getByText("Showing 1–10 of 12")).toBeInTheDocument();
   });
 
+  it("paginates real month/year dates newest-first without any sort interaction (regression)", async () => {
+    const user = userEvent.setup();
+    // 19 years x (October + March) = 38 rows, newest-first already.
+    const rows38: ReportRow[] = [];
+    for (let year = 2025; year >= 2007; year--) {
+      rows38.push({
+        id: `row-${year}-annual`,
+        date: `October ${year}`,
+        title: `Annual Report ${year}`,
+        url: `/pdf/${year}-annual.pdf`,
+      });
+      rows38.push({
+        id: `row-${year}-interim`,
+        date: `March ${year}`,
+        title: `Interim Report ${year}`,
+        url: `/pdf/${year}-interim.pdf`,
+      });
+    }
+    expect(rows38).toHaveLength(38);
+    render(<ReportsTable rows={rows38} />);
+
+    // Page 1 (default date desc) shows the newest rows.
+    expect(screen.getByText("October 2025")).toBeInTheDocument();
+    expect(screen.getByText("Annual Report 2025")).toBeInTheDocument();
+    expect(screen.getByText("Showing 1–10 of 38")).toBeInTheDocument();
+
+    // Click "Page 4" — must show the OLDEST rows, not reset to page 1.
+    await user.click(screen.getByRole("button", { name: "Page 4" }));
+    expect(screen.getByText("Showing 31–38 of 38")).toBeInTheDocument();
+    expect(screen.getByText("March 2007")).toBeInTheDocument();
+    expect(screen.queryByText("October 2025")).not.toBeInTheDocument();
+    expect(screen.queryByText("Annual Report 2025")).not.toBeInTheDocument();
+
+    // Clicking "Page 3" must NOT jump back to page 1 either.
+    await user.click(screen.getByRole("button", { name: "Page 3" }));
+    expect(screen.getByText("Showing 21–30 of 38")).toBeInTheDocument();
+    expect(screen.getByText("October 2013")).toBeInTheDocument();
+    expect(screen.queryByText("October 2025")).not.toBeInTheDocument();
+  });
+
   it("controls the number of rows per page", async () => {
     const user = userEvent.setup();
     render(<ReportsTable rows={manyRows} />);
@@ -135,5 +175,35 @@ describe("ReportsTable", () => {
 
     await user.click(screen.getByRole("button", { name: "Document" }));
     expect(screen.getByText("Showing 1–10 of 12")).toBeInTheDocument();
+  });
+
+  it("navigates directly to a numbered page button (regression: 4 pages)", async () => {
+    const user = userEvent.setup();
+    // 38 rows, default 10/page → 4 pages; use title sort for deterministic pages.
+    const rows38 = Array.from({ length: 38 }, (_, i) => ({
+      id: `row-${i + 1}`,
+      date: `2025-${String((i % 12) + 1).padStart(2, "0")}-01`,
+      title: `Report ${String(i + 1).padStart(2, "0")}`,
+      url: `/pdf/report-${i + 1}.pdf`,
+    }));
+    render(<ReportsTable rows={rows38} />);
+
+    // Title ASC → page 1 = Report 01..10, page 4 = Report 31..38.
+    await user.click(screen.getByRole("button", { name: /document/i }));
+    expect(screen.getByText("Showing 1–10 of 38")).toBeInTheDocument();
+
+    // Click the "Page 4" number button directly.
+    await user.click(screen.getByRole("button", { name: "Page 4" }));
+    expect(screen.getByText("Showing 31–38 of 38")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Report 38" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Report 01" })
+    ).not.toBeInTheDocument();
+
+    // Clicking another number button (e.g. 2 or 3) must NOT revert to page 1.
+    await user.click(screen.getByRole("button", { name: "Page 2" }));
+    expect(screen.getByText("Showing 11–20 of 38")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Page 3" }));
+    expect(screen.getByText("Showing 21–30 of 38")).toBeInTheDocument();
   });
 });
