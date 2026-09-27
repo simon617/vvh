@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import ReportsTable, { type ReportRow } from "./ReportsTable";
 
 const rows: ReportRow[] = [
@@ -17,6 +17,11 @@ const manyRows: ReportRow[] = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 describe("ReportsTable", () => {
+  afterEach(() => {
+    // Clear the ?page= search param left by the previous test.
+    window.history.replaceState(null, "", "/");
+  });
+
   it("renders all report rows", () => {
     render(<ReportsTable rows={rows} />);
     expect(screen.getByText("Annual Report 2025")).toBeInTheDocument();
@@ -150,6 +155,57 @@ describe("ReportsTable", () => {
     expect(screen.getByText("Showing 21–30 of 38")).toBeInTheDocument();
     expect(screen.getByText("October 2013")).toBeInTheDocument();
     expect(screen.queryByText("October 2025")).not.toBeInTheDocument();
+  });
+
+  it("restores page 4 from ?page= in the URL after a refresh (regression)", () => {
+    const rows38: ReportRow[] = [];
+    for (let year = 2025; year >= 2007; year--) {
+      rows38.push({
+        id: `a-${year}`,
+        date: `October ${year}`,
+        title: `Annual ${year}`,
+        url: `/p/${year}.pdf`,
+      });
+      rows38.push({
+        id: `i-${year}`,
+        date: `March ${year}`,
+        title: `Interim ${year}`,
+        url: `/p/${year}-i.pdf`,
+      });
+    }
+    window.history.replaceState(
+      null,
+      "",
+      "/en/financial-reports?page=4"
+    );
+
+    render(<ReportsTable rows={rows38} />);
+
+    // The page is adopted from the URL (highlight + content stay on page 4).
+    expect(screen.getByText("Showing 31–38 of 38")).toBeInTheDocument();
+    expect(screen.getByText("March 2007")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Page 4" })
+    ).toHaveAttribute("aria-current", "page");
+    // Page 1 has scrolled out of the button window ([2,3,4]); page 3 is not active.
+    expect(screen.queryByRole("button", { name: "Page 1" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Page 3" })
+    ).not.toHaveAttribute("aria-current", "page");
+  });
+
+  it("writes ?page= into the URL when navigating pages", async () => {
+    const user = userEvent.setup();
+    render(<ReportsTable rows={manyRows} />);
+
+    await user.click(screen.getByRole("button", { name: "Page 2" }));
+    expect(window.location.search).toContain("page=2");
+    expect(
+      screen.getByRole("button", { name: "Page 2" })
+    ).toHaveAttribute("aria-current", "page");
+
+    await user.click(screen.getByRole("button", { name: "Page 1" }));
+    expect(window.location.search).not.toContain("page=");
   });
 
   it("controls the number of rows per page", async () => {

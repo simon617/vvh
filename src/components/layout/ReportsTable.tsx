@@ -30,6 +30,16 @@ type SortDirection = "asc" | "desc";
 
 const PAGE_SIZES = [5, 10, 20] as const;
 const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SEARCH_PARAM = "page";
+
+/** `?page=N` from the URL, or null when absent/invalid (client only). */
+function pageFromUrl(): number | null {
+  if (typeof window === "undefined") return null;
+  const value = Number(
+    new URLSearchParams(window.location.search).get(PAGE_SEARCH_PARAM)
+  );
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
 
 const DEFAULT_LABELS: Required<
   Omit<ReportsTableLabels, "date" | "document">
@@ -70,6 +80,31 @@ export default function ReportsTable({ rows, labels }: ReportsTableProps) {
   useEffect(() => {
     if (safePage !== page) setPage(safePage);
   }, [safePage, page]);
+
+  // Restore the current page from `?page=N` after a refresh / reload. Read in an
+  // effect (not the useState initializer) so SSR and the first client render
+  // both show page 1 — avoids a hydration mismatch — then the URL-adopted page
+  // kicks in on the following render.
+  useEffect(() => {
+    const fromUrl = pageFromUrl();
+    if (fromUrl !== null) {
+      setPage(fromUrl);
+    }
+  }, [setPage]);
+
+  // Keep `?page=N` in the URL as the user navigates, so a refresh returns to
+  // the same page with the correct highlighted button. `replaceState` keeps
+  // browser history clean (no one entry per page click).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (safePage > 1) {
+      url.searchParams.set(PAGE_SEARCH_PARAM, String(safePage));
+    } else {
+      url.searchParams.delete(PAGE_SEARCH_PARAM);
+    }
+    window.history.replaceState(null, "", url.toString());
+  }, [safePage]);
 
   const pagedRows = useMemo(
     () => sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize),
