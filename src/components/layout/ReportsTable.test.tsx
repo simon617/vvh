@@ -184,14 +184,42 @@ describe("ReportsTable", () => {
     // The page is adopted from the URL (highlight + content stay on page 4).
     expect(screen.getByText("Showing 31–38 of 38")).toBeInTheDocument();
     expect(screen.getByText("March 2007")).toBeInTheDocument();
+    // Every page fits in the window (only 4 pages), so button 1 stays visible...
+    expect(screen.getByRole("button", { name: "Page 1" })).toBeInTheDocument();
+    // ...but page 4 is the one highlighted.
     expect(
       screen.getByRole("button", { name: "Page 4" })
     ).toHaveAttribute("aria-current", "page");
-    // Page 1 has scrolled out of the button window ([2,3,4]); page 3 is not active.
-    expect(screen.queryByRole("button", { name: "Page 1" })).toBeNull();
     expect(
-      screen.getByRole("button", { name: "Page 3" })
+      screen.getByRole("button", { name: "Page 1" })
     ).not.toHaveAttribute("aria-current", "page");
+  });
+
+  it("slides the page-number window only when there are more than 5 pages", async () => {
+    const user = userEvent.setup();
+    const rows38: ReportRow[] = Array.from({ length: 38 }, (_, i) => ({
+      id: `r${i + 1}`,
+      date: `2025-${String((i % 12) + 1).padStart(2, "0")}-01`,
+      title: `Report ${String(i + 1).padStart(2, "0")}`,
+      url: `/r${i + 1}.pdf`,
+    }));
+    render(<ReportsTable rows={rows38} />);
+    await user.selectOptions(screen.getByRole("combobox"), "5");
+
+    // 38 rows at 5/page → 8 pages; window starts at 1.
+    expect(screen.getByRole("button", { name: "Page 1" })).toBeInTheDocument();
+
+    // Page 5 is in the [1..5] window; after clicking it the window becomes
+    // [3..7], making "Page 7" reachable.
+    await user.click(screen.getByRole("button", { name: "Page 5" }));
+    await user.click(screen.getByRole("button", { name: "Page 7" }));
+    expect(screen.getByRole("button", { name: "Page 7" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(screen.queryByRole("button", { name: "Page 1" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Page 4" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Page 8" })).toBeInTheDocument();
   });
 
   it("writes ?page= into the URL when navigating pages", async () => {

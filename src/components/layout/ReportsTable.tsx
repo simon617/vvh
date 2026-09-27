@@ -132,7 +132,15 @@ export default function ReportsTable({ rows, labels }: ReportsTableProps) {
 
   const pageNumbers = useMemo(() => {
     const maxShown = 5;
-    const first = Math.max(1, safePage - Math.floor(maxShown / 2));
+    // Only slide the window when there are more pages than fit; otherwise keep
+    // every page button visible (e.g. 4 pages → always [1,2,3,4]).
+    let first = 1;
+    if (totalPages > maxShown) {
+      first = Math.max(
+        1,
+        Math.min(safePage - Math.floor(maxShown / 2), totalPages - maxShown + 1)
+      );
+    }
     const last = Math.min(totalPages, first + maxShown - 1);
     const nums: number[] = [];
     for (let i = first; i <= last; i++) nums.push(i);
