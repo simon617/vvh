@@ -1,6 +1,6 @@
-import { NAV_SLUGS, type NavSlug, type Locale } from "./navigation";
-import { buildReportContent, type ReportRowItem } from "./report-rows";
 import { getDirectors } from "./directors";
+import { NAV_SLUGS, type Locale, type NavSlug } from "./navigation";
+import { buildReportContent, type ReportRowItem } from "./report-rows";
 
 export interface PagePlaceholder {
   title: string;
@@ -120,30 +120,32 @@ function directorCardsHtml(locale: Locale): string {
 /** Corporate Governance documentation links (point to locally uploaded PDFs). */
 const GOVERNANCE_DOCS: Record<Locale, { label: string; file: string }[]> = {
   en: [
-    { label: "Memorandum & Articles of Association", file: "MoAandAoA (3).pdf" },
-    { label: "Board Diversity Policy", file: "E-20180800-Board Diversity PolicyV2.pdf" },
-    { label: "Terms of Reference of the Nomination Committee", file: "e_Terms of Reference of Nomination Committee.pdf" },
-    { label: "Nomination Policy", file: "E-Nomination Policy.pdf" },
-    { label: "Workforce Diversity Policy", file: "e_Workforce Diversity Policy.pdf" },
-    { label: "Terms of Reference of the Audit Committee", file: "TOR-AuditCommittee (1).pdf" },
-    { label: "Terms of Reference of the Remuneration Committee", file: "TOR-RemunerationCommittee.pdf" },
-    { label: "Whistleblowing Policy", file: "WHISTLEBLOWING POLICY MEC (eng) (1).pdf" },
-    { label: "Anti-Corruption Policy", file: "VVH Anti-corruption policy (eng).pdf" },
-    { label: "Code for Securities Transactions", file: "CodeForSecuritiesTransactions.pdf" },
-    { label: "Dividend Policy", file: "E-dividend policy.pdf" },
+    { label: "Memorandum of Association and Articles of Association", file: "../uploads/reports/en/MoAandAoA.pdf" },
+    { label: "Audit Committee - Terms of Reference", file: "../uploads/reports/en/TOR-AuditCommittee.pdf" },
+    { label: "Remuneration Committee - Terms of Reference", file: "../uploads/reports/en/TOR-RemunerationCommittee.pdf" },
+    { label: "Nomination Committee - Terms of Reference", file: "../uploads/reports/en/e_Terms of Reference of Nomination Committee.pdf" },
+    { label: "Code for Securities Transaction by Directors and Employees", file: "../uploads/reports/en/CodeForSecuritiesTransactions.pdf" },
+    { label: "Procedures for Shareholders to Propose a Person for Election as a Director of the Company at a general meeting", file: "../uploads/reports/en/e-20161025.pdf" },
+    { label: "Nomination Policy for Recruitment of Board Members", file: "../uploads/reports/en/E-Nomination Policy.pdf" },
+    { label: "Anti-Corruption Policy", file: "../uploads/reports/en/VVH Anti-corruption policy (eng).pdf" },
+    { label: "Board Diversity Policy", file: "../uploads/reports/en/E-20180800-Board Diversity PolicyV2.pdf" },
+    { label: "Dividend Policy", file: "../uploads/reports/en/E-dividend policy.pdf" },
+    { label: "Whistleblowing Policy", file: "../uploads/reports/en/WHISTLEBLOWING POLICY MEC (eng).pdf" },
+    { label: "Workforce Diversity Policy", file: "../uploads/reports/en/WHISTLEBLOWING POLICY MEC (eng).pdf" },
   ],
   zh: [
-    { label: "組織章程大綱及細則", file: "MoAandAoA (3).pdf" },
-    { label: "董事會多元化政策", file: "C-20181205-Board Diversity Policy (chi).pdf" },
-    { label: "提名委員會職權範圍", file: "c_Terms of Reference of Nomination Committee.pdf" },
-    { label: "提名政策", file: "C-Nomination Policy.pdf" },
-    { label: "員工多元化政策", file: "c_Workforce Diversity Policy.pdf" },
-    { label: "審核委員會職權範圍", file: "TOR-AuditCommittee (1).pdf" },
-    { label: "薪酬委員會職權範圍", file: "TOR-RemunerationCommittee.pdf" },
-    { label: "舉報政策", file: "WHISTLEBLOWING POLICY MEC (chi).pdf" },
-    { label: "反貪污政策", file: "VVH Anti-corruption policy (chi).pdf" },
-    { label: "證券交易守則", file: "CodeForSecuritiesTransactions.pdf" },
-    { label: "股息政策", file: "C-dividend policy.pdf" },
+    { label: "公司組織章程大綱及組織章程細則", file: "/uploads/reports/zh/MoAandAoA.pdf" },
+    { label: "審核委員會 - 職權範圍書", file: "/uploads/reports/zh/TOR-AuditCommittee.pdf" },
+    { label: "薪酬委員會 - 職權範圍書", file: "/uploads/reports/zh/TOR-RemunerationCommittee.pdf" },
+    { label: "提名委員會 - 職權範圍書", file: "/uploads/reports/zh/c_Terms of Reference of Nomination Committee.pdf" },
+    { label: "董事及員工進行證券交易守則 (只提供英文版)", file: "/uploads/reports/zh/CodeForSecuritiesTransactions.pdf" },
+    { label: "股東於股東大會上提名個別人士參選董事職位之程序", file: "TOR-AuditCommittee (1).pdf" },
+    { label: "提名政策招聘董事會成員", file: "TOR-RemunerationCommittee.pdf" },
+    { label: "反貪污政策", file: "WHISTLEBLOWING POLICY MEC (chi).pdf" },
+    { label: "董事會多元化政策", file: "VVH Anti-corruption policy (chi).pdf" },
+    { label: "股息政策", file: "CodeForSecuritiesTransactions.pdf" },
+    { label: "舉報政策", file: "C-dividend policy.pdf" },
+    { label: "員工多元化政策", file: "C-dividend policy.pdf" },
   ],
 };
 
