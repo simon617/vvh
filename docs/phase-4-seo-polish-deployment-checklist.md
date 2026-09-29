@@ -431,5 +431,5 @@ numbers if the Phase-3 refactor changes the test count before you start.*
 - [ ] 4.8 Lighthouse ≥85 mobile / ≥95 desktop (run against a deployed instance; fix findings iteratively).
 - [ ] 4.9 axe-core WCAG 2.1 AA scan.
 - [ ] 4.10 cross-browser (Chrome/Firefox/Safari/Edge) + broken-link crawl + final content review.
-- [ ] 4.11 Docker fresh-volume end-to-end (includes resolving the first-boot `prisma migrate deploy`/seed gap — §12 #9).
+- [ ] 4.11 Docker fresh-volume end-to-end — **code part done (`c2cfced`, 2026-09-29):** the Dockerfile now bakes a seeded SQLite DB at build (`prisma db push` + `npm run seed`; validated on host → 9 pages / 18 content rows), so a fresh volume boots with schema + seed (§12 #9 **resolved**). Remaining: **live** `docker compose up -d --build` verification once Docker Desktop's engine is running (see `docs/docker-command.md`).
 - [ ] 4.12 PDF migration cleanup vs `docs/phase-2-content-migration-checklist.md`.
