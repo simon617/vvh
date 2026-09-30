@@ -20,7 +20,12 @@ import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 import { buildReportContent, type ReportRowItem } from "../src/lib/report-rows";
-import { REPORT_CATALOG, type ReportCatalogEntry } from "./report-catalog";
+import {
+  catalogSlugFor,
+  REPORT_CATALOG,
+  stableId,
+  type ReportCatalogEntry,
+} from "./report-catalog";
 
 const prisma = new PrismaClient();
 
@@ -59,19 +64,11 @@ function scanLocaleDir(locale: string): Map<string, string> {
   return found;
 }
 
-function pageSlugFor(entry: ReportCatalogEntry): string {
-  return entry.page === "esg" ? "esg-reports" : "financial-reports";
-}
-
 function urlFor(locale: string, relPath: string): string {
   return `/uploads/reports/${locale}/${relPath
     .split("/")
     .map((seg) => encodeURIComponent(seg))
     .join("/")}`;
-}
-
-function stableId(entry: ReportCatalogEntry): string {
-  return `${entry.locale}-${entry.page}-${entry.file.replace(/\.pdf$/i, "").replace(/[^a-zA-Z0-9]+/g, "-")}`;
 }
 
 async function importRows(): Promise<void> {
@@ -98,7 +95,7 @@ async function importRows(): Promise<void> {
       url: urlFor(entry.locale, rel),
     };
     const slot = built.get(key) ?? {
-      slug: pageSlugFor(entry),
+      slug: catalogSlugFor(entry.page),
       locale: entry.locale,
       rows: [],
     };

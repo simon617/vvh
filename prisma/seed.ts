@@ -3,6 +3,7 @@ import {
   getPlaceholder,
   PLACEHOLDER_SLUGS,
 } from "../src/lib/placeholders";
+import { catalogEnvelopeFor } from "../scripts/report-catalog";
 
 const prisma = new PrismaClient();
 
@@ -25,7 +26,12 @@ const PAGES = [
 
 /** Upsert a page_contents row per slug/locale from the placeholder (the single
  *  static-content source). Placeholders now carry the same content as the DB
- *  baseline (director card grid, governance local-PDF links, report envelopes). */
+ *  baseline (director card grid, governance local-PDF links, report envelopes).
+ *  Financial/ESG report pages seed their EN/ZH envelopes straight from the
+ *  report catalog (scripts/report-catalog.ts, generated from the download
+ *  scripts in ./tools) instead of the placeholder defaults, so a fresh DB
+ *  already has the real rows; `npm run import:content` later reconciles the
+ *  URLs against the PDFs actually present under uploads/reports/<locale>/. */
 async function migratePageContent(): Promise<void> {
   console.log("Migrating Phase 2.5 content into page_contents...");
   let updated = 0;
@@ -44,13 +50,20 @@ async function migratePageContent(): Promise<void> {
         continue;
       }
 
+      // report pages: real rows from the tools catalog; everything else: placeholder.
+      const isReportPage =
+        slug === "financial-reports" || slug === "esg-reports";
+      const contentHtml = isReportPage
+        ? (catalogEnvelopeFor(slug, locale) ?? ph.contentHtml)
+        : ph.contentHtml;
+
       const data = {
         title: ph.title,
         metaTitle: ph.metaTitle,
         metaDescription: ph.metaDescription,
         breadcrumbLabel: ph.breadcrumb,
         heroImage: ph.heroImage ?? null,
-        contentHtml: ph.contentHtml,
+        contentHtml,
         isPublished: true,
       };
 

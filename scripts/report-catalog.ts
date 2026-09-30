@@ -1,4 +1,7 @@
-import type { ReportRowItem } from "../src/lib/report-rows";
+import {
+  buildReportContent,
+  type ReportRowItem,
+} from "../src/lib/report-rows";
 
 /**
  * Catalog of Financial Report & ESG Report PDFs downloaded by the scripts in
@@ -105,3 +108,54 @@ export const REPORT_CATALOG: ReportCatalogEntry[] = [
   { locale: "zh", page: "fr", date: "2010年3月", name: "2009/2010中期報告", file: "2009-10-C00862.pdf" },
   { locale: "zh", page: "fr", date: "2009年3月", name: "2008/2009中期報告", file: "2008-09-C00862.pdf" },
 ];
+
+/* -------------------------------------------------------------------------- *
+ * Catalog → report-row helpers (shared by prisma/seed.ts and
+ * import-report-rows.ts). The seed uses these directly (it cannot rely on PDFs
+ * being on disk yet); the importer reuses the same `stableId` so its later
+ * upserts overwrite the seeded rows instead of duplicating them.
+ * -------------------------------------------------------------------------- */
+
+/** Stable, unique row id — identical in seed and import (idempotent upserts). */
+export function stableId(entry: ReportCatalogEntry): string {
+  return `${entry.locale}-${entry.page}-${entry.file.replace(/\.pdf$/i, "").replace(/[^a-zA-Z0-9]+/g, "-")}`;
+}
+
+/** Public page slug for a catalog page bucket ("fr" | "esg"). */
+export function catalogSlugFor(page: ReportCatalogEntry["page"]): string {
+  return page === "esg" ? "esg-reports" : "financial-reports";
+}
+
+/** Canonical upload URL for a catalog entry (no PDF-on-disk dependency). */
+export function catalogUrlFor(entry: ReportCatalogEntry): string {
+  return `/uploads/reports/${entry.locale}/${encodeURIComponent(entry.file)}`;
+}
+
+/** A ReportRowItem from a catalog entry (id/date/title + upload URL). */
+export function catalogRowFor(entry: ReportCatalogEntry): ReportRowItem {
+  return {
+    id: stableId(entry),
+    date: entry.date,
+    title: entry.name,
+    url: catalogUrlFor(entry),
+  };
+}
+
+/** All catalog rows for a report slug + locale. */
+export function catalogRowsFor(
+  slug: string,
+  locale: "en" | "zh"
+): ReportRowItem[] {
+  return REPORT_CATALOG
+    .filter((entry) => catalogSlugFor(entry.page) === slug && entry.locale === locale)
+    .map(catalogRowFor);
+}
+
+/** Serialized "reports" envelope for a report slug + locale, or null. */
+export function catalogEnvelopeFor(
+  slug: string,
+  locale: "en" | "zh"
+): string | null {
+  const rows = catalogRowsFor(slug, locale);
+  return rows.length > 0 ? buildReportContent(rows) : null;
+}
