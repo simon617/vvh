@@ -30,7 +30,10 @@ describe("Lost Share Certificates page (rich text)", () => {
       await LostShareCertificatesPage({ params: { locale: "en" } })
     );
     expect(screen.getByRole("heading", { level: 1, name: "Lost Share Certificates" })).toBeInTheDocument();
-    expect(screen.getByText(/share certificate is lost/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Replacement of Lost Share Certificates/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText("There is currently no notice posted.")).toBeInTheDocument();
   });
 
   it("renders heading and body in Chinese", async () => {
@@ -39,6 +42,7 @@ describe("Lost Share Certificates page (rich text)", () => {
       "zh"
     );
     expect(screen.getByRole("heading", { level: 1, name: "遺失股票證書" })).toBeInTheDocument();
-    expect(screen.getByText(/股票證書遺失/i)).toBeInTheDocument();
+    expect(screen.getByText(/已遺失的股份證明書/)).toBeInTheDocument();
+    expect(screen.getByText("暫時沒有公告刊登。")).toBeInTheDocument();
   });
 });

@@ -30,13 +30,15 @@ describe("Corporate Governance page (rich text)", () => {
       await CorporateGovernancePage({ params: { locale: "en" } })
     );
     expect(screen.getByRole("heading", { level: 1, name: "Corporate Governance" })).toBeInTheDocument();
-    const moa = screen.getByText("Memorandum & Articles of Association");
+    const moa = screen.getByText("Memorandum of Association and Articles of Association");
     expect(moa).toHaveAttribute(
       "href",
-      "/uploads/reports/en/MoAandAoA%20(3).pdf"
+      "/uploads/reports/en/MoAandAoA.pdf"
     );
     expect(moa).toHaveAttribute("target", "_blank");
-    expect(screen.getByText("Terms of Reference of the Audit Committee")).toBeInTheDocument();
+    expect(
+      screen.getByText("Audit Committee - Terms of Reference")
+    ).toBeInTheDocument();
     expect(screen.getByText("Whistleblowing Policy")).toBeInTheDocument();
   });
 
@@ -46,13 +48,13 @@ describe("Corporate Governance page (rich text)", () => {
       "zh"
     );
     expect(screen.getByRole("heading", { level: 1, name: "企業管治" })).toBeInTheDocument();
-    const moa = screen.getByText("組織章程大綱及細則");
+    const moa = screen.getByText("公司組織章程大綱及組織章程細則");
     expect(moa).toHaveAttribute(
       "href",
-      "/uploads/reports/zh/MoAandAoA%20(3).pdf"
+      "/uploads/reports/zh/MoAandAoA.pdf"
     );
     expect(moa).toHaveAttribute("target", "_blank");
-    expect(screen.getByText("審核委員會職權範圍")).toBeInTheDocument();
+    expect(screen.getByText("審核委員會 - 職權範圍書")).toBeInTheDocument();
   });
 
   it("exposes localized metadata", async () => {

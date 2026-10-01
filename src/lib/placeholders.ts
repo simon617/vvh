@@ -120,18 +120,18 @@ function directorCardsHtml(locale: Locale): string {
 /** Corporate Governance documentation links (point to locally uploaded PDFs). */
 const GOVERNANCE_DOCS: Record<Locale, { label: string; file: string }[]> = {
   en: [
-    { label: "Memorandum of Association and Articles of Association", file: "../uploads/reports/en/MoAandAoA.pdf" },
-    { label: "Audit Committee - Terms of Reference", file: "../uploads/reports/en/TOR-AuditCommittee.pdf" },
-    { label: "Remuneration Committee - Terms of Reference", file: "../uploads/reports/en/TOR-RemunerationCommittee.pdf" },
-    { label: "Nomination Committee - Terms of Reference", file: "../uploads/reports/en/e_Terms of Reference of Nomination Committee.pdf" },
-    { label: "Code for Securities Transaction by Directors and Employees", file: "../uploads/reports/en/CodeForSecuritiesTransactions.pdf" },
-    { label: "Procedures for Shareholders to Propose a Person for Election as a Director of the Company at a general meeting", file: "../uploads/reports/en/e-20161025.pdf" },
-    { label: "Nomination Policy for Recruitment of Board Members", file: "../uploads/reports/en/E-Nomination Policy.pdf" },
-    { label: "Anti-Corruption Policy", file: "../uploads/reports/en/VVH Anti-corruption policy (eng).pdf" },
-    { label: "Board Diversity Policy", file: "../uploads/reports/en/E-20180800-Board Diversity PolicyV2.pdf" },
-    { label: "Dividend Policy", file: "../uploads/reports/en/E-dividend policy.pdf" },
-    { label: "Whistleblowing Policy", file: "../uploads/reports/en/WHISTLEBLOWING POLICY MEC (eng).pdf" },
-    { label: "Workforce Diversity Policy", file: "../uploads/reports/en/WHISTLEBLOWING POLICY MEC (eng).pdf" },
+    { label: "Memorandum of Association and Articles of Association", file: "/uploads/reports/en/MoAandAoA.pdf" },
+    { label: "Audit Committee - Terms of Reference", file: "/uploads/reports/en/TOR-AuditCommittee.pdf" },
+    { label: "Remuneration Committee - Terms of Reference", file: "/uploads/reports/en/TOR-RemunerationCommittee.pdf" },
+    { label: "Nomination Committee - Terms of Reference", file: "/uploads/reports/en/e_Terms of Reference of Nomination Committee.pdf" },
+    { label: "Code for Securities Transaction by Directors and Employees", file: "/uploads/reports/en/CodeForSecuritiesTransactions.pdf" },
+    { label: "Procedures for Shareholders to Propose a Person for Election as a Director of the Company at a general meeting", file: "/uploads/reports/en/e-20161025.pdf" },
+    { label: "Nomination Policy for Recruitment of Board Members", file: "/uploads/reports/en/E-Nomination Policy.pdf" },
+    { label: "Anti-Corruption Policy", file: "/uploads/reports/en/VVH Anti-corruption policy (eng).pdf" },
+    { label: "Board Diversity Policy", file: "/uploads/reports/en/E-20180800-Board Diversity PolicyV2.pdf" },
+    { label: "Dividend Policy", file: "/uploads/reports/en/E-dividend policy.pdf" },
+    { label: "Whistleblowing Policy", file: "/uploads/reports/en/WHISTLEBLOWING POLICY MEC (eng).pdf" },
+    { label: "Workforce Diversity Policy", file: "/uploads/reports/en/e_Workforce Diversity Policy.pdf" },
   ],
   zh: [
     { label: "公司組織章程大綱及組織章程細則", file: "/uploads/reports/zh/MoAandAoA.pdf" },
@@ -139,13 +139,13 @@ const GOVERNANCE_DOCS: Record<Locale, { label: string; file: string }[]> = {
     { label: "薪酬委員會 - 職權範圍書", file: "/uploads/reports/zh/TOR-RemunerationCommittee.pdf" },
     { label: "提名委員會 - 職權範圍書", file: "/uploads/reports/zh/c_Terms of Reference of Nomination Committee.pdf" },
     { label: "董事及員工進行證券交易守則 (只提供英文版)", file: "/uploads/reports/zh/CodeForSecuritiesTransactions.pdf" },
-    { label: "股東於股東大會上提名個別人士參選董事職位之程序", file: "TOR-AuditCommittee (1).pdf" },
-    { label: "提名政策招聘董事會成員", file: "TOR-RemunerationCommittee.pdf" },
-    { label: "反貪污政策", file: "WHISTLEBLOWING POLICY MEC (chi).pdf" },
-    { label: "董事會多元化政策", file: "VVH Anti-corruption policy (chi).pdf" },
-    { label: "股息政策", file: "CodeForSecuritiesTransactions.pdf" },
-    { label: "舉報政策", file: "C-dividend policy.pdf" },
-    { label: "員工多元化政策", file: "C-dividend policy.pdf" },
+    { label: "股東於股東大會上提名個別人士參選董事職位之程序", file: "/uploads/reports/zh/c-20161025.pdf" },
+    { label: "提名政策招聘董事會成員", file: "/uploads/reports/zh/C-Nomination Policy.pdf" },
+    { label: "反貪污政策", file: "/uploads/reports/zh/VVH Anti-corruption policy (chi).pdf" },
+    { label: "董事會多元化政策", file: "/uploads/reports/zh/C-20181205-Board Diversity Policy (chi).pdf" },
+    { label: "股息政策", file: "/uploads/reports/zh/C-dividend policy.pdf" },
+    { label: "舉報政策", file: "/uploads/reports/zh/WHISTLEBLOWING POLICY MEC (chi).pdf" },
+    { label: "員工多元化政策", file: "/uploads/reports/zh/c_Workforce Diversity Policy.pdf" },
   ],
 };
 
@@ -155,10 +155,14 @@ function governanceHtml(locale: Locale): string {
       ? "本公司致力維持嚴謹之企業管治。以下為相關政策及文件，歡迎下載查閱。"
       : "The Company is committed to maintaining the highest standards of corporate governance. The following policies and documents are available for download.";
   const items = GOVERNANCE_DOCS[locale]
-    .map(
-      (doc) =>
-        `<li><a href="/uploads/reports/${locale}/${encodeURI(doc.file)}" target="_blank" rel="noopener noreferrer">${escHtml(doc.label)}</a></li>`
-    )
+    .map((doc) => {
+      // `file` entries are absolute upload paths → use as-is; keep the relative
+      // fallback for anything without a leading slash (no duplicated prefix).
+      const href = doc.file.startsWith("/")
+        ? doc.file
+        : `/uploads/reports/${locale}/${doc.file}`;
+      return `<li><a href="${encodeURI(href)}" target="_blank" rel="noopener noreferrer">${escHtml(doc.label)}</a></li>`;
+    })
     .join("\n");
   const heading = locale === "en" ? "Policies & Documents" : "政策及文件";
   return `<p>${intro}</p>\n<h2>${heading}</h2>\n<ul>\n${items}\n</ul>`;
@@ -316,8 +320,8 @@ const PLACEHOLDERS: Record<CmsSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaDescription: "Procedures for lost share certificates of Vision Values Holdings Limited",
       breadcrumb: "Lost Share Certificates",
       contentHtml: `
-<p>If your share certificate is lost, stolen or destroyed, please contact our share registrar immediately.</p>
-<p>You will be required to provide a letter of indemnity and follow the prescribed procedures to obtain a replacement certificate.</p>
+<p><strong>Notices - Replacement of Lost Share Certificates</strong></p>
+<p>There is currently no notice posted.</p>
 `,
     },
     zh: {
@@ -326,8 +330,8 @@ const PLACEHOLDERS: Record<CmsSlug, { en: PagePlaceholder; zh: PagePlaceholder }
       metaDescription: "遠見控股有限公司遺失股票證書之處理程序",
       breadcrumb: "遺失股票證書",
       contentHtml: `
-<p>如您的股票證書遺失、被盜或損毀，請立即聯絡本公司之股份登記處。</p>
-<p>您需要提供彌償保證書並按照既定程序以取得補發證書。</p>
+<p><strong>公告 - 已遺失的股份證明書</strong></p>
+<p>暫時沒有公告刊登。</p>
 `,
     },
   },
