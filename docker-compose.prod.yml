@@ -1,0 +1,38 @@
+# Production compose file — deployed to /opt/vvh/docker-compose.prod.yml on the
+# server and run by /opt/vvh/deploy.sh. Secrets come from /opt/vvh/.env
+# (env_file); the image tag comes from the VVH_IMAGE variable set by deploy.sh.
+services:
+  app:
+    image: ${VVH_IMAGE:-ghcr.io/simon617/vvh:latest}
+    container_name: vvh-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    ports:
+      # Loopback only — Nginx is the ONLY process that reaches the app.
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - sqlite-data:/app/prisma/data
+      - uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  sqlite-data:
+    name: vvh_sqlite-data
+  uploads:
+    name: vvh_uploads

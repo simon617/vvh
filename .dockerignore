@@ -1,10 +1,45 @@
+# ---- dependencies / build output ----
 node_modules
 .next
 .git
-.gitignore
+out
+/build
+coverage
+
+# ---- vcs / metadata ----
+.github
+.gitattributes
+*.tsbuildinfo
+next-env.d.ts
+
+# ---- secrets & local env ----
 .env
 .env*.local
+.env.*
+
+# ---- documentation & local scratch ----
 *.md
-.DS_Store
+docs
+*.docx
+~$*
+*.tmp
+*.log
+server*.log
+server-out.log
+setup.log
+
+# ---- CI/deploy assets (not needed inside the image) ----
+Dockerfile
+Dockerfile*
+docker-compose*.yml
+docker-compose*.yaml
+nginx.conf
+deploy.sh
+.github/workflows
+
+# ---- project data (baked/persisted at runtime, built from scratch) ----
 prisma/data
 uploads
+# NOTE: `scripts` must stay in the build context — prisma/seed.ts imports
+# scripts/report-catalog.ts.
+tools

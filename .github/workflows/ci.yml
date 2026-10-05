@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.visionvalues.com.hk' }}
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        # npm 10 hits an edgesOut bug with the Tiptap optional-peers; pin npm 11.
+        # Keep in sync with Dockerfile and security.yml.
+        run: |
+          npm install -g --no-audit --no-fund npm@11
+          npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test (vitest)
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Typecheck
+        # Runs after build so `next build` has generated next-env.d.ts / .next/types.
+        run: npm run typecheck
