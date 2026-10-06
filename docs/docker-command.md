@@ -169,7 +169,7 @@ docker compose up -d
 
 ## 9. Reference: what the image does (Dockerfile)
 
-1. `node:18-alpine` builder: `npm ci` → `prisma generate` → `next build`
+1. `node:24-alpine` builder: `npm ci` → `prisma generate` → `next build`
    (`output: "standalone"`).
 2. Builder also boots the SQLite DB: `prisma db push` (schema) + `npm run seed`
    (9 CMS pages + EN/ZH content) → baked into the image.

@@ -88,7 +88,7 @@ Work through it in this order:
 ## 4. Setup instructions
 
 ```bash
-# 1) Dependencies (Node 18+, npm)
+# 1) Dependencies (Node 24+, npm) — see .nvmrc / package.json engines
 npm install
 
 # 2) Environment — copy example and fill in secrets

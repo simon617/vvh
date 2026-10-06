@@ -1,7 +1,7 @@
 # VVH Website Revamp — Developer Guide
 
 > **Project:** Vision Values Holdings Limited (HKEX: 862) — corporate website revamp
-> **Stack:** Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · Prisma (SQLite) · next-intl · TipTap · Vitest · Docker
+> **Stack:** Node 24 · Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · Prisma (SQLite) · next-intl · TipTap · Vitest · Docker
 > **Repo:** https://github.com/simon617/vvh (branch `phase-2b`)
 > **Docs:** `docs/` contains the phase plans (PRD, phase-1…phase-4), checklists, task lists and this guide.
 > **Tests:** 55 test files / **247 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0
