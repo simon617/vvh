@@ -67,7 +67,7 @@ Key decisions (pronounced, not assumed):
 
 | Topic | Decision |
 |---|---|
-| Node / runtime | **Node 22 LTS** (`node:22-alpine`); Next.js `output: "standalone"`; non-root `nextjs` user. (Brief said Node 20, but the dependency tree requires ≥22 — `@testing-library/jest-dom@7` — and Node 20 is EOL since 2026-04; your dev box runs Node 24.) |
+| Node / runtime | **Node 24 LTS** (`node:24-alpine`); Next.js `output: "standalone"`; non-root `nextjs` user. (Dependency tree requires ≥22 — `@testing-library/jest-dom@7`; Node 20 is EOL since 2026-04; the whole project is pinned to 24 — `.nvmrc`, `package.json engines`, CI, Docker.) |
 | Package manager | **npm** (`package-lock.json` confirmed; no pnpm/yarn) |
 | Database | **SQLite via Prisma**, named volume `vvh_sqlite-data`; seeded DB baked into the image (fresh-volume bootstrap), server `.env` holds runtime config |
 | Registry auth | Push: built-in `GITHUB_TOKEN` (`packages: write`). Server pull: PAT `GHCR_PULL_TOKEN` (`read:packages`) |
@@ -354,7 +354,7 @@ After Phase 5, flip `DEPLOY_ENABLED` → `true` and push to `main` (or **Actions
 | `.github/workflows/security.yml` | `npm audit` (gate), Gitleaks (SARIF), Trivy FS (SARIF, report-only), CodeQL; weekly cron |
 | `.github/workflows/deploy.yml` | Build → Trivy image gate (fails on CRITICAL) → push `:latest` + `:sha` → SSH deploy (gated by `DEPLOY_ENABLED` + `production` env) |
 | `.github/dependabot.yml` | Weekly npm + GitHub Actions bump PRs, grouped |
-| `Dockerfile` | Multi-stage `node:22-alpine`; standalone build; seeded SQLite baked in; non-root `nextjs` user; `ARG NEXT_PUBLIC_SITE_URL` |
+| `Dockerfile` | Multi-stage `node:24-alpine`; standalone build; seeded SQLite baked in; non-root `nextjs` user; `ARG NEXT_PUBLIC_SITE_URL` |
 | `docker-compose.prod.yml` | Server compose: `ghcr.io/simon617/vvh`, `127.0.0.1:3000:3000`, `env_file: .env`, named volumes, healthcheck |
 | `nginx.conf` | Host Nginx: 80→https, apex→www 301, TLS, security headers/CSP/gzip/WebSockets, `proxy_pass http://127.0.0.1:3000` |
 | `deploy.sh` | Server-side deploy: pull → optional migrate → up → healthcheck with retries → rollback to previous tag |
@@ -953,7 +953,7 @@ docker run --rm \
   -v vvh_sqlite-data:/data \
   -e DATABASE_URL=file:/data/vvh.db \
   -e CI=true \
-  node:22-alpine sh -c "apk add --no-cache openssl && npm ci --ignore-scripts && npx prisma generate && npx prisma migrate deploy"
+  node:24-alpine sh -c "apk add --no-cache openssl && npm ci --ignore-scripts && npx prisma generate && npx prisma migrate deploy"
 # Back up first: /opt/vvh/bin/backup-prod.sh
 ```
 

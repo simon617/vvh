@@ -3,9 +3,10 @@
 ############################
 # Stage 1: Builder          #
 ############################
-# Node 22 LTS. NOTE: the dependency tree requires node >=22 (jest-dom v7) and
-# Node 20 is past EOL (2026-04); your dev machine runs Node 24.
-FROM node:22-alpine AS builder
+# Node 24 LTS (matches .nvmrc / .node-version / package.json engines / CI
+# workflows). The dependency tree requires node >=22 (jest-dom v7); Node 20 is
+# past EOL (2026-04) and we standardise on the same major as the dev machine.
+FROM node:24-alpine AS builder
 WORKDIR /app
 
 # NEXT_PUBLIC_* variables are inlined by Next.js at BUILD time. Supply via
@@ -42,7 +43,7 @@ RUN npx prisma db push --skip-generate \
 # Stage 2: Runtime          #
 # Single multi-layer image   #
 ############################
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 
 # OpenSSL for Prisma at runtime.

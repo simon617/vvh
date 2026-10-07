@@ -14,7 +14,7 @@
 
 ### 1.1 Prerequisites
 
-- **Node.js 18+** (LTS) — the project targets `node:18-alpine` in the Dockerfile and uses Node 18/Next 14/React 18 conventions.
+- **Node.js 24+** (LTS) — the project targets `node:24-alpine` in the Dockerfile (see `.nvmrc` / `package.json engines`); Next 14/React 18 conventions.
 - **npm** (bundled with Node)
 - *(Optional)* **Docker Desktop** — for production-like container testing (see §1.5). ⚠️ **Docker engine was not running on the dev machine during Phase 1/2A, so `docker-compose up -d` was never fully verified.** Do not let it block CMS work.
 - **SQLite** — the database file is `prisma/data/vvh.db`; no separate DB server is required.
