@@ -23,17 +23,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - name: Install dependencies
-        # npm 10 hits an edgesOut bug with the Tiptap optional-peers; pin npm 11.
-        # Keep in sync with Dockerfile and ci.yml.
-        run: |
-          npm install -g --no-audit --no-fund npm@11
-          npm ci
+      - name: Setup Node.js 24 + deps
+        uses: ./.github/actions/node-setup
       - name: Audit production dependencies
         # REPORT-ONLY for now. Known issue: next@14.2.35 has critical
         # advisories with no patched 14.x release (fix = breaking upgrade to
@@ -59,6 +50,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       security-events: write
+    # Skipped on push to main: on main the blocking Trivy IMAGE scan inside
+    # deploy.yml is the authoritative control, so a full repo FS scan on every
+    # push would duplicate work. Still runs on PRs (early feedback), the weekly
+    # schedule, and manual dispatch.
+    if: ${{ github.event_name != 'push' }}
     steps:
       - uses: actions/checkout@v4
       # Report-only (exit-code 0): findings land in the Security tab, image gate

@@ -21,7 +21,7 @@ RUN apk add --no-cache openssl
 # `postinstall` hook which executes `prisma generate` (schema copied first).
 # npm 10 has a known bug with the Tiptap optional-peer set
 # ("Cannot read properties of null (reading 'edgesOut')"), so we pin npm 11.
-# Keep in sync with ci.yml/security.yml and package-lock.json generation.
+# Keep in sync with .github/actions/node-setup/action.yml and package-lock.json generation.
 COPY package.json package-lock.json* ./
 COPY prisma/schema.prisma ./prisma/schema.prisma
 RUN npm install -g --no-audit --no-fund npm@11 \
@@ -35,9 +35,9 @@ RUN npm run build
 # the image, so `docker compose up` works on a FRESH volume. `db push` matches
 # the schema (same as the dev `npm run db:push` flow) and `npm run seed` upserts
 # the CMS pages + their EN/ZH content rows.
-ENV DATABASE_URL=file:./data/vvh.db
-RUN npx prisma db push --skip-generate \
-  && npm run seed
+# > ENV DATABASE_URL=file:./data/vvh.db
+# > RUN npx prisma db push --skip-generate \
+# >  && npm run seed
 
 ############################
 # Stage 2: Runtime          #
@@ -53,22 +53,35 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Non-root runtime user.
-RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 nextjs
+#RUN addgroup --system --gid 1001 nodejs \
+#  && adduser --system --uid 1001 nextjs
+
+# In runner stage, replace the user creation:
+ARG UID=1001
+ARG GID=1001
+RUN addgroup --system --gid ${GID} nodejs \
+  && adduser --system --uid ${UID} nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/src ./src
 
-# Bake the seeded SQLite DB (schema + baseline content) into the image. Docker
-# initialises an EMPTY named volume with the files present at the mount path in
-# the image, so the first boot applies schema + seed without a manual migrate.
-COPY --from=builder /app/prisma/data ./prisma/data
+# Runtime deps:
+#   bcryptjs — used by the app
+#   prisma   — CLI needed for `npx prisma db push` in the entrypoint
+#   tsx      — TypeScript runtime, needed because the seed is `prisma/seed.ts`
+RUN npm install --no-save --omit=dev bcryptjs prisma tsx @prisma/client
+
+# Entrypoint: initializes the SQLite DB on first boot if the bind mount is empty.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Runtime uploads directory (persisted in a named volume).
-RUN mkdir -p /app/uploads \
+RUN mkdir -p /app/prisma/data /app/uploads \
   && chown -R nextjs:nodejs /app
 
 USER nextjs
@@ -77,4 +90,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "server.js"]

@@ -1,0 +1,23 @@
+name: Setup Node.js 24 + pinned npm 11
+description: >
+  Shared Node 24 / npm 11 toolchain used by the CI and Security workflows. Keeps the
+  dependency install and the npm 11 pin (Tiptap edgesOut workaround) in one place so it
+  is not copy-pasted across workflow files.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js 24
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: npm
+
+    - name: Install dependencies
+      # npm 10 hits an edgesOut bug with the Tiptap optional-peers; pin npm 11.
+      # Keep in sync with the Dockerfile builder stage (the image build installs its
+      # own node_modules inside the container and cannot reuse this action).
+      shell: bash
+      run: |
+        npm install -g --no-audit --no-fund npm@11
+        npm ci

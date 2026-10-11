@@ -6,23 +6,20 @@ import DirectorCards, { type Director } from "./DirectorCards";
 const directors: Director[] = [
   {
     name: "Mr. Lo Luen Chuen",
-    title: "Chairman",
     category: "Executive Directors",
     bio: "Extensive experience in corporate management.",
   },
   {
     name: "Mr. Tsui Hing Chuen",
-    title: "Independent Non-Executive Director",
     category: "Independent Non-Executive Directors",
     bio: "Holds various public service roles.",
   },
 ];
 
 describe("DirectorCards", () => {
-  it("renders director names and titles", () => {
+  it("renders director names", () => {
     render(<DirectorCards directors={directors} />);
     expect(screen.getByText("Mr. Lo Luen Chuen")).toBeInTheDocument();
-    expect(screen.getByText("Chairman")).toBeInTheDocument();
     expect(screen.getByText("Mr. Tsui Hing Chuen")).toBeInTheDocument();
   });
 

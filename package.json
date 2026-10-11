@@ -16,7 +16,7 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "backup": "tsx scripts/backup.ts",
-    "reset-password": "tsx scripts/reset-password.ts",
+    "reset-password": "node scripts/reset-password.ts",
     "seed": "prisma db seed",
     "content:migrate": "prisma db seed",
     "import:content": "tsx scripts/import-report-rows.ts",

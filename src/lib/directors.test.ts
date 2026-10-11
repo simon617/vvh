@@ -10,9 +10,9 @@ describe("directors data layer", () => {
     expect(categories.has("Independent Non-Executive Directors")).toBe(true);
   });
 
-  it("contains all 10 director names from PRD 2.2.2", () => {
+  it("contains all 10 director names from the CMS contentHtml (Phase 2.5)", () => {
     const names = getDirectors("en").map((d) => d.name);
-    expect(names).toContain("Mr. Lo Luen Chuen");
+    expect(names).toContain("Mr. Lo Lin Shing, Simon");
     expect(names.length).toBe(10);
   });
 

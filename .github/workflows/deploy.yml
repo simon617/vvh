@@ -11,14 +11,55 @@ concurrency:
 
 permissions:
   contents: read
+  checks: read
   packages: write
 
 jobs:
   build-push:
     name: Build, scan and push image to GHCR
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60 # includes the same-push CI/Security wait (up to ~30 min) + image build + scan
     steps:
+      - name: Wait for CI & Security on this commit
+        # Belt-and-braces ordering control (see DEPLOYMENT.md §5.7): on a push to
+        # main, do not build/deploy until the SAME commit's CI (`ci`) and Security
+        # (`npm audit`, `Gitleaks`, `CodeQL`) check-runs have succeeded. The
+        # primary gate is branch protection (§5.2) — nothing merges to main without
+        # these checks. This step only closes the same-push ordering gap (direct
+        # pushes, admin merges, bots). Manual `workflow_dispatch` deliberately
+        # skips it (operator-initiated). `trivy-fs` is not waited on: it is skipped
+        # on push by design — the Trivy IMAGE gate below is the runtime control.
+        if: ${{ github.event_name == 'push' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.sha }}
+          REQUIRED_CHECKS: "ci, npm audit (production deps), Gitleaks secret scan, CodeQL"
+        run: |
+          set -euo pipefail
+          deadline=$(( $(date +%s) + 1740 )) # 29 min wait budget; job timeout is 60 min
+          echo "Waiting for: $REQUIRED_CHECKS (SHA $SHA)"
+          while IFS= read -r name; do
+            [ -n "$name" ] || continue
+            echo " - $name"
+            while :; do
+              # No/empty conclusion while a run is queued, in progress or missing.
+              concls=$(gh api "repos/${{ github.repository }}/commits/$SHA/check-runs" \
+                --jq -r '[.check_runs[] | select(.name == "'"$name"'") | .conclusion] | unique[]' 2>/dev/null || true)
+              flat=$(echo "$concls" | tr -d '\n')
+              case "$flat" in
+                success) break ;;
+                *failure*|*timed_out*|*action_required*|*cancelled*)
+                  echo "::error::$name did not pass on $SHA ($flat)"
+                  exit 1
+                  ;;
+                *) echo "   waiting ($flat)" ; sleep 15 ;;
+              esac
+              (( $(date +%s) >= deadline )) && { echo "::error::timeout waiting for $name on $SHA"; exit 1; }
+            done
+            echo "::notice::$name green"
+          done < <(echo "$REQUIRED_CHECKS" | tr ',' '\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+          echo "::notice::CI + Security green on $SHA — building"
+
       - name: Checkout
         uses: actions/checkout@v4
 

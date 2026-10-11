@@ -135,7 +135,7 @@ This is the **orientation guide** for any developer who needs to work on this co
 | `placeholders.ts` | pure | Static default content for the **9 CMS pages** × 2 locales (the "until migrated" fallback) — **single source** for default content. `announcements` is **intentionally absent** (Datalink iframe page — no placeholder). The 3 report pages' default rows are stored here as a JSON report envelope (via `buildReportContent`). | `pages.ts`, seed, tests. |
 | `navigation.ts` | pure | `NAV_SLUGS`, nav groups, labels (DRY source-of-truth for slugs). | All layouts, placeholders, seed. |
 | `announcements.ts` | pure | HKEX Datalink iframe URL builder. | Announcements page. |
-| `directors.ts` | pure | Director names/titles/categories/bios (fallback data). | Board page (fallback) + seed (→ CMS cards). |
+| `directors.ts` | pure | Director names/categories/bios (fallback data). | Board page (fallback) + seed (→ CMS cards). |
 | `breadcrumbs.ts` | pure | Breadcrumb item resolution. | `Breadcrumb` component. |
 | `key-value.ts` | pure | Parse/build the `<table>` HTML used by the **corporate-details** key-value editor. | `KeyValueEditor`, tests. |
 | `report-rows.ts` | pure | JSON envelope (`{"__type":"reports","rows":[...]}`) stored in `contentHtml` for report pages; parse/serialize. | `placeholders.ts` (builds placeholder envelope), `ReportsEditor`, report public pages, seed. |

@@ -53,7 +53,17 @@ export function middleware(request: NextRequest) {
 // by adding x-pathname as a header, server components can still access the original URL   
 function withPathname(response: NextResponse, pathname: string): NextResponse {
   response.headers.set("x-pathname", pathname);
+  response.headers.set("x-locale", getLocaleFromPathname(pathname));
   return response;
+}
+
+// Derive the locale from the pathname (e.g. "/zh/about" -> "zh", "/en" -> "en").
+// Falls back to defaultLocale when no locale prefix is present.
+function getLocaleFromPathname(pathname: string): string {
+  const segment = pathname.split("/")[1];
+  return (locales as readonly string[]).includes(segment)
+    ? segment
+    : defaultLocale;
 }
 
 // Tells Next.js which paths should trigger this middleware. 

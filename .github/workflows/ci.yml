@@ -25,19 +25,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install dependencies
-        # npm 10 hits an edgesOut bug with the Tiptap optional-peers; pin npm 11.
-        # Keep in sync with Dockerfile and security.yml.
-        run: |
-          npm install -g --no-audit --no-fund npm@11
-          npm ci
+      - name: Setup Node.js 24 + deps
+        uses: ./.github/actions/node-setup
 
       - name: Lint
         run: npm run lint

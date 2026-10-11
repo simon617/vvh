@@ -84,10 +84,11 @@ function escHtml(s: string): string {
 }
 
 /** Board of Directors content: category <h2> + one card <p> per director,
- *  plus the Role-and-Functions PDF link. Rendered as cards by
- *  .director-cards in globals.css. */
+ *  plus a final "Roles & Responsibilities" <h2> section with the
+ *  Role-and-Functions PDF link. Rendered as cards by
+ *  .director-cards in globals.css (each <h2> spans the full row). */
 function directorCardsHtml(locale: Locale): string {
-  const groups = new Map<string, { name: string; title: string; bio: string }[]>();
+  const groups = new Map<string, { name: string; bio: string }[]>();
   for (const d of getDirectors(locale)) {
     const list = groups.get(d.category) ?? [];
     list.push(d);
@@ -98,9 +99,8 @@ function directorCardsHtml(locale: Locale): string {
   for (const [category, list] of Array.from(groups.entries())) {
     blocks.push(`<h2>${escHtml(category)}</h2>`);
     for (const d of list) {
-      const titleHtml = d.title ? `<br/><em>${escHtml(d.title)}</em>` : "";
       blocks.push(
-        `<p><strong>${escHtml(d.name)}</strong>${titleHtml}<br/>${escHtml(d.bio)}</p>`
+        `<p><strong>${escHtml(d.name)}</strong><br/>${escHtml(d.bio)}</p>`
       );
     }
   }
@@ -109,8 +109,8 @@ function directorCardsHtml(locale: Locale): string {
     locale === "zh" ? "董事之角色與職能" : "Directors' Roles and Functions";
   const roleHeader = locale === "en" ? "Roles & Responsibilities" : "角色與職責";
   blocks.push(
-    `<p><strong>${escHtml(roleHeader)}</strong><br/>` +
-      `<a href="/uploads/reports/${locale}/RoleAndFunction.pdf" target="_blank" rel="noopener noreferrer">` +
+    `<h2>${escHtml(roleHeader)}</h2>` +
+      `<p><a href="/uploads/reports/${locale}/RoleAndFunction.pdf" target="_blank" rel="noopener noreferrer">` +
       `${escHtml(roleLabel)} (PDF)</a></p>`
   );
 

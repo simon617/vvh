@@ -2,11 +2,11 @@
 
 **Repository:** `https://github.com/simon617/vvh` · **App:** Next.js 14 (App Router) + `next-intl` + Prisma/SQLite
 **Registry:** `ghcr.io/simon617/vvh` · **Production host:** Ubuntu 22.04/24.04 at `10.0.2.7` (NAT) — publicly `202.77.49.35`
-**Domains:** `www.visionvalues.com.hk` (app) and `visionvalues.com.hk` (301 → www) · **DNS:** Cloudflare (zone to be moved)
+**Domains:** `www.visionvalues.com.hk` (app) and `visionvalues.com.hk` (301 → www) · **DNS:** kept with the existing provider (no Cloudflare zone move)
 **Status:** ✅ Generated for `main`. ⬜ Manual phases below are pending — follow them in order.
 
 > **Operator model.** This guide is split into *automatable* steps (files already in this repo) and *manual* steps
-> (GitHub UI, Cloudflare UI, router UI, Ubuntu `sudo`, DNS). Run the manual steps exactly as written, redact logs to
+> (GitHub UI, DNS provider UI, firewall / router UI, Ubuntu `sudo`). Run the manual steps exactly as written, redact logs to
 > `setup.log`, and **stop on any failure** — do not continue blindly. Secrets are never printed.
 
 ---
@@ -15,7 +15,7 @@
 
 1. [Architecture & topology](#1-architecture--topology)
 2. [Pre-flight checks (Phase 0)](#2-pre-flight-checks-phase-0)
-3. [Cloudflare DNS (Phase 1a)](#3-cloudflare-dns-phase-1a)
+3. [DNS & switchover plan (Phase 1a)](#3-dns--switchover-plan-phase-1a)
 4. [Router / NAT port forwarding (Phase 1b)](#4-router--nat-port-forwarding-phase-1b)
 5. [GitHub setup (Phase 1c)](#5-github-setup-phase-1c)
 6. [Repo files overview](#6-repo-files-overview)
@@ -27,7 +27,7 @@
 12. [Post-deploy validation (Phase 7)](#12-post-deploy-validation-phase-7)
 13. [Rollback](#13-rollback)
 14. [Logs, monitoring, backups, maintenance (Phase 8)](#14-logs-monitoring-backups-maintenance-phase-8)
-15. [Dynamic public IP & DDNS](#15-dynamic-public-ip--ddns)
+15. [Dynamic public IP](#15-dynamic-public-ip)
 16. [Schema migrations (SQLite upgrade path)](#16-schema-migrations-sqlite-upgrade-path)
 17. [Troubleshooting](#17-troubleshooting)
 18. [Validation cheat sheet](#18-validation-cheat-sheet)
@@ -58,9 +58,11 @@
                         · security headers       vvh_uploads
 
 GitHub Actions (github.com/simon617/vvh)
-  · CI  -> npm ci / lint / test / build          (every PR + push to main)
-  · SEC -> npm audit, Gitleaks, Trivy, CodeQL, Dependabot
-  · DEP -> build → Trivy scan → push ghcr.io → SSH deploy → healthcheck → rollback
+  · PR  -> CI + Security            (required status checks — they gate the merge, §5.2)
+  · push -> CI + Security + Deploy: Deploy first waits for the same commit's
+            CI/Security (§5.7), then build → Trivy image gate (CRITICAL) →
+            push ghcr.io → SSH deploy → healthcheck → rollback
+  · weekly -> scheduled Security    · manual -> Deploy (skips the wait)
 ```
 
 Key decisions (pronounced, not assumed):
@@ -71,7 +73,8 @@ Key decisions (pronounced, not assumed):
 | Package manager | **npm** (`package-lock.json` confirmed; no pnpm/yarn) |
 | Database | **SQLite via Prisma**, named volume `vvh_sqlite-data`; seeded DB baked into the image (fresh-volume bootstrap), server `.env` holds runtime config |
 | Registry auth | Push: built-in `GITHUB_TOKEN` (`packages: write`). Server pull: PAT `GHCR_PULL_TOKEN` (`read:packages`) |
-| TLS issuance | **DNS-01 via Certbot `certbot-dns-cloudflare`** (works even if the ISP blocks 80/443). HTTP-01 documented as fallback |
+| TLS issuance | **HTTP-01 via Certbot (webroot)** — needs ports 80/443 forwarded to this server (already required for the site itself) |
+| DNS & cutover | DNS stays with the existing provider (no Cloudflare, no NS change); switchover = change the **firewall routing/NAT rule** from the old web server to the new one (§3) |
 | Reverse proxy | Nginx on the **host**, `server_name www.visionvalues.com.hk visionvalues.com.hk;`, apex→www 301, proxy to `127.0.0.1:3000` |
 | Deploy model | GitHub Actions builds/pushes the image, then SSHes as `deploy` and runs `/opt/vvh/deploy.sh` (pull → optional migrate → up → healthcheck → rollback) |
 | Health | `GET /api/health` (added to this repo) → compose `HEALTHCHECK` + `deploy.sh` curl loop |
@@ -88,8 +91,9 @@ www.visionvalues.com.hk    A    202.77.49.34   ← old Apache/CentOS host (live 
 visionvalues.com.hk        A    202.77.49.34
 ```
 
-Both records still point at the **old host** (`202.77.49.34` — HTTP 301→HTTPS, Apache). Until DNS is repointed to
-`202.77.49.35`, `Nginx here cannot be verified from the public internet`. This is expected and planned.
+Both records still point at the **old host** (`202.77.49.34` — HTTP 301→HTTPS, Apache) and will **stay that way** — this
+plan does **not** change DNS. The cutover is a **firewall routing** change (§3.2), so `Nginx here cannot be verified
+from the public internet` until the firewall routes web traffic to this box. Pre-verify the new box directly (§10.5).
 
 ### 2.2 Run these checks first
 
@@ -112,8 +116,8 @@ Test-NetConnection -ComputerName 202.77.49.35 -Port 443 -InformationLevel Quiet
 > nc -zv 202.77.49.35 443
 > ```
 >
-> If **80/443 are blocked by the ISP**, the plan still works because TLS uses **DNS-01**. Only the HTTP→HTTPS redirect
-> would be unreachable from the internet — contact the ISP or use Cloudflare Tunnel (appendix note) as a fix.
+> If **80/443 are blocked by the ISP**, the plan **cannot** proceed: the site itself needs inbound 80/443 via the
+> firewall (§3.2, §4) and Certbot uses **HTTP-01** (§10.1). Contact the ISP to open them.
 
 **Local Windows** — tooling available:
 
@@ -128,9 +132,9 @@ git --no-pager remote -v   # must show origin https://github.com/simon617/vvh.gi
 Goals of Phase 0:
 
 - [x] Repo state confirmed (origin set, `main`).
-- [x] DNS of both names recorded (old IP `202.77.49.34`, target `202.77.49.35`).
+- [x] DNS of both names recorded (old IP `202.77.49.34`, new server `202.77.49.35`) — DNS stays untouched.
 - [ ] `22` reachable from a **non-local** network (else fix router forward before anything else).
-- [ ] Decisions for Cloudflare token scope + registrar NS change confirmed (below).
+- [ ] Firewall switchover route (old → new web server) confirmed with the network admin (§3).
 
 ### 2.3 ⚠️ BLOCKING FINDING — Next.js 14.x critical advisories
 
@@ -163,97 +167,65 @@ nproc && free -h && df -h /    # capacity sanity check
 
 Follow the rest of this document in order. **Do not** skip the hardening phase on a public box.
 
-## 3. Cloudflare DNS (Phase 1a)
+## 3. DNS & switchover plan (Phase 1a)
 
-**DNS provider UI** — decision from pre-flight: **move the zone to Cloudflare**. This unlocks DNS-01 Certbot automation
-and the DDNS script, and lets you keep serving the old site until the designed cutover.
+**Decision:** keep DNS hosting with the **existing provider** — **no zone move to Cloudflare**, no NS change, no API
+tokens. The names keep resolving to their current address, and DNS is never touched during the cutover.
 
-### 3.1 Add the zone to Cloudflare
+### 3.1 DNS today (unchanged)
 
-1. [dash.cloudflare.com](https://dash.cloudflare.com) → **Add a site** → `visionvalues.com.hk` → select the **Free** plan.
-2. Cloudflare shows **two nameservers** (e.g. `anya.ns.cloudflare.com`, `bob.ns.cloudflare.com` — copy YOUR two).
-3. At the current registrar (likely an HKDNR-authorised registrar), edit the domain's **nameservers** to those two.
-   - This is the DNS cutover. It does *not* touch web hosting yet — only *authoritative* DNS moves.
-   - ⏱ Propagation typically 15 min–24 h, checked with `dig visionvalues.com.hk NS +short`.
+| Type | Name | Value | Notes |
+|---|---|---|---|
+| A | `www` | `202.77.49.34` | unchanged — the whole switchover is firewall-side |
+| A | `@` | `202.77.49.34` | unchanged |
+| MX / TXT | (existing) | (existing) | e-mail etc. untouched — nothing moves between providers |
 
-> While the zone is pending, add the records below — they go live atomically with your nameservers.
+### 3.2 Switchover = firewall routing (not DNS)
 
-### 3.2 Required records (add in Cloudflare, grey cloud / DNS-only)
+The old web server (Apache/CentOS on `202.77.49.34`) keeps its DNS identity. When the new server is staged (Phases 0–4)
+and validated, the cutover is a single **firewall change**:
 
-| Type | Name | Value | Proxy | TTL |
-|---|---|---|---|---|
-| A | `www` | `202.77.49.35` | DNS only | 300 (during cutover) |
-| A | `@` (root) | `202.77.49.35` | DNS only | 300 (during cutover) |
-| CAA | `@` | `0 issue "letsencrypt.org"` | — | Auto |
+1. In the **firewall**, change the **routing / NAT rule** for the site's inbound web traffic so it is forwarded to the
+   **new web server** (`10.0.2.7`) instead of the old web server. Ports 80 and 443 must be covered (22 for the deploy
+   pipeline rides the new server's own forward — see §4).
+2. Do **not** touch a single DNS record — no TTL drops, no NS change, no propagation wait.
+3. **Rollback = revert the firewall rule** back to the old web server — instant and DNS-independent.
 
-Notes:
+Pre-cutover checklist:
 
-- **Grey cloud (DNS-only)** — Nginx on your server must see real client IPs, and the VM IP is fixed inside the LAN. Use
-  the orange cloud later only after verifying (then `X-Forwarded-For` still works, but HSTS/proxy quirks apply).
-- **CAA** allows only Let's Encrypt. Cloudflare's own edge certificate needs its own CAA (`comodoca.com` / `digicert.com`)
-  if you ever proxy through Cloudflare — *grey cloud avoids that entirely*.
-- TTL: keep **300 s** for the cutover, raise to **Auto / 3600** once stable (see §3.5).
-
-### 3.3 Delay the cutover (recommended)
-
-Because a live site currently serves on `202.77.49.34`, use this **pre-cutover checklist** before switching the NS:
-
-- [ ] **Back up** the current zone: `dig visionvalues.com.hk A +short`, `dig www.visionvalues.com.hk A +short`,
-  `dig visionvalues.com.hk MX +short`, `dig visionvalues.com.hk TXT +short`, `dig visionvalues.com.hk NS +short`
-  → save to `setup.log` (excluding keys).
-- [ ] Screenshot the registrar control panel DNS records (incl. MX for e-mail if any).
-- [ ] **Confirm with the old host that the domain can be released / NS changed** (some hosting plans hold NS).
+- [ ] DNS records backed up / screenshot from the current provider (A, MX, TXT) → save to `setup.log`.
+- [ ] New server fully deployed and validated on the staging address (Phases 2–6) **before** the rule change.
+- [ ] Old server left running so the flip is a pure routing delta, instantly reversible.
+- [ ] Confirm with the network admin which firewall rule currently targets the old web server.
 - [ ] Choose a **low-traffic window** (this is an investor-facing corporate site — weekend morning HK time).
-- [ ] **24 h before**: lower TTL to 300 s on the current provider *if editable*.
-- [ ] Perform the NS change.
-- [ ] After propagation (below): verify old vs new A records, then proceed to Phase 5-cert + Phase 6-deploy.
 
-If people must reach the new site **before** NS move completes, you can temporarily add an **A record on the old host's
-DNS** for `www` → `202.77.49.35` — but the canonical path is the Cloudflare NS move.
+> ⚠️ **TLS ordering:** the Phase 5 certificate is issued with **HTTP-01**, which needs Let's Encrypt to reach this
+> server on port 80 — so the firewall must already route port 80 here when Phase 5 runs (§10.1).
 
-### 3.4 Verification
+### 3.3 Verification
 
-From a non-local network / `Local Windows`:
+After the firewall rule is in place:
 
 ```powershell
-Resolve-DnsName www.visionvalues.com.hk            # → should show 202.77.49.35 after cutover
-Resolve-DnsName visionvalues.com.hk
-Resolve-DnsName visionvalues.com.hk -Type NS       # → Cloudflare nameservers
+Resolve-DnsName www.visionvalues.com.hk            # unchanged — still the recorded address
+curl.exe -sI https://www.visionvalues.com.hk | Select-Object -First 10   # now served by the NEW server
 ```
 
 ```bash
-dig www.visionvalues.com.hk +short
-dig visionvalues.com.hk +short
-dig visionvalues.com.hk NS +short
+curl -sI https://www.visionvalues.com.hk          # expected: 200 from the new box
 ```
 
-Also check propagation from the outside at [whatsmydns.net](https://www.whatsmydns.net).
-
-### 3.5 After stability
-
-- Raise TTL to **Auto / 3600** for all records.
-- Leave CAA as-is (`0 issue "letsencrypt.org"`).
-
-### 3.6 Cloudflare API token (needed for Certbot + DDNS)
-
-**DNS provider UI** → My Profile → **API Tokens** → Create Token → *Edit zone DNS* (`Zone:DNS:Edit`) scoped to
-`visionvalues.com.hk` only. Create **two tokens** (least privilege per consumer) or one and reuse carefully:
-
-1. `CF_DNS_CHALLENGE_TOKEN` — used by **certbot-dns-cloudflare** (renewals). Scope: `Zone:DNS:Edit`.
-2. `CF_DDNS_TOKEN` — used by **cloudflare-ddns.sh**. Same scope; can be a separate token so each service can be revoked independently.
-
-> Never paste these tokens into `DEPLOYMENT.md`, `setup.log`, GitHub secrets UI screenshots, or commit them. They live
-> only in `/etc/letsencrypt/cloudflare.ini` (mode 600) and `/etc/cloudflare-ddns.env` (mode 600).
+TLS/certificate sanity: §10.5. Full post-deploy validation: §12.
 
 ## 4. Router / NAT port forwarding (Phase 1b)
 
 **Router / NAT UI** — the server is `10.0.2.7` behind a NAT router with public `202.77.49.35`.
-Without these three rules the site is unreachable **and** Certbot HTTP-01 fails (we use DNS-01, but the redirect still needs 80/443):
+Without these three rules the site is unreachable **and** Certbot HTTP-01 cannot issue the certificate (the HTTP→HTTPS redirect also needs 80):
 
 | External port (WAN) | Internal host | Internal port | Protocol | Purpose |
 |---|---|---|---|---|
 | 22 | `10.0.2.7` | 22 | TCP | SSH admin + GitHub Actions deploy (update to 2222→22 if you change sshd port) |
-| 80 | `10.0.2.7` | 80 | TCP | HTTP→HTTPS 301 redirect + ACME HTTP-01 fallback |
+| 80 | `10.0.2.7` | 80 | TCP | HTTP→HTTPS 301 redirect + ACME HTTP-01 challenge |
 | 443 | `10.0.2.7` | 443 | TCP | HTTPS app |
 
 Steps (router brand will differ):
@@ -271,8 +243,8 @@ sudo ufw allow 22/tcp && sudo ufw allow 80/tcp && sudo ufw allow 443/tcp
 
 Validation (from a non-local network): `nc -zv 202.77.49.35 22` / `80` / `443` — all three must report `succeeded`.
 
-> Opening only 22 is insufficient — without 80/443 the site 404s externally and (if you ever fall back to HTTP-01) the
-> certificate can never be issued.
+> Opening only 22 is insufficient — without 80/443 the site 404s externally and the **HTTP-01** certificate (the method
+> used in §10.2) can never be issued.
 
 ## 5. GitHub setup (Phase 1c)
 
@@ -292,8 +264,12 @@ Validation (from a non-local network): `nc -zv 202.77.49.35 22` / `80` / `443` �
 
 - Branch: `main`
 - ☑ **Require a pull request before merging** · ☑ *Require approvals* = **1**
-- ☑ **Require status checks to pass before merging** → add **`ci`** (job name in `ci.yml`). After the first green
-  security run, also add `gitleaks`, `trivy-fs`, `npm audit (production deps)` and `CodeQL`.
+- ☑ **Require status checks to pass before merging** → add **`CI / ci`** now. After the first green security run, also
+  require **`Security / npm audit (production deps)`**, **`Security / Gitleaks secret scan`**,
+  **`Security / Trivy filesystem scan`** and **`Security / CodeQL`** — type each as `<workflow name> / <job name>`
+  exactly as shown here. `npm audit` is still report-only (`continue-on-error`), but its *job* still concludes
+  `success`, so requiring it does not block merges. ⚠ Do not rename workflow/job names without also updating this rule
+  and the `REQUIRED_CHECKS` list in `deploy.yml` (§5.7).
 - ☑ **Do not allow bypassing the above settings**
 - ☐ *Require signed commits* — enable if you sign commits (`Optional/recommended`).
 - Save.
@@ -344,15 +320,44 @@ Get-Content "$env:USERPROFILE\.ssh\vvh_deploy.pub"
 
 After Phase 5, flip `DEPLOY_ENABLED` → `true` and push to `main` (or **Actions → Deploy → Run workflow**).
 
+### 5.7 CI → Security → Deploy ordering (how the sequence is enforced)
+
+GitHub Actions has no cross-workflow `needs:`. Chaining workflows with `workflow_run` would be fragile here (the weekly
+Security run would trigger a Deploy, rapid pushes would queue up runs) and would serialise every push into
+CI → Security → Deploy. So "CI green before Security before Deploy" is enforced with **three layers of gates**:
+
+| Layer | Gate | Where | Enforces |
+|---|---|---|---|
+| 1. Merge gate | Branch protection required checks (§5.2) | PR time | Nothing merges to `main` unless `CI / ci` + the Security jobs are green — Deploy only ever sees merge-gated commits. |
+| 2. Same-push ordering | `wait-for-checks` step in `deploy.yml` | Push to `main` | Deploy builds/pushes only after the *same* commit's CI + Security check-runs succeed. Skipped on manual `workflow_dispatch` — an operator-initiated override. |
+| 3. Runtime gate | Trivy **image** scan (`exit-code: 1` on CRITICAL) | Build time, `deploy.yml` | No image with unfixed CRITICAL vulns is pushed to GHCR or deployed. |
+
+**What actually runs per trigger** (simplified so a push to `main` is not triplicated):
+
+| Trigger | `ci.yml` | `security.yml` | `deploy.yml` |
+|---|---|---|---|
+| PR to `main` | lint, test, build, typecheck | npm audit, Gitleaks, Trivy FS, CodeQL | — |
+| Push to `main` | same as PR | npm audit, Gitleaks, CodeQL (Trivy FS **skipped** — the image gate below covers main) | wait → build → image scan → push → SSH deploy |
+| Weekly schedule | — | all four | — |
+| Manual dispatch | — | all four | build/deploy immediately (skips wait) |
+
+**Why the remaining per-push work is not redundant:** PR runs are the *decision* (they gate the merge, §5.2); the push
+runs re-verify the exact SHA about to be deployed — the signal layer 2 waits on. The one previously duplicated scan
+(`trivy-fs`, report-only) is now skipped on push because the Deploy image gate enforces the same class of findings
+against the actual artifact. The `npm ci`/npm-11 boilerplate is shared via `.github/actions/node-setup`, so the
+toolchain pin lives in one place for CI + Security (the Dockerfile copy installs inside the image and is inherently
+separate).
+
 ---
 
 ## 6. Repo files overview
 
 | File | What it does |
 |---|---|
-| `.github/workflows/ci.yml` | `npm ci` → lint → vitest → `next build` → `tsc --noEmit` on PRs + pushes to `main` |
-| `.github/workflows/security.yml` | `npm audit` (gate), Gitleaks (SARIF), Trivy FS (SARIF, report-only), CodeQL; weekly cron |
-| `.github/workflows/deploy.yml` | Build → Trivy image gate (fails on CRITICAL) → push `:latest` + `:sha` → SSH deploy (gated by `DEPLOY_ENABLED` + `production` env) |
+| `.github/workflows/ci.yml` | Shared Node setup → lint → vitest → `next build` → `tsc --noEmit` on PRs + pushes to `main` |
+| `.github/workflows/security.yml` | `npm audit` (report-only), Gitleaks (SARIF), Trivy FS (SARIF, report-only — **skipped on push**), CodeQL; weekly cron |
+| `.github/workflows/deploy.yml` | `wait-for-checks` (push only, §5.7) → build → Trivy image gate (fails on CRITICAL) → push `:latest` + `:sha` → SSH deploy (gated by `DEPLOY_ENABLED` + `production` env) |
+| `.github/actions/node-setup/action.yml` | Shared Node 24 + npm 11 install for CI/Security — the npm 11 pin lives in exactly one place |
 | `.github/dependabot.yml` | Weekly npm + GitHub Actions bump PRs, grouped |
 | `Dockerfile` | Multi-stage `node:24-alpine`; standalone build; seeded SQLite baked in; non-root `nextjs` user; `ARG NEXT_PUBLIC_SITE_URL` |
 | `docker-compose.prod.yml` | Server compose: `ghcr.io/simon617/vvh`, `127.0.0.1:3000:3000`, `env_file: .env`, named volumes, healthcheck |
@@ -511,10 +516,10 @@ sudo systemctl enable --now nginx
 curl -sI http://127.0.0.1 | head -3   # default page → 200
 ```
 
-### 8.3 Certbot + Cloudflare DNS plugin
+### 8.3 Certbot (nginx plugin)
 
 ```bash
-sudo apt-get install -y certbot python3-certbot-nginx python3-certbot-dns-cloudflare
+sudo apt-get install -y certbot python3-certbot-nginx
 certbot --version
 ```
 
@@ -537,7 +542,7 @@ From **Local Windows** (repo root):
 ```powershell
 scp docker-compose.prod.yml deploy.sh deploy@202.77.49.35:/opt/vvh/
 scp nginx.conf deploy@202.77.49.35:/opt/vvh/nginx.conf
-scp scripts/cloudflare-ddns.sh scripts/backup-prod.sh deploy@202.77.49.35:/opt/vvh/bin/
+scp scripts/backup-prod.sh deploy@202.77.49.35:/opt/vvh/bin/
 ```
 
 Then on the server (as `deploy`):
@@ -619,44 +624,25 @@ docker compose -f docker-compose.prod.yml config --quiet && echo "compose OK"
 
 ## 10. Nginx + TLS via Certbot (Phase 5)
 
-**Ubuntu terminal**, as `deploy`. Do the **certificate first** (DNS-01), then the site config, so Nginx never references
-a missing cert file.
+**Ubuntu terminal**, as `deploy`. The certificate is issued with **HTTP-01** — DNS stays with the existing provider, so
+Let's Encrypt must reach this server on port 80. That means the **firewall switchover for port 80 must already be in
+place** (§3.2) before this phase; otherwise the challenge for `www.visionvalues.com.hk` is answered by the **old** web
+server.
 
-### 10.1 Issue the certificate (DNS-01, Cloudflare)
+### 10.1 Install the site config (with a placeholder cert)
 
-```bash
-# 1) Cloudflare credentials for certbot (the DNS challenge token from §3.6):
-sudo tee /etc/letsencrypt/cloudflare.ini >/dev/null <<'EOF'
-dns_cloudflare_api_token = REPLACE_WITH_CF_DNS_CHALLENGE_TOKEN
-EOF
-sudo chmod 600 /etc/letsencrypt/cloudflare.ini
-sudo chown root:root /etc/letsencrypt/cloudflare.ini
-
-# 2) Issue (creates the cert under /etc/letsencrypt/live/www.visionvalues.com.hk):
-sudo certbot certonly \
-  --authenticator dns-cloudflare \
-  --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini \
-  --dns-cloudflare-propagation-seconds 20 \
-  -d www.visionvalues.com.hk -d visionvalues.com.hk \
-  --email admin@visionvalues.com.hk \
-  --agree-tos --no-eff-email --keep-until-expiring
-
-# 3) Validate:
-sudo certbot certificates
-```
-
-> **Why DNS-01 by default?** Your ISP may block inbound 80/443 (pre-flight still pending). DNS-01 only needs outbound
-> DNS + the Cloudflare API token — no open ports, works behind any NAT.
->
-> **HTTP-01 fallback** (if ports 80/443 are provably reachable): skip 10.1 and instead run after 10.3:
-> `sudo certbot certonly --nginx -d www.visionvalues.com.hk -d visionvalues.com.hk`. The `.well-known` location block
-> in `nginx.conf` is already present for the challenge.
->
-> **Wildcard** (`*.visionvalues.com.hk`) is only possible via DNS-01 — repeat 10.1 adding `-d "*.visionvalues.com.hk"`.
-
-### 10.2 Install the Nginx site config
+`nginx.conf` references `/etc/letsencrypt/live/www.visionvalues.com.hk/`, so put a temporary self-signed certificate at
+that exact path first — Nginx must never reference a missing cert file.
 
 ```bash
+# 1) Placeholder cert at the real cert paths (replaced by the real one in 10.2):
+sudo mkdir -p /etc/letsencrypt/live/www.visionvalues.com.hk
+sudo openssl req -x509 -nodes -newkey rsa:2048 -days 3650 \
+  -keyout /etc/letsencrypt/live/www.visionvalues.com.hk/privkey.pem \
+  -out    /etc/letsencrypt/live/www.visionvalues.com.hk/fullchain.pem \
+  -subj "/CN=www.visionvalues.com.hk"
+
+# 2) Install the site config:
 sudo cp /opt/vvh/nginx.conf /etc/nginx/sites-available/vvh.conf
 sudo ln -sfn /etc/nginx/sites-available/vvh.conf /etc/nginx/sites-enabled/vvh.conf
 sudo rm -f /etc/nginx/sites-enabled/default
@@ -666,12 +652,32 @@ sudo systemctl reload nginx
 ```
 
 The config (`nginx.conf` in this repo) gives you: HTTP→HTTPS 301, apex→www 301, TLS 1.2/1.3, stapling, HSTS/security
-headers/CSP, gzip, WebSocket upgrade headers, long-cache for `/_next/static/`, upload size.
+headers/CSP, gzip, WebSocket upgrade headers, long-cache for `/_next/static/`, upload size. It also serves
+`/.well-known/acme-challenge/` from `/var/www/certbot` for the HTTP-01 challenge.
+
+### 10.2 Issue the real certificate (HTTP-01)
+
+```bash
+# Issue (creates the cert under /etc/letsencrypt/live/www.visionvalues.com.hk):
+sudo certbot certonly --webroot \
+  -w /var/www/certbot \
+  -d www.visionvalues.com.hk -d visionvalues.com.hk \
+  --email admin@visionvalues.com.hk \
+  --agree-tos --no-eff-email --keep-until-expiring
+
+# Validate + apply:
+sudo certbot certificates
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+> **Why HTTP-01?** DNS stays with the existing provider (no Cloudflare zone, no DNS API), so Let's Encrypt must reach
+> this server on port 80 — which the firewall switchover (§3.2) makes possible. Issuing before the switchover would
+> deliver the challenge to the **old** web server. Renewals reuse the same webroot path and are automatic (§10.3).
 
 ### 10.3 Auto-renewal
 
 ```bash
-# Dry-run the renewal path (uses the same cloudflare.ini automatically):
+# Dry-run the renewal path:
 sudo certbot renew --dry-run
 # Don't disable the packaged random timer:
 sudo systemctl list-timers | grep certbot
@@ -679,8 +685,9 @@ sudo systemctl list-timers | grep certbot
 #   sudo systemctl enable --now certbot.timer
 ```
 
-Renewals happen automatically when the cert is <60 days from expiry; Nginx picks up new certs on reload. Add
-`--deploy-hook 'systemctl reload nginx'` to the renew job only if you customise renewal.
+Renewals happen automatically when the cert is <60 days from expiry. Nginx reads the cert at startup/reload, so register
+the reload hook once — it persists in the renewal config and reload is skipped when nothing changed:
+`sudo certbot renew --deploy-hook 'systemctl reload nginx'`.
 
 ### 10.4 HSTS rollout
 
@@ -688,7 +695,7 @@ Renewals happen automatically when the cert is <60 days from expiry; Nginx picks
 works on HTTPS. Recommended: first set `max-age=3600`, verify for ~1–2 weeks, then raise to `31536000` (and consider
 `includeSubDomains` + preload later). Each change: `sudo nginx -t && sudo systemctl reload nginx`.
 
-### 10.5 Validate TLS locally (even before DNS finishes cutting over)
+### 10.5 Validate TLS locally (before the firewall cutover moves public traffic here)
 
 ```bash
 curl -sI http://www.visionvalues.com.hk -H 'Host: www.visionvalues.com.hk' --resolve www.visionvalues.com.hk:80:127.0.0.1 | head -5
@@ -700,12 +707,15 @@ curl -skI https://visionvalues.com.hk    --resolve visionvalues.com.hk:443:127.0
 
 ## 11. First pipeline run & deploy (Phase 6)
 
-This is the merge moment. **Order matters:** Phase 5 must be complete, and (recommended) the Cloudflare NS move done so
-`dig www.visionvalues.com.hk +short` returns `202.77.49.35`.
+This is the merge moment. **Order matters:** Phase 5 must be complete, and the firewall switchover (§3.2) done so the
+site is served by this box — DNS itself is never changed.
 
 1. **GitHub UI** — ensure: `DEPLOY_ENABLED=true`, all secrets set (§5.4), `production` env has your reviewer account.
-2. **Merge** this repo's deployment work to `main` (see `git log`/PR). Push triggers **ci** + **security**.
-3. **Actions → Deploy** runs automatically after `build-push`; approve the **`production`** environment prompt.
+2. **Merge** the deployment PR via the UI. Branch protection (§5.2) requires **CI + Security green**, so the merge
+   itself is the CI/security gate. The merge push then triggers **ci** + **security** + **deploy**.
+3. **Actions → Deploy** — `build-push` first waits for the same commit's CI/Security check-runs (no chained workflows;
+   see §5.7), builds, runs the Trivy image gate and pushes to GHCR. Then approve the **`production`** environment
+   prompt.
 4. Watch the **Deploy over SSH** step → it runs `/opt/vvh/deploy.sh ghcr.io/simon617/vvh:<sha>` which:
    pulls → recreates `vvh-app` → waits on `/api/health` (30×3s) → writes `.last_image`.
 5. First run also creates volumes `vvh_sqlite-data` + `vvh_uploads` and populates the DB from the baked image.
@@ -730,7 +740,7 @@ tail -5 /opt/vvh/logs/deploy.log        # shows the deployed sha + OK
 ### 12.2 From outside (Local Windows)
 
 ```powershell
-# DNS now points at the new box:
+# Site is now served by the new box (DNS unchanged — still resolves to the recorded address):
 nslookup www.visionvalues.com.hk
 # App + TLS:
 curl.exe -sI https://www.visionvalues.com.hk | Select-Object -First 10     # 200, valid cert
@@ -853,11 +863,11 @@ systemctl --user list-timers | grep vvh-backup
 docker run --rm -v vvh_sqlite-data:/data -v /opt/vvh/backups:/backup alpine sh -c "tar xzf /backup/sqlite-<stamp>.tar.gz -C /data"
 ```
 
-## 15. Dynamic public IP & DDNS
+## 15. Dynamic public IP
 
 `202.77.49.35` appears to be a static-looking IP on a business line, but residential-type links can renumber. Plan for
-it — the blast radius of an IP change is: GitHub Actions `SSH_HOST` target, DNS A records (`www` + apex), and any
-monitoring/whitelist entries (they all follow DNS if you automate it).
+it — the blast radius of an IP change is: GitHub Actions `SSH_HOST` target, the A record at the existing DNS provider,
+the firewall routing rule (§3.2), and any monitoring/whitelist entries.
 
 ### 15.1 Detect an IP change
 
@@ -872,61 +882,14 @@ dig +short www.visionvalues.com.hk A       # what the world resolves
 | Option | Effort | Covers |
 |---|---|---|
 | **Static IP from ISP** (recommended for a corporate site) | phone call/order | everything permanently |
-| **DDNS via Cloudflare API** (this repo: `/opt/vvh/bin/cloudflare-ddns.sh`) | ~10 min | DNS A record (`www`), which GitHub Actions + monitoring can also follow |
-| DuckDNS / No-IP (hosted DDNS, if you don't need Cloudflare-wildcard flows) | 5 min | DNS only, then alias `www`→that name |
+| **Manual A-record update at the existing DNS provider** | ~10 min per change | DNS A record (`www` + apex); `SSH_HOST` and firewall targets stay a manual touch point |
+| DuckDNS / No-IP (hosted DDNS) | 5 min | DNS only, then alias `www` → that name |
 
-### 15.3 Install the Cloudflare DDNS script
+### 15.3 After an IP change
 
-```bash
-# 1) Create the env file (challenge token from §3.6 / second token):
-sudo tee /etc/cloudflare-ddns.env >/dev/null <<'EOF'
-CF_API_TOKEN=REPLACE_WITH_CF_DDNS_TOKEN
-CF_ZONE_ID=REPLACE_WITH_ZONE_ID
-CF_A_RECORD_ID=REPLACE_WITH_A_RECORD_ID
-CF_DOMAIN=www.visionvalues.com.hk
-EOF
-sudo chmod 600 /etc/cloudflare-ddns.env
-
-# Get ZONE_ID: CF dashboard → zone → Overview → right rail. 
-# Get A_RECORD_ID: curl -sS "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?type=A&name=www.visionvalues.com.hk" \
-#   -H "Authorization: Bearer $CF_API_TOKEN"  → copy result[0].id
-
-# 2) systemd timer (as deploy):
-cat > ~/.config/systemd/user/cloudflare-ddns.service <<'EOF'
-[Unit]
-Description=Update Cloudflare A record with current public IP
-After=network-online.target
-Wants=network-online.target
-[Service]
-Type=oneshot
-EnvironmentFile=/etc/cloudflare-ddns.env
-ExecStart=/opt/vvh/bin/cloudflare-ddns.sh
-EOF
-cat > ~/.config/systemd/user/cloudflare-ddns.timer <<'EOF'
-[Unit]
-Description=Run Cloudflare DDNS every 10 minutes
-[Timer]
-OnBootSec=2min
-OnUnitActiveSec=10min
-Persistent=true
-[Install]
-WantedBy=timers.target
-EOF
-systemctl --user daemon-reload
-systemctl --user enable --now cloudflare-ddns.timer
-systemctl --user list-timers | grep cloudflare
-
-# 3) First run + log:
-systemctl --user start cloudflare-ddns.service
-tail -3 /opt/vvh/logs/ddns.log
-```
-
-### 15.4 After an IP change
-
-- A record + all monitoring follow **automatically** (script PATCHes Cloudflare).
-- **If** the router's WAN IP changed but the script couldn't update (token revoked / CF outage) — manual fix:
-  update the A record in Cloudflare, then re-run `systemctl --user start cloudflare-ddns.service`.
-- GitHub Actions `SSH_HOST` still points at the old IP → update the secret once (this is the one manual touch point).
+- Update the **A record** in the existing DNS provider's control panel (or its DDNS service, if offered).
+- Update the GitHub **`SSH_HOST`** secret to the new IP (the one manual deploy touch point).
+- Re-point the **firewall routing/NAT rule** (§3.2) and any monitoring/whitelist entries to the new IP.
 
 ---
 
@@ -971,22 +934,20 @@ docker run --rm \
 | `docker: permission denied` | `deploy` not in the `docker` group / stale session | `sudo usermod -aG docker deploy`, log out/in, `docker run --rm hello-world`. |
 | GHCR pull denied | Server token lacks `read:packages`; package private; token expired/revoked | Re-create the PAT (fine-grained, `read:packages`), `echo "$TOKEN" \| docker login ghcr.io -u simon617 --password-stdin`. Check package visibility in GHCR settings. |
 | Nginx 502 Bad Gateway | App down / not yet healthy / proxy target wrong | `docker ps` → is `vvh-app` `Up (healthy)`? `docker logs vvh-app --tail 50`. Confirm `proxy_pass http://127.0.0.1:3000` and that compose binds `127.0.0.1:3000:3000` (no port clash with Nginx). |
-| Site shows old cert / certificate verify failed | DNS cutover in progress; cert names mismatch; HSTS cached | Wait for `dig +short` → `202.77.49.35`; `sudo certbot certificates`; test in a private/incognito window (`chrome://net-internals/#hsts` to clear). |
-| HTTP-01 challenge failed / port 80 blocked by ISP | No forward, ISP blocks inbound 80/443 | Stay on **DNS-01** (§10.1). Cloudflare Tunnel `cloudflared` is the last-resort fallback (appendix note below). |
-| DNS not propagating | TTL caching / registrar lock / NS pending | `dig +trace visionvalues.com.hk NS`; TTL §3.5; wait; `whatsmydns.net`. |
-| Apex→www redirect loop | Redirect in two places (Next + nginx) | Only `nginx.conf` redirects the apex; keep Cloudflare grey-cloud so requests hit Nginx directly. |
+| Site shows old cert / certificate verify failed | Firewall switchover not done; cert names mismatch; HSTS cached | Confirm the firewall routes 80/443 to this server (§3.2) and the cert covers both names (`sudo certbot certificates`); test in a private/incognito window (`chrome://net-internals/#hsts` to clear). |
+| HTTP-01 challenge failed / port 80 blocked by ISP | No firewall forward on 80; old server still answering; ISP blocks inbound 80/443 | Confirm the firewall routes port 80 to this server (§3.2, §4). If the ISP truly blocks inbound 80/443, contact the ISP — the site cannot be served publicly without them. |
+| Old site still served after switchover | Firewall routing rule not changed / still targets the old server | Re-check the firewall rule (§3.2) — DNS was never changed, so it always shows the recorded address; only the web server behind it changes. |
+| Apex→www redirect loop | Redirect in two places (Next + nginx) | Only `nginx.conf` redirects the apex; no DNS proxy sits in front, so requests hit Nginx directly. |
 | Health check failing in deploy.sh | App crash on boot (env/DB/chmod) | `docker logs vvh-app --tail 100`; check server `.env`; confirm volume `vvh_sqlite-data`; verify `DATABASE_URL=file:./data/vvh.db` resolves from `/app` inside the container. |
 | Next env vars missing at runtime | NEXT_PUBLIC_* are inlined at BUILD time; runtime `env_file` can't fix them | Keep `NEXT_PUBLIC_SITE_URL` in sync as the `deploy.yml` build arg + GitHub variable (§5.4). |
 | GitHub Actions cannot reach server | NAT broken; ISP filters GitHub egress; UFW | `nc -zv 202.77.49.35 22` from a phone hotspot; re-check forwards; `ufw status`; run `ssh -v` in CI to see the runner's egress IP. |
-| Public IP changed → deploy broken | Router re-dial; stale A record / `SSH_HOST` secret | §15.4: craft Cloudflare A records fixed (or trust DDNS), update `SSH_HOST` secret. |
+| Public IP changed → deploy broken | Router re-dial; stale A record / `SSH_HOST` secret | Update the A record at the existing DNS provider and the `SSH_HOST` secret (§15.3). |
 | Deploy job skipped | `DEPLOY_ENABLED` is `false` | Flip variable to `true` after Phase 5, re-run workflow. |
-| Certificate won't renew | Token scope changed / zone missing / rate-limit | `sudo certbot renew --dry-run -v`; verify `cloudflare.ini` is 600; check LE logs at `/var/log/letsencrypt`. |
+| Deploy stuck at *Wait for CI & Security on this commit* | A required check-run failed/cancelled, or the commit's check-runs were superseded by another push | Open the commit's Actions runs and fix the red/cancelled check. The wait times out after ~30 min. A manual `workflow_dispatch` bypasses the wait (operator override). |
+| Certificate won't renew | Port 80 not forwarded; `/.well-known` not served; rate-limit | `sudo certbot renew --dry-run -v`; confirm firewall 80 → this server (§3.2) and the `/.well-known/acme-challenge/` block in `nginx.conf`; check LE logs at `/var/log/letsencrypt`. |
 
-> **Appendix note — Cloudflare Tunnel (`cloudflared`) final fallback.** If the ISP blocks ALL inbound ports: install
-> `cloudflared`, authenticate to the zone, create a public tunnel for `www.visionvalues.com.hk` → `http://127.0.0.1:3000`.
-> SSH for GitHub Actions can then ride the tunnel too (`cloudflared access`), making port 22 optional. You must then
-> enable the orange (proxied) cloud and switch real-IP handling to `X-Forwarded-For`/`CF-Connecting-IP` (headers are
-> already proxied in `nginx.conf`). This is a contingency, not the primary path.
+> **Switchover rollback.** Reverting the cutover is a one-step firewall change — point the routing/NAT rule back at the
+> old web server (§3.2). There is no DNS propagation to wait out, because DNS was never changed.
 
 ## 18. Validation cheat sheet
 
@@ -994,7 +955,7 @@ docker run --rm \
 |---|---|---|
 | Ports | `nc -zv 202.77.49.35 22` / `80` / `443` (non-local) | `succeeded` × 3 |
 | SSH as deploy | `ssh deploy@202.77.49.35` | key-based login, no password prompt |
-| DNS | `dig www.visionvalues.com.hk +short` | `202.77.49.35` |
+| DNS (unchanged) | `dig www.visionvalues.com.hk +short` | existing A record (firewall routes to the new server) |
 | App up | `docker ps` | `vvh-app   Up (healthy)` |
 | Health | `curl -fsS https://www.visionvalues.com.hk/api/health` | `{"ok":true,...}` |
 | Site | `curl -I https://www.visionvalues.com.hk` | `200`, valid TLS, HSTS header |
@@ -1007,25 +968,25 @@ docker run --rm \
 
 ## 19. Security & secret-handling protocol
 
-1. **Never** echo: `JWT_SECRET`, any `CF_*` token, `GHCR_PULL_TOKEN`, `SSH_PRIVATE_KEY`, or `.env` content.
+1. **Never** echo: `JWT_SECRET`, `GHCR_PULL_TOKEN`, `SSH_PRIVATE_KEY`, or `.env` content.
    If a transcript must be kept, redact first:
    ```bash
-   sed -E 's/(JWT_SECRET|CF_API_TOKEN|GHCR_PULL_TOKEN|-----BEGIN[^-]*KEY-----).*/\1=<REDACTED>/g' \
+   sed -E 's/(JWT_SECRET|GHCR_PULL_TOKEN|-----BEGIN[^-]*KEY-----).*/\1=<REDACTED>/g' \
      server-transcript.txt > setup.log
    ```
 2. `setup.log` — keep a running log of every operator command (local + server) with the redaction above. It is
    `.dockerignore`d; keep it locally, never commit it.
 3. Rotation on (suspected) leak:
    - GHCR PAT → revoke at [github.com/settings/tokens](https://github.com/settings/tokens) → re-login on the server.
-   - CF token → rotate in the CF dashboard → restart `cloudflare-ddns.service` + `certbot renew --force-renewal`.
    - Deploy key → remove from `~deploy/.ssh/authorized_keys`, generate a new pair, update `SSH_PRIVATE_KEY`.
 4. Approval gating: every production deploy pauses at the `production` environment reviewers; sshd/UFW/nginx/certbot
    changes on the server are manual by design.
-5. Least privilege: PATs scoped (`read:packages`) · CF tokens scoped (`Zone:DNS:Edit`) · `deploy` sudo only for
-   installs/Nginx · app container runs as non-root `nextjs`.
+5. Least privilege: PATs scoped (`read:packages`) · `deploy` sudo only for installs/Nginx · app container runs as
+   non-root `nextjs`.
 
 ---
 
-**Done.** This document, plus the repo files it describes, is a complete runbook. The order that matters: Cloudflare zone
-→ router forwards → GitHub secrets → server hardening → Docker/Nginx/Certbot → flip `DEPLOY_ENABLED=true` → merge →
-approve → validate. Every phase is idempotent or validated before the next."
+**Done.** This document, plus the repo files it describes, is a complete runbook. The order that matters: DNS untouched →
+firewall switchover (route old → new web server) → router forwards → GitHub secrets → server hardening →
+Docker/Nginx/Certbot → flip `DEPLOY_ENABLED=true` → merge → approve → validate. Every phase is idempotent or validated
+before the next."

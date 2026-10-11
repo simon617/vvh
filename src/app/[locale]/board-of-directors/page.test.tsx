@@ -33,8 +33,8 @@ describe("Board of Directors page template", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Board of Directors" })).toBeInTheDocument();
     expect(screen.getByText("Executive Directors")).toBeInTheDocument();
     expect(screen.getByText("Independent Non-Executive Directors")).toBeInTheDocument();
-    expect(screen.getByText("Mr. Lo Luen Chuen")).toBeInTheDocument();
-    expect(screen.getByText("Mr. Tsui Hing Chuen (JP)")).toBeInTheDocument();
+    expect(screen.getByText("Mr. Lo Lin Shing, Simon")).toBeInTheDocument();
+    expect(screen.getByText("Mrr. Tsui Hing Chuen, William jp")).toBeInTheDocument();
   });
 
   it("renders Chinese director categories and names", async () => {
@@ -50,9 +50,9 @@ describe("Board of Directors page template", () => {
   it("expands a director bio on click", async () => {
     const user = userEvent.setup();
     renderWithLocale(await BoardOfDirectorsPage({ params: { locale: "en" } }));
-    expect(screen.queryByText(/extensive experience in corporate management/i)).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Lo Luen Chuen/i }));
-    expect(screen.getByText(/extensive experience in corporate management/i)).toBeInTheDocument();
+    expect(screen.queryByText(/joined the Company in March 2000/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Lo Lin Shing/i }));
+    expect(screen.getByText(/joined the Company in March 2000/i)).toBeInTheDocument();
   });
 
   it("renders DB director content as cards and the Role-and-Functions PDF link", async () => {
@@ -61,8 +61,8 @@ describe("Board of Directors page template", () => {
       ...placeholder!,
       isDbContent: true,
       contentHtml:
-        "<h2>Executive Directors</h2><p><strong>Mr. Lo Luen Chuen</strong><br/><em>Chairman</em><br/>A verified DB bio.</p>" +
-        '<p><strong>Roles &amp; Functions</strong><br/><a href="/uploads/reports/en/RoleAndFunction.pdf" target="_blank" rel="noopener noreferrer">Directors&#39; Roles and Functions (PDF)</a></p>',
+        "<h2>Executive Directors</h2><p><strong>Mr. Lo Lin Shing, Simon</strong><br/><em>Chairman</em><br/>A verified DB bio.</p>" +
+        '<h2>Roles &amp; Responsibilities</h2><p><a href="/uploads/reports/en/RoleAndFunction.pdf" target="_blank" rel="noopener noreferrer">Directors&#39; Roles and Functions (PDF)</a></p>',
     });
 
     renderWithLocale(
@@ -71,13 +71,13 @@ describe("Board of Directors page template", () => {
 
     // DB-driven grid (not the interactive component)
     expect(screen.getByTestId("director-db-content")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Lo Luen Chuen/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Lo Lin Shing/i })).not.toBeInTheDocument();
 
     // Category heading, director name and bio, and the PDF link are present
     expect(
       screen.getByRole("heading", { level: 2, name: "Executive Directors" })
     ).toBeInTheDocument();
-    expect(screen.getByText("Mr. Lo Luen Chuen")).toBeInTheDocument();
+    expect(screen.getByText("Mr. Lo Lin Shing, Simon")).toBeInTheDocument();
     expect(screen.getByText("A verified DB bio.")).toBeInTheDocument();
 
     const pdfLink = screen.getByRole("link", {

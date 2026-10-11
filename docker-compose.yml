@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1001}
+        GID: ${GID:-1001}
     ports:
       - "3000:3000"
     environment:
@@ -16,10 +19,6 @@ services:
       - UPLOAD_DIR=${UPLOAD_DIR:-./uploads}
       - MAX_FILE_SIZE=${MAX_FILE_SIZE:-5242880}
     volumes:
-      - sqlite-data:/app/prisma/data
-      - uploads:/app/uploads
+      - ./prisma/data:/app/prisma/data
+      - ./uploads:/app/uploads
     restart: unless-stopped
-
-volumes:
-  sqlite-data:
-  uploads:

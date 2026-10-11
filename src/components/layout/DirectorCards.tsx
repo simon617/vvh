@@ -4,7 +4,6 @@ import { useState } from "react";
 
 export interface Director {
   name: string;
-  title: string;
   category: string;
   bio: string;
 }
@@ -63,9 +62,6 @@ export default function DirectorCards({ directors }: DirectorCardsProps) {
                   >
                     <div className="font-semibold text-primary">
                       {director.name}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {director.title}
                     </div>
                   </button>
                   {isExpanded && (

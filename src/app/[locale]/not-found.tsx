@@ -1,12 +1,14 @@
+import { headers } from "next/headers";
 import Link from "next/link";
 import enMessages from "../../../messages/en.json";
 import zhMessages from "../../../messages/zh.json";
 
+const toLocale = (value: string | null | undefined): "en" | "zh" =>
+  value === "zh" ? "zh" : "en";
+
 interface Props {
   params: { locale: string };
 }
-
-const toLocale = (value: string): "en" | "zh" => (value === "zh" ? "zh" : "en");
 
 type NotFoundMessages = {
   title: string;
@@ -23,7 +25,8 @@ type NotFoundMessages = {
  * returns HTTP 404 automatically for this special `not-found` segment.
  */
 export default async function NotFound({ params }: Props) {
-  const locale = toLocale(params.locale);
+  //const locale = toLocale(params.locale);
+  const locale = toLocale(headers().get("x-locale"));
   const messages: NotFoundMessages =
     locale === "zh" ? zhMessages.notFound : enMessages.notFound;
 

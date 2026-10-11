@@ -163,6 +163,9 @@ In the editor, the rule is simple:
   Shift+Enter line breaks between name / title / bio.
 - **Category headings = Heading (H)**. The two categories span the full row width; the
   director paragraphs become the cards.
+- **Roles &amp; Responsibilities = also a Heading (H) section** (`角色與職責` in ZH),
+  spanning the full row like the categories, with the Role-and-Functions PDF link as
+  its paragraph below (e.g. `Directors' Roles and Functions (PDF)` → `RoleAndFunction.pdf`).
 
 Example of what one director block looks like in the EN tab:
 
