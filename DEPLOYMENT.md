@@ -253,18 +253,22 @@ Validation (from a non-local network): `nc -zv 202.77.49.35 22` / `80` / `443` �
 **GitHub UI** → `simon617/vvh` → **Settings**:
 
 1. **General → Pull Requests**: enable *Allow auto-merge* (`Optional/recommended`).
-2. **Actions → General → Workflow permissions**: select **Read and write** (needed for GHCR `packages: write` via
+2. **Actions (Left side) → General → Workflow permissions**: select **Read and write** (needed for GHCR `packages: write` via
    `GITHUB_TOKEN`) and enable *Allow GitHub Actions to create and approve pull requests* (Dependabot). Save.
-3. **Packages (GHCR)**: enabled by default; the first push in Phase 6 creates the package. Once it exists, open the
-   package → **Package settings → Danger Zone → Change visibility** and keep it **private** (server pulls with a token).
+3. **Packages (GHCR)**: enabled by default; workflow runs (Phase 6) and pushes container image to GHCR. Once it exists, open the
+   package (Right-hand sidebar, below About) → **Package settings → Danger Zone → Change visibility** and keep it **private** (server pulls with a token).
+Flow : GitHub repot > Actions > workflow run > build image > logs into GHCR with GITHUB_TOKEN > pushes image to GHCR
 
 ### 5.2 Branch protection for `main`
+- direct pushes to main are allowed by default unless we explicitly lock down the branch
 
-**GitHub UI** → Settings → Branches → **Add branch protection rule**:
+**GitHub UI** → Settings → Branches (left panel) → Add classic branch protection rule → **Add rule**:
 
 - Branch: `main`
 - ☑ **Require a pull request before merging** · ☑ *Require approvals* = **1**
-- ☑ **Require status checks to pass before merging** → add **`CI / ci`** now. After the first green security run, also
+- ☑ **Require status checks to pass before merging** 
+Action : merge button will be greyed out until this specific check passes. You can only select checks that have run on the main branch (a PR targeting it recently). It CI / ci does not appear, trigger a workflow run on main first.
+→ add **`CI / ci`** now. After the first green security run, also
   require **`Security / npm audit (production deps)`**, **`Security / Gitleaks secret scan`**,
   **`Security / Trivy filesystem scan`** and **`Security / CodeQL`** — type each as `<workflow name> / <job name>`
   exactly as shown here. `npm audit` is still report-only (`continue-on-error`), but its *job* still concludes
@@ -284,23 +288,23 @@ Validation (from a non-local network): `nc -zv 202.77.49.35 22` / `80` / `443` �
 
 ### 5.4 Actions secrets & variables
 
-**Variables** (Settings → Secrets and variables → Actions → Variables → New):
+**Variables** (GitHub UI → Repository → Settings → Secrets and variables (left panel) → Actions → Variables → New repository variable):
 
 | Name | Value | Notes |
 |---|---|---|
 | `DEPLOY_ENABLED` | `false` | Flip to `true` only after Phase 5 (server + nginx ready). |
 | `NEXT_PUBLIC_SITE_URL` | `https://www.visionvalues.com.hk` | Build-time inline value (also defaulted in workflows). |
 
-**Secrets** (Actions → Secrets → New):
+**Secrets** (Actions → Secrets → New repository variable):
 
 | Name | Value |
 |---|---|
 | `SSH_HOST` | `202.77.49.35` |
 | `SSH_USER` | `deploy` |
 | `SSH_PORT` | `22` (or `2222` if you moved sshd — §7.7) |
-| `SSH_PRIVATE_KEY` | private key from §5.5 (never the `.pub`) |
-| `SSH_KNOWN_HOSTS` | `ssh-keyscan -t ed25519 202.77.49.35` output (run after the server exists) |
-| `GHCR_PULL_TOKEN` | GitHub PAT with **`read:packages`** — used on the *server*, not in Actions |
+| `SSH_PRIVATE_KEY` | private key from §5.5 (entire contents, including -----BEGIN OPENSSH PRIVATE KEY----- and -----END OPENSSH PRIVATE KEY----- lines) . Workflow uses private key to authenticate with public key on the Ubuntu server during deployment phase CD. |
+| `SSH_KNOWN_HOSTS` | `ssh-keyscan -t ed25519 202.77.49.35` output (fetch server's ed25519 host key. Run after the server exists) |
+| `GHCR_PULL_TOKEN` | GitHub PAT with **`read:packages`** scope — used on the *server*, not in Actions. Use by server to pull container image from GitHub Container Registry |
 
 > `GHCR_PULL_TOKEN` is a PAT because `GITHUB_TOKEN` works only inside Actions jobs. Push-side needs **no PAT** — the
 > workflow declares `permissions: packages: write` and logs in with `GITHUB_TOKEN`.
@@ -328,9 +332,9 @@ CI → Security → Deploy. So "CI green before Security before Deploy" is enfor
 
 | Layer | Gate | Where | Enforces |
 |---|---|---|---|
-| 1. Merge gate | Branch protection required checks (§5.2) | PR time | Nothing merges to `main` unless `CI / ci` + the Security jobs are green — Deploy only ever sees merge-gated commits. |
-| 2. Same-push ordering | `wait-for-checks` step in `deploy.yml` | Push to `main` | Deploy builds/pushes only after the *same* commit's CI + Security check-runs succeed. Skipped on manual `workflow_dispatch` — an operator-initiated override. |
-| 3. Runtime gate | Trivy **image** scan (`exit-code: 1` on CRITICAL) | Build time, `deploy.yml` | No image with unfixed CRITICAL vulns is pushed to GHCR or deployed. |
+| 1. Merge gate (should this code be allowed onto main)| Branch protection required checks (§5.2) | PR time | Nothing merges to `main` unless `CI / ci` + the Security jobs are green — Deploy only ever sees merge-gated commits. |
+| 2. Same-push ordering (Has this exact commit proven itself) | `wait-for-checks` step in `deploy.yml` | Push to `main` | Deploy builds/pushes only after the *same* commit's CI + Security check-runs succeed. Skipped on manual `workflow_dispatch` — an operator-initiated override. |
+| 3. Runtime gate (is the artifact actually safe to ship)| Trivy **image** scan (`exit-code: 1` on CRITICAL) | Build time, `deploy.yml` | No image with unfixed CRITICAL vulns is pushed to GHCR or deployed. |
 
 **What actually runs per trigger** (simplified so a push to `main` is not triplicated):
 
@@ -375,10 +379,15 @@ control** (it's server-life-changing: network, sshd, users). Run each block, the
 ### 7.1 Create the `deploy` user and install the deploy key
 
 ```bash
+# create a new user without asking for password, and generate 
 adduser --disabled-password --gecos "vvh deploy user" deploy
+
+# grant administrative mode
 usermod -aG sudo deploy
 
 # Authorized keys: existing root key + the GitHub Actions deploy key from §5.5
+
+# creates the /home/deploy/.ssh directory with strict permissions (700) and assigns its ownership to the # # deploy user and group
 install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
 cp /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys 2>/dev/null || true
 cat >> /home/deploy/.ssh/authorized_keys <<'EOF'
@@ -394,7 +403,7 @@ chmod 600 /home/deploy/.ssh/authorized_keys
 ```
 
 ### 7.2 Lock down sshd
-
+# Users cannot log in by typing a password
 Edit `/etc/ssh/sshd_config` — set/verify:
 
 ```nginx
@@ -403,6 +412,10 @@ PasswordAuthentication no
 PubkeyAuthentication yes
 KbdInteractiveAuthentication no
 UsePAM yes
+
+# notice that some settings are override by /etc/ssh/sshd_config.d/50-cloud-init.conf
+PasswordAuthentication yes
+
 # If you changed the port:
 # Port 2222
 ```
@@ -433,29 +446,56 @@ ufw status numbered   # expect 22,80,443 ALLOW
 
 ```bash
 apt-get update && apt-get install -y fail2ban
-cat > /etc/fail2ban/jail.local <<'EOF'
-[sshd]
-enabled   = true
-port      = ssh
-maxretry  = 5
-bantime   = 1h
-findtime  = 10m
-EOF
+clear
 systemctl enable --now fail2ban
 fail2ban-client status sshd
 ```
 
-### 7.5 unattended-upgrades
-
+### 7.5 Upgrades
+## Staging Server (unattended-upgrades)
 ```bash
+#  installs and turns on automatic security updates, then verifies they're scheduled to run daily
 apt-get install -y unattended-upgrades
 dpkg-reconfigure --priority=low unattended-upgrades   # answer "Yes" to auto-update
 systemctl enable --now unattended-upgrades apt-daily-upgrade.timer
 systemctl list-timers | grep -E "apt|unattended"
 ```
+### Production Server
+install and enable automatic background security updates :
+sudo apt-get install -y unattended-upgrades
+sudo dpkg-reconfigure --priority=low unattended-upgrades   # Select "Yes"
+
+
+Edit the configuration file to configure rules and behaviors for automatic updates :
+sudo nano /etc/apt/apt.conf.d/50unattended-upgrades
+
+Locate and set the following (if commented, remove the // :
+Unattended-Upgrade::Automatic-Reboot "false";   # Disable auto reboot
+
+Prevent needrestart from Automatically Restarting Docker / containerd :
+sudo mkdir -p /etc/needrestart/conf.d
+sudo tee /etc/needrestart/conf.d/docker-exclude.conf <<'EOF'
+$nrconf{override_rc} = {
+    qr(^docker\.service$) => 0,
+    qr(^containerd\.service$) => 0,
+};
+EOF
+
+Turns on auto background security updates and run everyday, even reboot :
+sudo systemctl enable --now unattended-upgrades apt-daily-upgrade.timer
+systemctl list-timers | grep -E "apt|unattended"
+
+Regular Maintenance Checks :
+cat /var/log/unattended-upgrades/unattended-upgrades.log
+cat /var/run/reboot-required
+
+manually restart Docker and verify: 
+sudo systemctl restart docker && docker ps
+
 
 ### 7.6 Harden sysctl (Optional/recommended)
 
+sysctl --system : modify Linux kernel parameters at runtime
 ```bash
 cat >> /etc/sysctl.d/99-vvh-hardening.conf <<'EOF'
 net.ipv4.conf.all.rp_filter=1
@@ -474,7 +514,9 @@ router-forward `2222 → 10.0.2.7:22`, and set `SSH_PORT=2222` in GitHub. Keep 2
 ### 7.8 Validate
 
 ```bash
-sudo -l           # as deploy: sudo works
+sudo -l              # list privilege for current uesr
+sudo -l -U deploy
+
 last -15          # confirm no failed root logins piling up
 grep -E "Failed|Accepted" /var/log/auth.log | tail -5
 ```
@@ -482,23 +524,37 @@ grep -E "Failed|Accepted" /var/log/auth.log | tail -5
 ## 8. Install Docker, Compose, Nginx, Certbot (Phase 3)
 
 **Ubuntu terminal**, now as `deploy` with `sudo`:
+sudo -u deploy -i
+
+Create a configuration file :
+sudo visudo -f /etc/sudoers.d/deploy-nopasswd
+
+Add the following line (deploy is granted full administrative privileges via sudo without typing a password):
+deploy ALL=(ALL) NOPASSWD: ALL
+
+Press Ctrl+X and then Y
+
+sudo chmod 0440 /etc/sudoers.d/deploy-nopasswd
 
 ### 8.1 Base packages + Docker Engine + Compose plugin
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg dnsutils git htop
+dpkg -l ca-certificates curl gnupg dnsutils git htop  # confirm the installation
 
 # Docker Engine + Compose plugin via the official convenience script (or the
 # saved docker apt-repo instructions on docs.docker.com — both are equivalent).
 curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
 sudo sh /tmp/get-docker.sh
-sudo systemctl enable --now docker
+sudo systemctl enable --now docker  # enable auto start
+systemctl is-enabled docker # check whether docker is auto start
+systemctl status docker # check status
 
 # Compose plugin ships with the script; verify:
 docker compose version        # Docker Compose version v2.x
 
-# Allow the deploy user to drive docker WITHOUT sudo:
+# Add user deploy to docker group, aloows user to run Docker commands without sudo :
 sudo usermod -aG docker deploy
 ```
 
@@ -507,6 +563,9 @@ sudo usermod -aG docker deploy
 ```bash
 docker run --rm hello-world   # must work without sudo
 ```
+
+
+# Certbot asks for security certificates. proves to Let's Encrypt's server that you own the website, it then writes the SSL security rules directly into Nginx configuration file so your site instantly loads securely over HTTPs
 
 ### 8.2 Nginx
 
@@ -540,6 +599,7 @@ mkdir -p /var/www/certbot && sudo chown -R deploy:deploy /var/www/certbot
 From **Local Windows** (repo root):
 
 ```powershell
+# scp -i c:\Users\simonleung\.ssh\vvh_deploy docker-compose.prod.yml deploy.sh - deploy@202.77.49.35:/opt/vvh/
 scp docker-compose.prod.yml deploy.sh deploy@202.77.49.35:/opt/vvh/
 scp nginx.conf deploy@202.77.49.35:/opt/vvh/nginx.conf
 scp scripts/backup-prod.sh deploy@202.77.49.35:/opt/vvh/bin/
@@ -550,6 +610,7 @@ Then on the server (as `deploy`):
 ```bash
 chmod +x /opt/vvh/deploy.sh /opt/vvh/bin/*.sh
 # make scripts executable for systemd/cron (they run as deploy)
+# create a symbolic link : source  shortcut destination
 sudo ln -s /opt/vvh/scripts /opt/vvh/bin   # optional convenience
 ```
 
@@ -594,13 +655,22 @@ chown deploy:deploy /opt/vvh/.env
 
 ### 9.4 GHCR login for the `deploy` user
 
-Create the PAT (**GitHub UI**: [github.com/settings/tokens](https://github.com/settings/tokens/new) →
+Create the PAT 
+Profile icon > Settings > Developer Settings > Personal access token > Tokens (classic) > Generate new token (classic)
+Paste the token value into the GHCR_PULL_TOKEN secret (for reference only, not used by GitHub)
+(**GitHub UI**: [github.com/settings/tokens](https://github.com/settings/tokens/new) →
 fine-grained, `read:packages` only) and store it server-side:
 
-```bash
+```bash (After generating the PAT, you run this on the Ubuntu server.)
+# securely prompt you for a GitHub token and save it into a hidden, password-protected file so your scripts can use it later 
+# - p "GHCR_PULL_TOKEN: " : display text prompt
+# GHCR_PULL_TOKEN : variable that stores whatever value you type next
 read -s -p "GHCR_PULL_TOKEN: " GHCR_PULL_TOKEN   # never typed into shell history visibly
 mkdir -p ~/.config
 printf '%s' "$GHCR_PULL_TOKEN" > ~/.config/ghcr_pull_token && chmod 600 ~/.config/ghcr_pull_token
+
+Below command authenticates the server to GHCR so it can pull your images. Docker stores the credential locally (usually in ~/.docker/config.json), so you only do this once per server.
+# print token value and pipe to right side, read password directly from the pipe
 echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u simon617 --password-stdin
 # verify:
 docker pull ghcr.io/simon617/vvh:latest 2>&1 | tail -2   # works after Phase 6 pushes the first image

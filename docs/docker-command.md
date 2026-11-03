@@ -147,6 +147,11 @@ docker compose down -v     # stop + remove containers AND both volumes (DB + upl
 docker compose build
 docker compose up -d
 ```
+If you want to see if Container A can talk to Container B, you can use Container B's internal Docker IP address as the <target>.
+• Example: docker exec container-A ping -c 2 172.17.0.3
+
+If you want to check if your container can access the outside world, the <target> can be a public IP address.
+• Example: docker exec my-container ping -c 2 8.8.8.8
 
 ---
 
