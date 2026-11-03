@@ -69,7 +69,12 @@ export function uploadsDir(): string {
  */
 export function resolveUploadPath(relativePath: string): string | null {
   const base = path.resolve(uploadsDir());
-  const target = path.resolve(base, relativePath);
+
+  // Treat backslashes as separators too, so the guard behaves identically on
+  // POSIX and Windows. On Linux a `..\..\x` string is a single (in-base)
+  // filename, which would otherwise slip past the traversal check.
+  const normalized = relativePath.replace(/\\/g, "/");
+  const target = path.resolve(base, normalized);
 
   // Guard against path traversal (.. segments escaping UPLOAD_DIR).
   if (target !== base && !target.startsWith(base + path.sep)) {
@@ -97,7 +102,10 @@ export function assertAllowedImage(name: string, size: number): void {
 
 /** Strip any directory/traversal and unsafe characters from a file name. */
 export function sanitizeFilename(name: string): string {
-  return path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "_");
+  // Split on both POSIX and Windows separators (path.basename only honours the
+  // current platform's separator) so `..\..\win.ini` -> `win.ini` everywhere.
+  const base = name.split(/[\\/]/).pop() ?? "";
+  return base.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
 /**
