@@ -33,6 +33,9 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Asia/Hong_Kong"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(actions)"
