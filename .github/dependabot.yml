@@ -7,6 +7,9 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Asia/Hong_Kong"
+    # 👇 This stops scheduled/push rebases entirely. 
+    # You just type "@dependabot rebase" on the PR when you are ready to merge it!
+    rebase-strategy: "disabled" 
     open-pull-requests-limit: 10
     versioning-strategy: auto
     commit-message:
