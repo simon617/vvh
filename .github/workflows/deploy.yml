@@ -38,13 +38,30 @@ jobs:
           set -euo pipefail
           deadline=$(( $(date +%s) + 1740 )) # 29 min wait budget; job timeout is 60 min
           echo "Waiting for: $REQUIRED_CHECKS (SHA $SHA)"
+          errlog=$(mktemp)
+          first_probe=1
           while IFS= read -r name; do
             [ -n "$name" ] || continue
             echo " - $name"
             while :; do
+              # `gh api --jq` already prints raw output — it has NO `-r` flag (that
+              # belongs to the standalone `jq` CLI). Passing `-r` made gh treat it as
+              # the jq query and the selector as a 2nd argument, so the command died
+              # with "accepts 1 arg(s), received 2"; the old `2>/dev/null || true`
+              # swallowed that, leaving `concls` empty forever → a silent 29-min hang.
               # No/empty conclusion while a run is queued, in progress or missing.
-              concls=$(gh api "repos/${{ github.repository }}/commits/$SHA/check-runs" \
-                --jq -r '[.check_runs[] | select(.name == "'"$name"'") | .conclusion] | unique[]' 2>/dev/null || true)
+              if concls=$(gh api "repos/${{ github.repository }}/commits/$SHA/check-runs" \
+                --jq '[.check_runs[] | select(.name == "'"$name"'") | .conclusion] | unique[]' 2>"$errlog"); then
+                :
+              elif [ "$first_probe" -eq 1 ]; then
+                # Surface a broken auth/query immediately instead of hanging for 29 min.
+                echo "::error::gh api check-runs query failed for '$name' on $SHA:"
+                cat "$errlog"
+                exit 1
+              else
+                concls=""
+              fi
+              first_probe=0
               flat=$(echo "$concls" | tr -d '\n')
               case "$flat" in
                 success) break ;;
