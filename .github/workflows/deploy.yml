@@ -95,7 +95,7 @@ jobs:
       - name: Trivy image scan (gate)
         # GATE: fails the job (and blocks push/deploy) on any CRITICAL vuln.
         # Adjust severity below if you want HIGH to block too.
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
         with:
           scan-type: image
           image-ref: ghcr.io/simon617/vvh:${{ github.sha }}
