@@ -13,6 +13,7 @@ permissions:
   contents: read
   checks: read
   packages: write
+  security-events: write
 
 jobs:
   build-push:
@@ -50,7 +51,7 @@ jobs:
               # with "accepts 1 arg(s), received 2"; the old `2>/dev/null || true`
               # swallowed that, leaving `concls` empty forever → a silent 29-min hang.
               # No/empty conclusion while a run is queued, in progress or missing.
-              if concls=$(gh api "repos/${{ github.repository }}/commits/$SHA/check-runs" \
+              if concls=$(gh api "repos/${{ github.repository }}/commits/$SHA/check-runs?filter=latest" \
                 --jq '[.check_runs[] | select(.name == "'"$name"'") | .conclusion] | unique[]' 2>"$errlog"); then
                 :
               elif [ "$first_probe" -eq 1 ]; then
