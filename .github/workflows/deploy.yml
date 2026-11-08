@@ -95,6 +95,8 @@ jobs:
           # Built-in token with packages: write — no PAT needed for pushes.
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      #Build image and load into local Docker environment for Trivy scan (no push yet) of Runner
+      #Trivy can use image-ref: ghcr.io/simon617/vvh:${{ github.sha }} to scan.
       - name: Build image
         id: build
         uses: docker/build-push-action@v6
@@ -113,7 +115,7 @@ jobs:
       - name: Trivy image scan (gate)
         # GATE: fails the job (and blocks push/deploy) on any CRITICAL vuln.
         # Adjust severity below if you want HIGH to block too.
-        uses: aquasecurity/trivy-action@0.28.0 
+        uses: aquasecurity/trivy-action@v0.36.0 
         with:
           scan-type: image
           image-ref: ghcr.io/simon617/vvh:${{ github.sha }}
@@ -125,10 +127,12 @@ jobs:
 
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@v3
-        if: ${{ !cancelled() }}
+        #if: ${{ !cancelled() }}
+        if: ${{ always() && hashFiles('trivy-image.sarif') != '' }}
         with:
           sarif_file: trivy-image.sarif
 
+      #PUsh to gate  after the scan
       - name: Push to GHCR
         run: |
           docker push ghcr.io/simon617/vvh:${{ github.sha }}
