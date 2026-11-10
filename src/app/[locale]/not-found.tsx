@@ -7,7 +7,7 @@ const toLocale = (value: string | null | undefined): "en" | "zh" =>
   value === "zh" ? "zh" : "en";
 
 interface Props {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 type NotFoundMessages = {
@@ -25,8 +25,10 @@ type NotFoundMessages = {
  * returns HTTP 404 automatically for this special `not-found` segment.
  */
 export default async function NotFound({ params }: Props) {
-  //const locale = toLocale(params.locale);
-  const locale = toLocale(headers().get("x-locale"));
+  // Next.js 15: params and headers() are async. Prefer the middleware-set
+  // x-locale header and fall back to the route param.
+  const { locale: paramLocale } = await params;
+  const locale = toLocale((await headers()).get("x-locale") ?? paramLocale);
   const messages: NotFoundMessages =
     locale === "zh" ? zhMessages.notFound : enMessages.notFound;
 

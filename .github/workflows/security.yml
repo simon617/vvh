@@ -26,10 +26,11 @@ jobs:
       - name: Setup Node.js 24 + deps
         uses: ./.github/actions/node-setup
       - name: Audit production dependencies
-        # REPORT-ONLY for now. Known issue: next@14.2.35 has critical
-        # advisories with no patched 14.x release (fix = breaking upgrade to
-        # Next 16). Make this step blocking (remove continue-on-error) AFTER
-        # the upgrade listed in DEPLOYMENT.md §2.2 is merged.
+        # REPORT-ONLY. The critical Next.js RCEs (next@14.2.35) were cleared by
+        # the next@15.5.29 upgrade, but production deps still report highs:
+        # postcss bundled inside next@15 (fix = next@16.4.5) and nodemailer <10.4.0.
+        # Make this step blocking (remove continue-on-error) AFTER the Next 16
+        # upgrade and nodemailer bump listed in DEPLOYMENT.md §2.3 are merged.
         continue-on-error: true
         run: npm audit --omit=dev --audit-level=high
 

@@ -5,13 +5,15 @@ import AdminNav from "./AdminNav";
 
 export default async function AdminLayout({
   children,
-  params: { locale },
+  params,
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
+  // Next.js 15+: route params and headers() are async and must be awaited.
+  const { locale } = await params;
   const session = await getSession();
-  const pathname = headers().get("x-pathname") || "";
+  const pathname = (await headers()).get("x-pathname") || "";
 
   // Public auth pages (login/setup) render standalone without AdminNav
   const isAuthPage =

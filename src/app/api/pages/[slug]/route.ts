@@ -10,14 +10,15 @@ import type { Locale } from "@/lib/page-content-validation";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   const { error } = await requireSession();
   if (error) {
     return error;
   }
 
-  const { slug } = params;
+  // Next.js 15+: route params are async and must be awaited.
+  const { slug } = await params;
   const url = new URL(request.url);
   const localeParam = url.searchParams.get("locale");
 
@@ -42,14 +43,15 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   const { error } = await requireSession();
   if (error) {
     return error;
   }
 
-  const { slug } = params;
+  // Next.js 15+: route params are async and must be awaited.
+  const { slug } = await params;
 
   const body = (await request.json().catch(() => null)) as unknown;
   const validation = validatePageContentBody(body);

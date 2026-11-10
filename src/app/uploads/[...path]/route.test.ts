@@ -57,7 +57,7 @@ describe("GET /uploads/[...path]", () => {
     );
 
     const req = new NextRequest("http://localhost/uploads/images/test.png");
-    const res = await GET(req, { params: { path: ["images", "test.png"] } });
+    const res = await GET(req, { params: Promise.resolve({ path: ["images", "test.png"] }) });
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("image/png");
@@ -80,7 +80,7 @@ describe("GET /uploads/[...path]", () => {
       "http://localhost/uploads/reports/en/RoleAndFunction.pdf"
     );
     const res = await GET(req, {
-      params: { path: ["reports", "en", "RoleAndFunction.pdf"] },
+      params: Promise.resolve({ path: ["reports", "en", "RoleAndFunction.pdf"] }),
     });
 
     expect(res.status).toBe(200);
@@ -90,14 +90,14 @@ describe("GET /uploads/[...path]", () => {
   it("returns 404 when the file does not exist", async () => {
     process.env.UPLOAD_DIR = TEST_DIR;
     const req = new NextRequest("http://localhost/uploads/images/missing.png");
-    const res = await GET(req, { params: { path: ["images", "missing.png"] } });
+    const res = await GET(req, { params: Promise.resolve({ path: ["images", "missing.png"] }) });
     expect(res.status).toBe(404);
   });
 
   it("returns 400 for a path that escapes UPLOAD_DIR", async () => {
     process.env.UPLOAD_DIR = TEST_DIR;
     const req = new NextRequest("http://localhost/uploads/%2e%2e/x");
-    const res = await GET(req, { params: { path: ["..", "secret"] } });
+    const res = await GET(req, { params: Promise.resolve({ path: ["..", "secret"] }) });
     expect(res.status).toBe(400);
   });
 });

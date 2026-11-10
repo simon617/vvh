@@ -15,9 +15,11 @@ import { mimeTypeForUpload, resolveUploadPath } from "@/lib/uploads";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const relative = (params.path ?? []).join("/");
+  // Next.js 15+: route params are async and must be awaited.
+  const { path } = await params;
+  const relative = (path ?? []).join("/");
   const filePath = resolveUploadPath(relative);
 
   if (!filePath) {

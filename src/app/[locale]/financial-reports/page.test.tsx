@@ -27,7 +27,7 @@ describe("Financial Reports page (reports table)", () => {
   });
 
   it("renders table with placeholder rows in English", async () => {
-    renderWithLocale(await FinancialReportsPage({ params: { locale: "en" } }));
+    renderWithLocale(await FinancialReportsPage({ params: Promise.resolve({ locale: "en" }) }));
     expect(screen.getByRole("heading", { level: 1, name: "Financial Reports" })).toBeInTheDocument();
     expect(screen.getByText("Date")).toBeInTheDocument();
     expect(screen.getByText("Document")).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe("Financial Reports page (reports table)", () => {
 
   it("renders localized table headers and rows in Chinese", async () => {
     renderWithLocale(
-      await FinancialReportsPage({ params: { locale: "zh" } }),
+      await FinancialReportsPage({ params: Promise.resolve({ locale: "zh" }) }),
       "zh"
     );
     expect(screen.getByRole("heading", { level: 1, name: "財務報告" })).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe("Financial Reports page (reports table)", () => {
       }),
     });
 
-    renderWithLocale(await FinancialReportsPage({ params: { locale: "en" } }));
+    renderWithLocale(await FinancialReportsPage({ params: Promise.resolve({ locale: "en" }) }));
 
     // The DB-driven row replaces the hardcoded default.
     expect(screen.getByText("Custom Report 2026")).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe("Financial Reports page (reports table)", () => {
       contentHtml: JSON.stringify({ __type: "reports", rows: rows38 }),
     });
 
-    renderWithLocale(await FinancialReportsPage({ params: { locale: "en" } }));
+    renderWithLocale(await FinancialReportsPage({ params: Promise.resolve({ locale: "en" }) }));
 
     // Title sort → deterministic pages: page 1 = Report 01..10, page 4 = 31..38.
     await user.click(screen.getByRole("button", { name: "Document" }));
@@ -105,10 +105,10 @@ describe("Financial Reports page (reports table)", () => {
 
   it("exposes localized metadata", async () => {
     expect(
-      (await generateMetadata({ params: { locale: "en" } })).title
+      (await generateMetadata({ params: Promise.resolve({ locale: "en" }) })).title
     ).toContain("Financial Reports");
     expect(
-      (await generateMetadata({ params: { locale: "zh" } })).title
+      (await generateMetadata({ params: Promise.resolve({ locale: "zh" }) })).title
     ).toContain("財務報告");
   });
 });

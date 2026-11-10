@@ -20,15 +20,30 @@ export interface KeyValueRow {
   value: string;
 }
 
-/** Minimal HTML entity decoder for trusted CMS output. */
+/** Recognised named entities (single-pass decode targets). */
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+};
+
+/**
+ * Minimal HTML entity decoder for trusted CMS output.
+ *
+ * Decodes in a SINGLE pass, so an entity that is itself the *result* of a
+ * decode is never decoded again. This is what prevents double-decoding
+ * (CodeQL `js/double-escaping`): `&amp;lt;` → `&lt;` (NOT `<`), and
+ * `&amp;` → `&`. Chained `.replace()` calls cannot guarantee this, because
+ * each later pass re-scans the output of the earlier ones.
+ */
 function decodeEntities(s: string): string {
-  return s
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#0*39;/g, "'")
-    .replace(/&apos;/g, "'");
+  return s.replace(
+    /&(amp|lt|gt|quot|apos|#0*39);/g,
+    (_match: string, name: string): string =>
+      name.startsWith("#") ? "'" : NAMED_ENTITIES[name]
+  );
 }
 
 /** Escape text for safe inclusion inside HTML tags. */

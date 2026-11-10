@@ -6,7 +6,7 @@ import {
 } from "@/lib/page-content";
 
 interface AdminDashboardPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 /**
@@ -16,7 +16,7 @@ interface AdminDashboardPageProps {
 export default async function AdminDashboardPage({
   params,
 }: AdminDashboardPageProps) {
-  const { locale } = params;
+  const { locale } = await params;
   const session = await getSession();
 
   const [pages, recent] = await Promise.all([

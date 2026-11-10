@@ -1,6 +1,6 @@
 # Docker Commands — VVH (compose-based deployment)
 
-> Stack: Next.js 14 (`output: "standalone"`) · Prisma + SQLite · Docker Compose v2.
+> Stack: Next.js 15 (`output: "standalone"`) · Prisma + SQLite · Docker Compose v2.
 > Compose file: `docker-compose.yml` · Image: `Dockerfile`.
 > Named volumes: `vvh_sqlite-data` (DB at `/app/prisma/data/vvh.db`) and
 > `vvh_uploads` (runtime uploads at `/app/uploads`) — both survive restarts.

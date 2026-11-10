@@ -26,13 +26,13 @@ describe("ESG Reports page (reports table)", () => {
   });
 
   it("renders table with placeholder rows in English", async () => {
-    renderWithLocale(await EsgReportsPage({ params: { locale: "en" } }));
+    renderWithLocale(await EsgReportsPage({ params: Promise.resolve({ locale: "en" }) }));
     expect(screen.getByRole("heading", { level: 1, name: "ESG Reports" })).toBeInTheDocument();
     expect(screen.getByText("ESG Report 2025")).toBeInTheDocument();
   });
 
   it("renders localized rows in Chinese", async () => {
-    renderWithLocale(await EsgReportsPage({ params: { locale: "zh" } }), "zh");
+    renderWithLocale(await EsgReportsPage({ params: Promise.resolve({ locale: "zh" }) }), "zh");
     expect(screen.getByRole("heading", { level: 1, name: "環境、社會及管治報告" })).toBeInTheDocument();
     expect(screen.getByText("2025環境、社會及管治報告")).toBeInTheDocument();
   });
@@ -50,7 +50,7 @@ describe("ESG Reports page (reports table)", () => {
       }),
     });
 
-    renderWithLocale(await EsgReportsPage({ params: { locale: "en" } }));
+    renderWithLocale(await EsgReportsPage({ params: Promise.resolve({ locale: "en" }) }));
     expect(screen.getByText("Custom ESG Report 2026")).toBeInTheDocument();
     expect(screen.queryByText("ESG Report 2025")).not.toBeInTheDocument();
   });

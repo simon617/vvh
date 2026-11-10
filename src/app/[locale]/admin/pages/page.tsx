@@ -2,7 +2,7 @@ import Link from "next/link";
 import { listPagesWithContent } from "@/lib/page-content";
 
 interface AdminPagesPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 /**
@@ -11,7 +11,7 @@ interface AdminPagesPageProps {
  * Rendered inside the protected [locale]/admin layout.
  */
 export default async function AdminPagesPage({ params }: AdminPagesPageProps) {
-  const { locale } = params;
+  const { locale } = await params;
   const pages = await listPagesWithContent();
 
   return (

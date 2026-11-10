@@ -23,7 +23,8 @@ export default async function ContentWithSidebar({
   // Unknown slug OR unpublished current locale → 404 (Decision D8).
   if (!pageData) notFound();
 
-  const headersList = headers();
+  // Next.js 15+: headers() is async and must be awaited.
+  const headersList = await headers();
   const pathname = headersList.get("x-pathname") || `/${locale}/${slug}`;
 
   return (

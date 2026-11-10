@@ -1,3 +1,15 @@
+// @vitest-environment node
+//
+// The very first line is a directive that tells Vitest framework : 
+// "Swith the environment from jsdom to node for this file" 
+// This suite asserts on the redirect table exported by `next.config.js`. Importing
+// that config pulls in `next-intl/plugin`, which resolves its own module filename
+// from `import.meta.url`. Under the default jsdom environment that URL is
+// `http://localhost:3000/`, which makes the plugin throw:
+//   "The argument 'filename' must be a file URL object, file URL string, or
+//    absolute path string."
+// `next.config.js` is plain config and needs no DOM, so run this file under the
+// node environment where the module URL is a real `file://` path.
 import { describe, expect, it } from "vitest";
 import nextConfig from "../../next.config.js";
 

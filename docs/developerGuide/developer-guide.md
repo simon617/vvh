@@ -1,10 +1,10 @@
 # VVH Website Revamp — Developer Guide
 
 > **Project:** Vision Values Holdings Limited (HKEX: 862) — corporate website revamp
-> **Stack:** Node 24 · Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · Prisma (SQLite) · next-intl · TipTap · Vitest · Docker
+> **Stack:** Node 24 · Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Prisma (SQLite) · next-intl 4 · TipTap · Vitest · Docker
 > **Repo:** https://github.com/simon617/vvh (branch `phase-2b`)
 > **Docs:** `docs/` contains the phase plans (PRD, phase-1…phase-4), checklists, task lists and this guide.
-> **Tests:** 55 test files / **247 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0
+> **Tests:** 66 test files / **335 tests passing** · `npm run lint` clean (2 pre-existing warnings) · `npm run build` exit 0
 
 ---
 
@@ -137,7 +137,7 @@ This is the **orientation guide** for any developer who needs to work on this co
 | `announcements.ts` | pure | HKEX Datalink iframe URL builder. | Announcements page. |
 | `directors.ts` | pure | Director names/categories/bios (fallback data). | Board page (fallback) + seed (→ CMS cards). |
 | `breadcrumbs.ts` | pure | Breadcrumb item resolution. | `Breadcrumb` component. |
-| `key-value.ts` | pure | Parse/build the `<table>` HTML used by the **corporate-details** key-value editor. | `KeyValueEditor`, tests. |
+| `key-value.ts` | pure | Parse/build the `<table>` HTML used by the **corporate-details** key-value editor. `decodeEntities()` decodes in a **single pass**, so a decode-result is never re-decoded (`&amp;lt;` → `&lt;`, not `<`) — this is the CodeQL `js/double-escaping` fix; keep it that way. | `KeyValueEditor`, tests. |
 | `report-rows.ts` | pure | JSON envelope (`{"__type":"reports","rows":[...]}`) stored in `contentHtml` for report pages; parse/serialize. | `placeholders.ts` (builds placeholder envelope), `ReportsEditor`, report public pages, seed. |
 | `email.ts` | server | Nodemailer transport + `sendContactEmail()` for the public contact form (SMTP env: `SMTP_HOST/PORT/RECIPIENT` with `SMTP_USER/PASS` fallback, decision D10). | `/api/contact/send`. |
 | `uploads.ts` | pure | Upload validation/path helpers (images + documents), `resolveUploadPath`, `sanitizeFilename`, `getUploadUrl`. | Upload routes, `/uploads` serving, `logo.ts`. |
@@ -377,10 +377,16 @@ All API routes guard themselves with `requireSession()` (a `{session, error}` re
 - Test files live **next to the code** (`*.test.ts` / `*.test.tsx`) — this is a deliberate pattern.
 - **Use `renderWithLocale(ui, "en"|"zh")`** (from `src/test/utils.tsx`) for any component that calls
   `useTranslations`; it wraps in `NextIntlClientProvider` with the real `messages/*.json`.
-- **Server-component tests:** `await Component({ params: ... })` to resolve the JSX, then render it,
-  e.g. `renderWithLocale(await BoardOfDirectorsPage({ params: { locale: "en" } }))`.
+- **Server-component tests:** `await Component({ params: ... })` to resolve the JSX, then render it.
+  Since Next.js 15 `params` is a **Promise**, so pass `Promise.resolve(...)`, e.g.
+  `renderWithLocale(await BoardOfDirectorsPage({ params: Promise.resolve({ locale: "en" }) }))`.
   Mock `getPageData` (`@/lib/pages`) via `vi.mock` + `vi.hoisted`.
-- **Route tests** use `next/server` `NextRequest`.
+- **Route tests** use `next/server` `NextRequest`; the second handler argument is
+  `{ params }: { params: Promise<{ … }> }` (also awaited inside the handler), e.g.
+  `await GET(request, { params: Promise.resolve({ slug: "home" }) })`.
+- **Environment:** `vitest.config.ts` defaults to `jsdom`. Add a `// @vitest-environment node`
+  docblock to any suite that imports `next.config.js` (e.g. `src/lib/redirects.test.ts`) — the
+  next-intl plugin resolves its own filename from the document base URL and breaks under jsdom.
 - **Database boundary:** mock `@/lib/page-content` / `@/lib/auth` / Prisma at the module seam —
   never hit a real SQLite DB in unit tests (`src/lib/pages.test.ts`, `page-content.test.ts`, etc. are
   examples).
@@ -443,13 +449,24 @@ All API routes guard themselves with `requireSession()` (a `{session, error}` re
 
 12. **Slug sync.** When adding a page, keep slugs in sync across `navigation.ts` (nav source of truth — includes `announcements`, which is **public-only**), `placeholders.ts` (fallback content — **exclude** `announcements`), and `prisma/seed.ts` (CMS pages — **exclude** `announcements`).
 
-13. **Tests to keep green.** Target the current count on `npm test` (55 files / 258 tests);
+13. **Tests to keep green.** Target the current count on `npm test` (66 files / 335 tests);
     `npm run lint` should be clean apart from the two pre-existing Phase-1 warnings
     (`admin/setup` useEffect deps, `Logo` `<img>`); `npm run build` exits 0.
 
 14. **Docs discipline.** Every code change is expected to update `docs/phase-2b-tasklist.md`
     (Files Modified + commit) so the work is traceable. Phase plans/checklists should stay in sync
     with behaviors (e.g. unpublished→placeholder).
+
+15. **Next.js 15 async request APIs (breaking change).** `params`, `searchParams`, `cookies()` and
+    `headers()` are all **async** now — always `await` them:
+    - Page / layout / route props: declare `params: Promise<{ locale: string }>`, then
+      `const { locale } = await params;` before using it.
+    - `const cookieStore = await cookies();` and `const headersList = await headers();`
+      (`src/lib/auth.ts`, `ContentWithSidebar.tsx`).
+    - `TemplateShell` is deliberately **synchronous** — resolve `x-pathname` in the async page and pass it
+      down as the `pathname` prop (React only supports async components on the server).
+    - Tests call async server components as functions, so pass `params: Promise.resolve({ … })`.
+    See `DEPLOYMENT.md` §2.3 for the full Next 15 migration notes.
 
 ---
 

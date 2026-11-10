@@ -100,7 +100,7 @@ describe("GET /api/pages/[slug]", () => {
 
   it("returns 401 when unauthenticated", async () => {
     mockGetSession.mockResolvedValue(null);
-    const res = await GET(makeRequest(undefined), { params: { slug: "home" } });
+    const res = await GET(makeRequest(undefined), { params: Promise.resolve({ slug: "home" }) });
     expect(res.status).toBe(401);
   });
 
@@ -110,7 +110,7 @@ describe("GET /api/pages/[slug]", () => {
       async (_slug: string, locale: string) =>
         locale === "en" ? CONTENT : null
     );
-    const res = await GET(makeRequest(undefined), { params: { slug: "home" } });
+    const res = await GET(makeRequest(undefined), { params: Promise.resolve({ slug: "home" }) });
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.en?.title).toBe("Home");
@@ -121,7 +121,7 @@ describe("GET /api/pages/[slug]", () => {
     mockGetSession.mockResolvedValue(ADMIN_SESSION);
     mockGetPageContent.mockResolvedValue(CONTENT);
     const res = await GET(makeRequest(undefined, "?locale=en"), {
-      params: { slug: "home" },
+      params: Promise.resolve({ slug: "home" }),
     });
     const body = await res.json();
     expect(res.status).toBe(200);
@@ -135,7 +135,7 @@ describe("GET /api/pages/[slug]", () => {
   it("rejects an invalid locale param", async () => {
     mockGetSession.mockResolvedValue(ADMIN_SESSION);
     const res = await GET(makeRequest(undefined, "?locale=fr"), {
-      params: { slug: "home" },
+      params: Promise.resolve({ slug: "home" }),
     });
     expect(res.status).toBe(400);
   });
@@ -151,7 +151,7 @@ describe("PUT /api/pages/[slug]", () => {
   it("returns 401 when unauthenticated", async () => {
     mockGetSession.mockResolvedValue(null);
     const res = await PUT(makeRequest({ locale: "en", title: "Home" }), {
-      params: { slug: "home" },
+      params: Promise.resolve({ slug: "home" }),
     });
     expect(res.status).toBe(401);
   });
@@ -159,7 +159,7 @@ describe("PUT /api/pages/[slug]", () => {
   it("returns 400 for an invalid body", async () => {
     mockGetSession.mockResolvedValue(ADMIN_SESSION);
     const res = await PUT(makeRequest({ title: "Home" }), {
-      params: { slug: "home" },
+      params: Promise.resolve({ slug: "home" }),
     });
     expect(res.status).toBe(400);
     expect(mockUpsertPageContent).not.toHaveBeenCalled();
@@ -169,7 +169,7 @@ describe("PUT /api/pages/[slug]", () => {
     mockGetSession.mockResolvedValue(ADMIN_SESSION);
     mockGetPageBySlug.mockResolvedValue(null);
     const res = await PUT(makeRequest({ locale: "en", title: "Home" }), {
-      params: { slug: "nope" },
+      params: Promise.resolve({ slug: "nope" }),
     });
     expect(res.status).toBe(404);
     expect(mockUpsertPageContent).not.toHaveBeenCalled();
@@ -182,7 +182,7 @@ describe("PUT /api/pages/[slug]", () => {
 
     const res = await PUT(
       makeRequest({ locale: "zh", title: "首頁", isPublished: true }),
-      { params: { slug: "home" } }
+      { params: Promise.resolve({ slug: "home" }) }
     );
 
     expect(res.status).toBe(200);

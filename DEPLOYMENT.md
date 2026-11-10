@@ -1,6 +1,6 @@
 # vvh — Production Deployment Guide
 
-**Repository:** `https://github.com/simon617/vvh` · **App:** Next.js 14 (App Router) + `next-intl` + Prisma/SQLite
+**Repository:** `https://github.com/simon617/vvh` · **App:** Next.js 15 (App Router) + `next-intl` 4 + Prisma/SQLite
 **Registry:** `ghcr.io/simon617/vvh` · **Production host:** Ubuntu 22.04/24.04 at `10.0.2.7` (NAT) — publicly `202.77.49.35`
 **Domains:** `www.visionvalues.com.hk` (app) and `visionvalues.com.hk` (301 → www) · **DNS:** kept with the existing provider (no Cloudflare zone move)
 **Status:** ✅ Generated for `main`. ⬜ Manual phases below are pending — follow them in order.
@@ -136,26 +136,58 @@ Goals of Phase 0:
 - [ ] `22` reachable from a **non-local** network (else fix router forward before anything else).
 - [ ] Firewall switchover route (old → new web server) confirmed with the network admin (§3).
 
-### 2.3 ⚠️ BLOCKING FINDING — Next.js 14.x critical advisories
+### 2.3 ✅ RESOLVED — Next.js 14.x critical advisories (upgraded to Next.js 15.5.29)
 
-`npm audit` reports **critical/high advisories for `next@14.2.35`** (the newest 14.x):
-RCE via the Image Optimizer (AVIF), RSC deserialization DoS, request smuggling, SSRF in rewrites, cache-poisoning,
-etc. npm ships **no patched 14.x** — the effective fix is a breaking upgrade to **Next 15/16** (with `next-intl@4`).
-Mitigations currently in place: `images.unoptimized = true` in `next.config.js` (Image-Optimizer paths are inert) and
-the app is not yet publicly reachable.
+`npm audit` used to report **critical advisories for `next@14.2.35`** (the newest 14.x): RCE via the Image
+Optimizer (AVIF), RSC deserialization DoS, request smuggling, SSRF in rewrites, cache-poisoning, etc. npm ships
+**no patched 14.x**, so the effective fix was a breaking framework upgrade — **now landed** on branch
+`security/next-15-upgrade`:
 
-**Action items before/at go-live (ranked):**
+| Before | After |
+|---|---|
+| `next@14.2.35` | `next@15.5.29` |
+| `react` / `react-dom` 18 | `react` / `react-dom` 19.3.1 |
+| `next-intl` 3 | `next-intl` 4.14.9 |
+| `eslint-config-next` 14 | `eslint-config-next` 15 |
 
-1. **Plan the Next 15 → 16 upgrade** on a branch (`npm i next@15 next-intl@4`, run `npm run build`, fix breakages,
-   update `next.config.js` api diffs, re-run vitest). Repeat for 16 once 15 is green. This is the #1 security item.
-2. Keep the `npm audit` CI step **report-only** until #1 lands, then **remove `continue-on-error`** in
-   `security.yml` (comments in the file explain exactly where).
-3. Do not expose the admin/editor endpoints to the internet — enforce the authorization middleware and (recommended)
+`npm audit` now reports **0 critical** — the 3 critical RCEs and the 25 `next` advisories are gone at the source
+rather than merely mitigated. 21 advisories remain overall (14 moderate, 7 high).
+
+**Breakages fixed by the upgrade** — Next 15 made the request APIs asynchronous:
+
+- `params` / `searchParams` are `Promise<…>` in every page, layout and route handler and are awaited before use
+  (`src/app/[locale]/**`, `src/app/api/pages/[slug]/route.ts`, `src/app/uploads/[...path]/route.ts`).
+- `cookies()` / `headers()` are async: `src/lib/auth.ts` (`getSession`, `setAuthCookie` and `clearAuthCookie` are
+  all `async` now) and `src/components/layout/ContentWithSidebar.tsx`.
+- `TemplateShell` stays deliberately **synchronous** (React only supports async components on the server), so the
+  async pages resolve `x-pathname` and pass it down as a `pathname` prop — breadcrumb behaviour is unchanged.
+- Tests call async server components as plain functions, so every `{ params: { … } }` became
+  `{ params: Promise.resolve({ … }) }`; `src/lib/redirects.test.ts` now pins `// @vitest-environment node`
+  because importing `next.config.js` pulls in `next-intl/plugin`, whose filename resolution breaks under jsdom.
+
+**Still open — keep the `npm audit` CI step REPORT-ONLY.** `npm audit --omit=dev --audit-level=high` still exits
+non-zero, so `continue-on-error` in `.github/workflows/security.yml` must stay until these clear:
+
+| Finding | Where | Fix |
+|---|---|---|
+| `postcss` ≤ 8.5.22 — XSS via unescaped `</style>`, arbitrary `.map` file read (high) | **bundled inside `next@15.5.29`** (`node_modules/next/node_modules/postcss`) | Needs **`next@16.4.5`** — see item 1. |
+| `nodemailer` < 10.4.0 (high) | contact-form SMTP (`src/lib/email.ts`) | `npm i nodemailer@10` (breaking major) — re-test the contact form. |
+| `postcss-selector-parser` < 6.1.5 / `@tailwindcss/typography` (moderate) | build-time only (Tailwind) | Routine dependency bump. |
+
+**Action items (ranked):**
+
+1. **Plan the Next 15 → 16 upgrade** on a branch (`npm i next@16`, run `npm run build`, fix breakages, re-run
+   vitest). This is also the fix for the `postcss` finding above. Note `next lint` is already **deprecated** in 15
+   — migrate that script to the ESLint CLI (`npx @next/codemod@canary next-lint-to-eslint-cli .`) as part of it.
+2. Bump `nodemailer` to 10.x and re-test the contact form end to end.
+3. **Only after 1–2 are green:** remove `continue-on-error` from the `npm audit` step in `security.yml` (the
+   comment in that file points here), then re-run `npm audit --omit=dev` and target **0 critical/high** in
+   production deps.
+4. Do not expose the admin/editor endpoints to the internet — enforce the authorization middleware and (recommended)
    an additional IP allow-list in `nginx.conf` for `/api/auth` and `/api/upload` if editors connect from fixed IPs.
-4. Re-run `npm audit --omit=dev` after the upgrade; target **0 critical/high** in production deps.
 
-> This single issue is why the image gate (Trivy) is set to `CRITICAL` — keep it strict. The dependency gate will
-> become strict again after the framework upgrade.
+> This class of finding is why the image gate (Trivy) is pinned to `CRITICAL` — keep it strict. The dependency gate
+> becomes strict once item 3 is done.
 
 **Ubuntu terminal** — initial login as root (from a machine you trust):
 

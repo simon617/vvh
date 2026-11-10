@@ -19,7 +19,7 @@ describe("Admin settings page (/admin/settings)", () => {
       return null;
     });
 
-    renderWithLocale(await AdminSettingsPage({ params: { locale: "en" } }));
+    renderWithLocale(await AdminSettingsPage({ params: Promise.resolve({ locale: "en" }) }));
 
     expect(screen.getByDisplayValue("Vision Values")).toBeTruthy();
     expect(screen.getByDisplayValue("G-ABC123")).toBeTruthy();
@@ -27,7 +27,7 @@ describe("Admin settings page (/admin/settings)", () => {
 
   it("treats missing settings as empty strings", async () => {
     mockGetSiteSetting.mockResolvedValue(null);
-    renderWithLocale(await AdminSettingsPage({ params: { locale: "en" } }));
+    renderWithLocale(await AdminSettingsPage({ params: Promise.resolve({ locale: "en" }) }));
 
     const siteName = screen.getByLabelText("Site name") as HTMLInputElement;
     const ga4 = screen.getByLabelText("GA4 Tracking ID") as HTMLInputElement;

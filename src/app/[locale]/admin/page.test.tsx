@@ -60,7 +60,7 @@ describe("Admin dashboard (/admin)", () => {
       recentRow("home", "zh", "首頁"),
     ]);
 
-    renderWithLocale(await AdminDashboardPage({ params: { locale: "en" } }));
+    renderWithLocale(await AdminDashboardPage({ params: Promise.resolve({ locale: "en" }) }));
 
     // Stats: 3 pages, 2 EN published, 2 ZH published
     expect(screen.getByText("Total pages")).toBeTruthy();
@@ -77,7 +77,7 @@ describe("Admin dashboard (/admin)", () => {
     mockListPagesWithContent.mockResolvedValue([]);
     mockGetRecentPageActivity.mockResolvedValue([]);
 
-    renderWithLocale(await AdminDashboardPage({ params: { locale: "en" } }));
+    renderWithLocale(await AdminDashboardPage({ params: Promise.resolve({ locale: "en" }) }));
     expect(screen.getByText("admin")).toBeTruthy();
   });
 
@@ -85,7 +85,7 @@ describe("Admin dashboard (/admin)", () => {
     mockListPagesWithContent.mockResolvedValue([pageRow("home", { en: true })]);
     mockGetRecentPageActivity.mockResolvedValue([]);
 
-    renderWithLocale(await AdminDashboardPage({ params: { locale: "en" } }));
+    renderWithLocale(await AdminDashboardPage({ params: Promise.resolve({ locale: "en" }) }));
     expect(screen.getByTestId("recent-empty")).toBeTruthy();
     expect(screen.queryByTestId("recent-list")).not.toBeInTheDocument();
   });

@@ -70,7 +70,7 @@ describe("Admin pages listing (/admin/pages)", () => {
     ]);
 
     // An async server component resolves to JSX — await it before rendering.
-    renderWithLocale(await AdminPagesPage({ params: { locale: "en" } }));
+    renderWithLocale(await AdminPagesPage({ params: Promise.resolve({ locale: "en" }) }));
 
     expect(screen.getByText("home")).toBeTruthy();
     expect(screen.getByText("contact")).toBeTruthy();
@@ -91,7 +91,7 @@ describe("Admin pages listing (/admin/pages)", () => {
   it("prefixes the edit link with the active locale", async () => {
     mockListPagesWithContent.mockResolvedValue([pageRow()]);
 
-    renderWithLocale(await AdminPagesPage({ params: { locale: "zh" } }));
+    renderWithLocale(await AdminPagesPage({ params: Promise.resolve({ locale: "zh" }) }));
     const hrefs = screen
       .getAllByText("Edit")
       .map((node) => node.getAttribute("href"));

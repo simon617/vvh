@@ -15,8 +15,10 @@ vi.mock("next/link", () => ({
 }));
 
 describe("Announcements page", () => {
-  it("embeds the en Datalink announcement page in an iframe", () => {
-    renderWithLocale(AnnouncementsPage({ params: { locale: "en" } }));
+  it("embeds the en Datalink announcement page in an iframe", async () => {
+    renderWithLocale(
+      await AnnouncementsPage({ params: Promise.resolve({ locale: "en" }) })
+    );
     expect(
       screen.getByRole("heading", { level: 1, name: "Announcements & Circulars" })
     ).toBeInTheDocument();
@@ -28,8 +30,11 @@ describe("Announcements page", () => {
     );
   });
 
-  it("embeds the zh Datalink announcement page in an iframe", () => {
-    renderWithLocale(AnnouncementsPage({ params: { locale: "zh" } }), "zh");
+  it("embeds the zh Datalink announcement page in an iframe", async () => {
+    renderWithLocale(
+      await AnnouncementsPage({ params: Promise.resolve({ locale: "zh" }) }),
+      "zh"
+    );
     expect(
       screen.getByRole("heading", { level: 1, name: "公告及通函" })
     ).toBeInTheDocument();
@@ -40,13 +45,13 @@ describe("Announcements page", () => {
     );
   });
 
-  it("exposes localized metadata", () => {
-    expect(generateMetadata({ params: { locale: "en" } }).title).toContain(
-      "Announcements"
-    );
-    expect(generateMetadata({ params: { locale: "zh" } }).title).toContain(
-      "公告"
-    );
+  it("exposes localized metadata", async () => {
+    expect(
+      (await generateMetadata({ params: Promise.resolve({ locale: "en" }) })).title
+    ).toContain("Announcements");
+    expect(
+      (await generateMetadata({ params: Promise.resolve({ locale: "zh" }) })).title
+    ).toContain("公告");
   });
 });
 

@@ -11,11 +11,13 @@ const locales = ["en", "zh"];
 
 export default async function LocaleLayout({
   children,
-  params: { locale },
+  params,
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
+  // Next.js 15+: route params are async and must be awaited.
+  const { locale } = await params;
   if (!locales.includes(locale)) {
     notFound();
   }
@@ -26,7 +28,7 @@ export default async function LocaleLayout({
   const gaMeasurementId = (await getSiteSetting("ga4_tracking_id")) ?? "";
 
   return (
-    <NextIntlClientProvider messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages}>
       {gaMeasurementId ? <GAScript measurementId={gaMeasurementId} /> : null}
       <div className="min-h-screen flex flex-col">
         <Header locale={locale} />

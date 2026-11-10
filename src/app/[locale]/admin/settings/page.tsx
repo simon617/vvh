@@ -2,7 +2,7 @@ import { getSiteSetting } from "@/lib/site-settings";
 import SettingsForm from "@/components/admin/SettingsForm";
 
 interface AdminSettingsPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 /**

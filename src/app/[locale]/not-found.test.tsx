@@ -3,7 +3,8 @@ import { renderWithLocale } from "@/test/utils";
 import NotFound from "./not-found";
 
 // The 404 page derives its locale from the `x-locale` request header set by
-// middleware (see src/middleware.ts and not-found.tsx) rather than route params.
+// middleware (see src/middleware.ts and not-found.tsx), falling back to the
+// route param when the header is absent.
 // Mock next/headers — mirroring the other page tests — and let each test choose
 // the active locale. `vi.hoisted` keeps the mock available to the factory above
 // the hoisted `vi.mock` call.
@@ -17,7 +18,7 @@ describe("[locale] not-found page (deliverable 4.7 / WEB-08)", () => {
   it("renders localized copy for English and links home in the current locale", async () => {
     mockHeaders.mockReturnValue(new Map([["x-locale", "en"]]));
     const view = renderWithLocale(
-      await NotFound({ params: { locale: "en" } }),
+      await NotFound({ params: Promise.resolve({ locale: "en" }) }),
       "en"
     );
     expect(
@@ -30,7 +31,7 @@ describe("[locale] not-found page (deliverable 4.7 / WEB-08)", () => {
   it("renders localized copy for Chinese and links home in the current locale", async () => {
     mockHeaders.mockReturnValue(new Map([["x-locale", "zh"]]));
     const view = renderWithLocale(
-      await NotFound({ params: { locale: "zh" } }),
+      await NotFound({ params: Promise.resolve({ locale: "zh" }) }),
       "zh"
     );
     expect(

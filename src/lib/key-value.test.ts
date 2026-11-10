@@ -70,3 +70,40 @@ describe("buildKeyValueTable", () => {
     expect(buildKeyValueTable([])).toBe("");
   });
 });
+
+/**
+ * Regression coverage for CodeQL `js/double-escaping`.
+ *
+ * `decodeEntities` previously chained six `.replace()` calls (`&amp;` first), so
+ * an already-escaped entity was re-scanned by later passes: `&amp;lt;` decoded to
+ * `<` instead of `&lt;`. It now decodes in a single pass with one regex.
+ */
+describe("parseKeyValueTable — single-pass entity decoding", () => {
+  const decode = (raw: string): string =>
+    parseKeyValueTable(
+      `<table><tbody><tr><th>Key</th><td>${raw}</td></tr></tbody></table>`
+    )[0].value;
+
+  it("decodes &amp; once, leaving already-escaped markup escaped", () => {
+    expect(decode("&amp;lt;script&amp;gt;")).toBe("&lt;script&gt;");
+    expect(decode("&amp;lt;script&amp;gt;")).not.toBe("<script>");
+  });
+
+  it("turns a single &amp; into one ampersand", () => {
+    expect(decode("Fish &amp; Chips")).toBe("Fish & Chips");
+  });
+
+  it("does not double-decode &amp;amp;", () => {
+    expect(decode("&amp;amp;")).toBe("&amp;");
+  });
+
+  it("does not double-decode numeric entities", () => {
+    expect(decode("&amp;#39;")).toBe("&#39;");
+  });
+
+  it("still decodes plain named and numeric entities", () => {
+    expect(decode("&lt;a&gt; &quot;q&quot; &apos;a&apos;")).toBe("<a> \"q\" 'a'");
+    expect(decode("&#39;")).toBe("'");
+    expect(decode("&#039;")).toBe("'");
+  });
+});

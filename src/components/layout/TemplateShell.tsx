@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import Breadcrumb from "./Breadcrumb";
 import type { Locale } from "@/lib/navigation";
@@ -7,20 +6,31 @@ interface TemplateShellProps {
   title: string;
   locale: Locale;
   heroImage?: string;
+  /**
+   * Current request pathname, used for the breadcrumb trail. Callers resolve it
+   * from the `x-pathname` header set by middleware (Next.js 15 made `headers()`
+   * async). Falls back to the locale root when omitted.
+   */
+  pathname?: string;
   children: ReactNode;
 }
 
 /**
  * Shared shell for inner-page templates: hero/header image area + breadcrumb
  * + content slot. The left sidebar is provided by the [locale] layout.
+ *
+ * Deliberately a SYNC component: it is rendered as JSX by React, and React only
+ * supports async components on the server. Callers pass the async-resolved
+ * `pathname` in as a prop instead.
  */
 export default function TemplateShell({
   title,
   locale,
   heroImage,
+  pathname,
   children,
 }: TemplateShellProps) {
-  const pathname = headers().get("x-pathname") || `/${locale}`;
+  const currentPathname = pathname || `/${locale}`;
 
   return (
     <div>
@@ -40,7 +50,7 @@ export default function TemplateShell({
         </div>
       )}
 
-      <Breadcrumb pathname={pathname} locale={locale} />
+      <Breadcrumb pathname={currentPathname} locale={locale} />
 
       {children}
     </div>

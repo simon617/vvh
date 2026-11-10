@@ -3,7 +3,7 @@ import { getPageBySlug, getPageContent } from "@/lib/page-content";
 import PageEditor from "@/components/admin/PageEditor";
 
 interface AdminPageEditorPageProps {
-  params: { locale: string; slug: string };
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 /**
@@ -13,7 +13,7 @@ interface AdminPageEditorPageProps {
 export default async function AdminPageEditorPage({
   params,
 }: AdminPageEditorPageProps) {
-  const { slug } = params;
+  const { slug } = await params;
 
   const page = await getPageBySlug(slug);
   if (!page) {

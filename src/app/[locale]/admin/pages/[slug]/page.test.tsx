@@ -45,7 +45,7 @@ describe("Admin page editor route (server)", () => {
   it("calls notFound() when the slug has no Page row", async () => {
     mockGetPageBySlug.mockResolvedValue(null);
     await expect(
-      AdminPageEditorPage({ params: { locale: "en", slug: "nope" } })
+      AdminPageEditorPage({ params: Promise.resolve({ locale: "en", slug: "nope" }) })
     ).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
@@ -59,7 +59,7 @@ describe("Admin page editor route (server)", () => {
     );
 
     const jsx = await AdminPageEditorPage({
-      params: { locale: "en", slug: "home" },
+      params: Promise.resolve({ locale: "en", slug: "home" }),
     });
     renderWithLocale(jsx);
 

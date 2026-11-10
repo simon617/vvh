@@ -43,7 +43,8 @@ export function verifyToken(token: string): JwtPayload | null {
 
 // Get current session from cookie
 export async function getSession(): Promise<JwtPayload | null> {
-  const cookieStore = cookies();
+  // Next.js 15+: cookies() is async and must be awaited.
+  const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
   if (!token) {
@@ -86,8 +87,9 @@ export async function requireSession(): Promise<SessionResult> {
 //       secure === true AND connection is HTTP
 
 // path: "/" : cookie is available for entire website, not just a specific path
-export function setAuthCookie(token: string): void {
-  const cookieStore = cookies();
+export async function setAuthCookie(token: string): Promise<void> {
+  // Next.js 15+: cookies() is async and must be awaited.
+  const cookieStore = await cookies();
   cookieStore.set("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -98,8 +100,9 @@ export function setAuthCookie(token: string): void {
 }
 
 // Clear auth cookie
-export function clearAuthCookie(): void {
-  const cookieStore = cookies();
+export async function clearAuthCookie(): Promise<void> {
+  // Next.js 15+: cookies() is async and must be awaited.
+  const cookieStore = await cookies();
   cookieStore.set("token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

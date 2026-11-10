@@ -4,19 +4,19 @@ import { buildPageMetadata } from "@/lib/metadata";
 import type { Locale } from "@/lib/navigation";
 
 interface Props {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 export async function generateMetadata({ params }: Props) {
-  const data = await getPageData("corporate-details", params.locale as Locale);
-  return data ? buildPageMetadata(data, params.locale as Locale) : {};
+  const { locale } = await params;
+  const data = await getPageData("corporate-details", locale as Locale);
+  return data ? buildPageMetadata(data, locale as Locale) : {};
 }
 
 export default async function CorporateDetailsPage({ params }: Props) {
-  return (
-    await ContentWithSidebar({
-      slug: "corporate-details",
-      locale: params.locale as Locale,
-    })
-  );
+  // Next.js 15: params is async; ContentWithSidebar is async and reads headers().
+  return await ContentWithSidebar({
+    slug: "corporate-details",
+    locale: (await params).locale as Locale,
+  });
 }

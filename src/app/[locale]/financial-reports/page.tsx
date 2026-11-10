@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { useTranslations } from "next-intl";
 import TemplateShell from "@/components/layout/TemplateShell";
 import ReportsTable from "@/components/layout/ReportsTable";
@@ -9,12 +10,13 @@ import { buildPageMetadata } from "@/lib/metadata";
 import type { Locale } from "@/lib/navigation";
 
 interface Props {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 export async function generateMetadata({ params }: Props) {
-  const data = await getPageData("financial-reports", params.locale as Locale);
-  return data ? buildPageMetadata(data, params.locale as Locale) : {};
+  const { locale } = await params;
+  const data = await getPageData("financial-reports", locale as Locale);
+  return data ? buildPageMetadata(data, locale as Locale) : {};
 }
 
 /** Synchronous view (i18n hook must run inside the provider during render). */
@@ -22,16 +24,23 @@ function FinancialReportsView({
   title,
   heroImage,
   locale,
+  pathname,
   rows,
 }: {
   title: string;
   heroImage?: string;
   locale: Locale;
+  pathname: string;
   rows: ReportRow[];
 }) {
   const t = useTranslations("tables");
   return (
-    <TemplateShell title={title} locale={locale} heroImage={heroImage}>
+    <TemplateShell
+      title={title}
+      locale={locale}
+      heroImage={heroImage}
+      pathname={pathname}
+    >
       <div className="bg-white rounded-lg shadow-md p-6">
         <ReportsTable
           rows={rows}
@@ -51,9 +60,13 @@ function FinancialReportsView({
 }
 
 export default async function FinancialReportsPage({ params }: Props) {
-  const locale = params.locale as Locale;
+  const locale = (await params).locale as Locale;
   const data = await getPageData("financial-reports", locale);
   if (!data) notFound();
+
+  // Next.js 15: headers() is async — read the middleware-set pathname for the breadcrumb.
+  const pathname =
+    (await headers()).get("x-pathname") || `/${locale}/financial-reports`;
 
   // contentHtml is always populated (DB or placeholder) and both carry the report
   // envelope, so getReportRows always yields rows here.
@@ -64,6 +77,7 @@ export default async function FinancialReportsPage({ params }: Props) {
       title={data.title}
       heroImage={data.heroImage}
       locale={locale}
+      pathname={pathname}
       rows={rows}
     />
   );

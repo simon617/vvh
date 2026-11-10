@@ -22,7 +22,7 @@ describe("Home page template", () => {
   });
 
   it("renders hero, metrics and reports in English", async () => {
-    renderWithLocale(await HomePage({ params: { locale: "en" } }));
+    renderWithLocale(await HomePage({ params: Promise.resolve({ locale: "en" }) }));
     expect(
       screen.getByRole("heading", { level: 1, name: /Vision Values Holdings/i })
     ).toBeInTheDocument();
@@ -33,12 +33,12 @@ describe("Home page template", () => {
   });
 
   it("passes the latest report rows for the locale to the template", async () => {
-    await HomePage({ params: { locale: "en" } });
+    await HomePage({ params: Promise.resolve({ locale: "en" }) });
     expect(mockGetLatestReports).toHaveBeenCalledWith("en");
   });
 
   it("renders localized Chinese content", async () => {
-    renderWithLocale(await HomePage({ params: { locale: "zh" } }), "zh");
+    renderWithLocale(await HomePage({ params: Promise.resolve({ locale: "zh" }) }), "zh");
     expect(
       screen.getByRole("heading", { level: 1, name: "遠見控股有限公司" })
     ).toBeInTheDocument();
@@ -47,10 +47,10 @@ describe("Home page template", () => {
 
   it("exposes localized metadata", async () => {
     expect(
-      (await generateMetadata({ params: { locale: "en" } })).title
+      (await generateMetadata({ params: Promise.resolve({ locale: "en" }) })).title
     ).toContain("Vision Values Holdings Limited");
     expect(
-      (await generateMetadata({ params: { locale: "zh" } })).title
+      (await generateMetadata({ params: Promise.resolve({ locale: "zh" }) })).title
     ).toContain("遠見控股有限公司");
   });
 });

@@ -27,7 +27,7 @@ describe("Corporate Governance page (rich text)", () => {
 
   it("renders localized heading and clickable document list", async () => {
     renderWithLocale(
-      await CorporateGovernancePage({ params: { locale: "en" } })
+      await CorporateGovernancePage({ params: Promise.resolve({ locale: "en" }) })
     );
     expect(screen.getByRole("heading", { level: 1, name: "Corporate Governance" })).toBeInTheDocument();
     const moa = screen.getByText("Memorandum of Association and Articles of Association");
@@ -44,7 +44,7 @@ describe("Corporate Governance page (rich text)", () => {
 
   it("renders Chinese heading and clickable document list", async () => {
     renderWithLocale(
-      await CorporateGovernancePage({ params: { locale: "zh" } }),
+      await CorporateGovernancePage({ params: Promise.resolve({ locale: "zh" }) }),
       "zh"
     );
     expect(screen.getByRole("heading", { level: 1, name: "企業管治" })).toBeInTheDocument();
@@ -59,10 +59,10 @@ describe("Corporate Governance page (rich text)", () => {
 
   it("exposes localized metadata", async () => {
     expect(
-      (await generateMetadata({ params: { locale: "en" } })).title
+      (await generateMetadata({ params: Promise.resolve({ locale: "en" }) })).title
     ).toContain("Corporate Governance");
     expect(
-      (await generateMetadata({ params: { locale: "zh" } })).title
+      (await generateMetadata({ params: Promise.resolve({ locale: "zh" }) })).title
     ).toContain("企業管治");
   });
 });

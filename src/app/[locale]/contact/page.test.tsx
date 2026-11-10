@@ -26,7 +26,7 @@ describe("Contact page", () => {
   });
 
   it("renders the form fields and buttons", async () => {
-    renderWithLocale(await ContactPage({ params: { locale: "en" } }));
+    renderWithLocale(await ContactPage({ params: Promise.resolve({ locale: "en" }) }));
     expect(screen.getByRole("heading", { level: 1, name: "Contact Us" })).toBeInTheDocument();
     expect(screen.getByLabelText(/^Name/)).toBeInTheDocument();
     expect(screen.getByLabelText(/^Subject/)).toBeInTheDocument();
@@ -37,13 +37,13 @@ describe("Contact page", () => {
   });
 
   it("renders Chinese labels", async () => {
-    renderWithLocale(await ContactPage({ params: { locale: "zh" } }), "zh");
+    renderWithLocale(await ContactPage({ params: Promise.resolve({ locale: "zh" }) }), "zh");
     expect(screen.getByRole("heading", { level: 1, name: "聯絡我們" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "遞交" })).toBeInTheDocument();
   });
 
   it("exposes localized metadata", async () => {
-    expect((await generateMetadata({ params: { locale: "en" } })).title).toContain("Contact Us");
-    expect((await generateMetadata({ params: { locale: "zh" } })).title).toContain("聯絡我們");
+    expect((await generateMetadata({ params: Promise.resolve({ locale: "en" }) })).title).toContain("Contact Us");
+    expect((await generateMetadata({ params: Promise.resolve({ locale: "zh" }) })).title).toContain("聯絡我們");
   });
 });

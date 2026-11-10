@@ -27,7 +27,7 @@ describe("Lost Share Certificates page (rich text)", () => {
 
   it("renders heading and body in English", async () => {
     renderWithLocale(
-      await LostShareCertificatesPage({ params: { locale: "en" } })
+      await LostShareCertificatesPage({ params: Promise.resolve({ locale: "en" }) })
     );
     expect(screen.getByRole("heading", { level: 1, name: "Lost Share Certificates" })).toBeInTheDocument();
     expect(
@@ -38,7 +38,7 @@ describe("Lost Share Certificates page (rich text)", () => {
 
   it("renders heading and body in Chinese", async () => {
     renderWithLocale(
-      await LostShareCertificatesPage({ params: { locale: "zh" } }),
+      await LostShareCertificatesPage({ params: Promise.resolve({ locale: "zh" }) }),
       "zh"
     );
     expect(screen.getByRole("heading", { level: 1, name: "遺失股票證書" })).toBeInTheDocument();

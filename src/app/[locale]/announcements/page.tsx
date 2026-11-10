@@ -1,10 +1,11 @@
+import { headers } from "next/headers";
 import TemplateShell from "@/components/layout/TemplateShell";
 import { getAnnouncementsUrl } from "@/lib/announcements";
 import { buildPageMetadata } from "@/lib/metadata";
 import type { Locale } from "@/lib/navigation";
 
 interface Props {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 /**
@@ -34,8 +35,8 @@ const PAGE_INFO: Record<
 
 const toLocale = (value: string): Locale => (value === "zh" ? "zh" : "en");
 
-export function generateMetadata({ params }: Props) {
-  const locale = toLocale(params.locale);
+export async function generateMetadata({ params }: Props) {
+  const locale = toLocale((await params).locale);
   const info = PAGE_INFO[locale];
   return buildPageMetadata(
     {
@@ -47,12 +48,15 @@ export function generateMetadata({ params }: Props) {
   );
 }
 
-export default function AnnouncementsPage({ params }: Props) {
-  const locale = toLocale(params.locale);
+export default async function AnnouncementsPage({ params }: Props) {
+  const locale = toLocale((await params).locale);
   const info = PAGE_INFO[locale];
+  // Next.js 15: headers() is async — read the middleware-set pathname for the breadcrumb.
+  const pathname =
+    (await headers()).get("x-pathname") || `/${locale}/announcements`;
 
   return (
-    <TemplateShell title={info.title} locale={locale}>
+    <TemplateShell title={info.title} locale={locale} pathname={pathname}>
       <div className="bg-white rounded-lg shadow-md p-4">
         <iframe
           src={getAnnouncementsUrl(locale)}

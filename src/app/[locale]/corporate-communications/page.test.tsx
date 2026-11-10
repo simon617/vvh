@@ -27,7 +27,7 @@ describe("Corporate Communications page (reports table)", () => {
 
   it("renders a sortable document table linked to a local PDF in English", async () => {
     renderWithLocale(
-      await CorporateCommunicationsPage({ params: { locale: "en" } })
+      await CorporateCommunicationsPage({ params: Promise.resolve({ locale: "en" }) })
     );
     expect(
       screen.getByRole("heading", { level: 1, name: "Corporate Communications" })
@@ -47,7 +47,7 @@ describe("Corporate Communications page (reports table)", () => {
 
   it("renders a localized document table linked to a local PDF in Chinese", async () => {
     renderWithLocale(
-      await CorporateCommunicationsPage({ params: { locale: "zh" } }),
+      await CorporateCommunicationsPage({ params: Promise.resolve({ locale: "zh" }) }),
       "zh"
     );
     expect(screen.getByRole("heading", { level: 1, name: "公司通訊" })).toBeInTheDocument();
@@ -76,7 +76,7 @@ describe("Corporate Communications page (reports table)", () => {
     });
 
     renderWithLocale(
-      await CorporateCommunicationsPage({ params: { locale: "en" } })
+      await CorporateCommunicationsPage({ params: Promise.resolve({ locale: "en" }) })
     );
     expect(screen.getByText("Custom Communication 2026")).toBeInTheDocument();
     expect(
