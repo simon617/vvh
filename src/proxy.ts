@@ -8,7 +8,11 @@ const intlMiddleware = createMiddleware({
   localePrefix: "always", // Always include locale in URLs (e.g., /en/about)
 });
 
-export function middleware(request: NextRequest) {
+// Next.js 16 renamed the `middleware.ts` convention to `proxy.ts` (`middleware`
+// is deprecated, not removed). This file was moved to `src/proxy.ts` and the
+// exported function renamed from `middleware` to `proxy`; the logic below is
+// unchanged.
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 1. Skip static files
@@ -66,7 +70,7 @@ function getLocaleFromPathname(pathname: string): string {
     : defaultLocale;
 }
 
-// Tells Next.js which paths should trigger this middleware. 
+// Tells Next.js which paths should trigger this proxy. 
 // It uses a negative lookahead regex to exclude.
 export const config = {
   matcher: ["/((?!_next|api|images|favicon.ico).*)"],

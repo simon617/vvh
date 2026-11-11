@@ -1,6 +1,6 @@
 # vvh — Production Deployment Guide
 
-**Repository:** `https://github.com/simon617/vvh` · **App:** Next.js 15 (App Router) + `next-intl` 4 + Prisma/SQLite
+**Repository:** `https://github.com/simon617/vvh` · **App:** Next.js 16 (App Router) + `next-intl` 4 + Prisma/SQLite
 **Registry:** `ghcr.io/simon617/vvh` · **Production host:** Ubuntu 22.04/24.04 at `10.0.2.7` (NAT) — publicly `202.77.49.35`
 **Domains:** `www.visionvalues.com.hk` (app) and `visionvalues.com.hk` (301 → www) · **DNS:** kept with the existing provider (no Cloudflare zone move)
 **Status:** ✅ Generated for `main`. ⬜ Manual phases below are pending — follow them in order.
@@ -170,15 +170,14 @@ non-zero, so `continue-on-error` in `.github/workflows/security.yml` must stay u
 
 | Finding | Where | Fix |
 |---|---|---|
-| `postcss` ≤ 8.5.22 — XSS via unescaped `</style>`, arbitrary `.map` file read (high) | **bundled inside `next@15.5.29`** (`node_modules/next/node_modules/postcss`) | Needs **`next@16.4.5`** — see item 1. |
+| `postcss` ≤ 8.5.22 — XSS via unescaped `</style>`, arbitrary `.map` file read (high) | **bundled inside `next@15.5.29`** (`node_modules/next/node_modules/postcss`) | ✅ **Cleared** — `next@16.4.6` bundles a patched `postcss`. See §2.4. |
 | `nodemailer` < 10.4.0 (high) | contact-form SMTP (`src/lib/email.ts`) | `npm i nodemailer@10` (breaking major) — re-test the contact form. |
 | `postcss-selector-parser` < 6.1.5 / `@tailwindcss/typography` (moderate) | build-time only (Tailwind) | Routine dependency bump. |
 
 **Action items (ranked):**
 
-1. **Plan the Next 15 → 16 upgrade** on a branch (`npm i next@16`, run `npm run build`, fix breakages, re-run
-   vitest). This is also the fix for the `postcss` finding above. Note `next lint` is already **deprecated** in 15
-   — migrate that script to the ESLint CLI (`npx @next/codemod@canary next-lint-to-eslint-cli .`) as part of it.
+1. ✅ **Done — Next 15 → 16 upgrade landed** (`next@16.4.6`, Turbopack build, `next lint` → ESLint CLI). This was
+   also the fix for the `postcss` finding above; full notes in **§2.4**.
 2. Bump `nodemailer` to 10.x and re-test the contact form end to end.
 3. **Only after 1–2 are green:** remove `continue-on-error` from the `npm audit` step in `security.yml` (the
    comment in that file points here), then re-run `npm audit --omit=dev` and target **0 critical/high** in
@@ -198,6 +197,52 @@ nproc && free -h && df -h /    # capacity sanity check
 ```
 
 Follow the rest of this document in order. **Do not** skip the hardening phase on a public box.
+
+### 2.4 ✅ RESOLVED — Next.js 15 → 16 upgrade (clears the bundled `postcss` high)
+
+Landed on branch `NextJS-16-Upgrade`. This was action item 1 of §2.3 and *is* the fix for the `postcss` finding in
+the table above.
+
+| Before | After |
+|---|---|
+| `next@15.5.29` | `next@16.4.6` — bundles `postcss@8.5.23` (was ≤ 8.5.22 → high) |
+| `next-intl@4.14.9` | `next-intl@4.14.10` |
+| `eslint` 8 + `.eslintrc.json` | `eslint@9` + flat `eslint.config.mjs` |
+| `eslint-config-next@15.5.29` | `eslint-config-next@16.4.6` |
+| `react` / `react-dom` 19.3.1, TypeScript `^5.4` | unchanged — no React/TS change needed |
+
+**Breaking changes handled**
+
+- **`middleware.ts` → `proxy.ts`** (Next 16 renamed the convention; `middleware` is deprecated, not removed). The
+  file is now `src/proxy.ts` exporting `proxy()`, with `config.matcher` unchanged. The build's route table prints
+  `ƒ Proxy` and behaviour is identical.
+- **`next lint` removed** → `"lint": "eslint ."` against the flat `eslint.config.mjs`, which spreads
+  `eslint-config-next/core-web-vitals`. That preset already registers `@typescript-eslint/parser` for `**/*.ts(x)`,
+  so no separate `/typescript` import is needed and no type-aware rules were introduced.
+- **Turbopack is the default builder** for dev *and* build (`next build --webpack` opts out). `next.config.js`
+  needed **no** change — the next-intl plugin detects Next ≥ 16 and injects the Turbopack `resolveAlias` itself.
+- **`tsconfig.json` is rewritten by the build**: `jsx: "react-jsx"` (mandatory) and `.next/dev/types/**/*.ts` added
+  to `include`. Committed as-is.
+- **`src/lib/uploads.ts`** now marks its dynamic `path.resolve` with `/*turbopackIgnore: true*/`. Turbopack can't
+  statically scope `UPLOAD_DIR`, so without it the *whole project* is traced into `.next/standalone` (269.9 MB →
+  122.7 MB locally) — and the Dockerfile copies that directory into the image.
+- **Two new `react-hooks` v7 lints.** `set-state-in-effect` flagged two deliberate, commented effects in
+  `ReportsTable.tsx` (page clamping + `?page=N` restore that must not run during SSR). Pinned to `warn` in
+  `eslint.config.mjs`; refactoring them is a follow-up, not a blocker.
+
+**Verification** — `npm run typecheck` 0 · `npm test` **335 tests / 66 files green** · `npm run lint` **0 errors**
+(6 warnings) · `npm run build` (Turbopack) 0, plus a route smoke test against **both** `next start` and the
+standalone artifact (`node .next/standalone/server.js`): `/` → 307 `/en`; `/eng/corp_board.asp` → 301
+`/en/board-of-directors`; `/chi/major.asp` → 301 `/zh/announcements`; `/en`, `/zh`, `/sitemap.xml`, `/robots.txt`,
+`/api/health` → 200; `/en/admin/pages` → 307 to the admin login; unknown page → 404 with the **localized** copy.
+`/en/admin/login` → **200** is the key assertion: the admin layout renders standalone only when the proxy-set
+`x-pathname` header reaches `headers()`, so this proves middleware → request header propagation still works on 16.
+⚠️ **`docker build` was not run** (no Docker daemon in that environment) — run
+`docker build -t vvh:next16 .` before deploying.
+
+**Still deferred:** the `nodemailer` < 10.4.0 item below, and a one-line guard for the non-fatal `TypeError` that
+`src/app/[locale]/not-found.tsx` logs when Next renders the 404 boundary without route props (the page still renders
+and still returns HTTP 404).
 
 ## 3. DNS & switchover plan (Phase 1a)
 

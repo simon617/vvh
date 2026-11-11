@@ -68,7 +68,16 @@ export function uploadsDir(): string {
  * Used by the /uploads serving route.
  */
 export function resolveUploadPath(relativePath: string): string | null {
-  const base = path.resolve(uploadsDir());
+  // `turbopackIgnore: true` (Next.js 16): Turbopack is now the default builder
+  // for `next build` and, unlike webpack, it cannot statically scope this call —
+  // UPLOAD_DIR comes from the environment — so it falls back to tracing the
+  // *whole project* into `.next/standalone` ("Dynamic filesystem access causes
+  // tracing of the whole project"). Excluding it is safe: the uploads root is a
+  // runtime volume (docker-compose mounts ./uploads, the Dockerfile creates
+  // /app/uploads) that deliberately does not exist at build time.
+  // This comment only affects build-time file tracing — runtime behaviour is
+  // unchanged, and webpack builds (`next build --webpack`) simply ignore it.
+  const base = path.resolve(/*turbopackIgnore: true*/ uploadsDir());
 
   // Treat backslashes as separators too, so the guard behaves identically on
   // POSIX and Windows. On Linux a `..\..\x` string is a single (in-base)

@@ -23,7 +23,7 @@ This is the **orientation guide** for any developer who needs to work on this co
 
 ```
 ┌─────────────────────────────┐
-│  next-intl middleware        │  src/middleware.ts
+│  next-intl proxy             │  src/proxy.ts
 │  - locale routing /en /zh    │  - sets x-pathname header
 │  - guards /admin (JWT cookie)│
 └──────────────┬──────────────┘
@@ -61,7 +61,7 @@ This is the **orientation guide** for any developer who needs to work on this co
 ### Core data flow (public page render)
 
 1. Browser requests `/en/financial-reports`.
-2. `src/middleware.ts` runs next-intl middleware (locale), sets `x-pathname`, passes through.
+2. `src/proxy.ts` (Next.js 16's renamed `middleware.ts`) runs next-intl middleware (locale), sets `x-pathname`, passes through.
 3. `src/app/[locale]/financial-reports/page.tsx` (server component) calls
    `getPageData("financial-reports", locale)` from `src/lib/pages.ts`.
 4. `pages.ts` loads the placeholder (from `src/lib/placeholders.ts`) as a fallback, then reads the
@@ -159,7 +159,7 @@ into a client component; call `/api` instead. Pure modules (no server imports) a
 | File | Purpose |
 |------|---------|
 | `i18n.ts` | next-intl config: locales `['en','zh']`, loads `messages/<locale>.json`. |
-| `middleware.ts` | next-intl middleware + admin JWT cookie guard + `x-pathname` header. |
+| `proxy.ts` | Next.js 16's `middleware.ts` convention (renamed): next-intl proxy + admin JWT cookie guard + `x-pathname` header. Exports `proxy()` + `config.matcher`. |
 | `global.d.ts` | CSS module type shim. |
 
 ### 3.7 Config / root files
@@ -171,6 +171,7 @@ into a client component; call `/api` instead. Pure modules (no server imports) a
 | `tsconfig.json` | `@/*` → `src/*` path alias. Always import via `@/...`, never relative for cross-folder. |
 | `tailwind.config.ts` | Tailwind theme + `@tailwindcss/typography` plugin (used by `.prose`). |
 | `vitest.config.ts` | Vitest config (jsdom, react plugin, alias, include `src/**/*.test.{ts,tsx}`). |
+| `eslint.config.mjs` | **ESLint flat config** (Next.js 16). Spreads `eslint-config-next/core-web-vitals` (which already wires `@typescript-eslint/parser` for `**/*.ts(x)`) + ignores for generated folders; pins `react-hooks/set-state-in-effect` to `warn`. |
 | `.env` / `.env.example` | Environment variables (see §7). |
 | `docker-compose.yml` / `Dockerfile` | Containerized production-like setup with SQLite + uploads volumes. |
 | `tools/` | PowerShell download scripts (live-site PDFs) + catalog source for `import:content`. |
@@ -191,7 +192,7 @@ into a client component; call `/api` instead. Pure modules (no server imports) a
 
 - **`src/i18n.ts`** — declares `locales = ['en', 'zh']`, `defaultLocale = 'en'`. Loads the matching
   `messages/<locale>.json`. Any unknown locale → `notFound()`.
-- **`src/middleware.ts`** — 
+- **`src/proxy.ts`** (was `src/middleware.ts` before Next.js 16) — 
   1. Skips `_next`, `api`, `images`, `favicon.ico`, any path with a dot.
   2. For `/admin/*` (after stripping the locale prefix): allows `login` & `setup`; otherwise requires the
      JWT cookie `token` (presence check only), else redirects to `/{locale}/admin/login?redirect=...`.
@@ -343,7 +344,7 @@ All API routes guard themselves with `requireSession()` (a `{session, error}` re
 | `dev` | `next dev` | Local dev server. |
 | `build` | `next build` | Production build. |
 | `start` | `next start` | Serve production build. |
-| `lint` | `next lint` | ESLint. |
+| `lint` | `eslint .` | ESLint. Next.js 16 removed `next lint`; config is the flat `eslint.config.mjs` (spreads `eslint-config-next/core-web-vitals`). |
 | `test` | `vitest run` | Run all tests. |
 | `test:watch` | `vitest` | Watch mode. |
 | `db:migrate` | `prisma migrate dev` | Create/apply migrations. |
@@ -450,8 +451,9 @@ All API routes guard themselves with `requireSession()` (a `{session, error}` re
 12. **Slug sync.** When adding a page, keep slugs in sync across `navigation.ts` (nav source of truth — includes `announcements`, which is **public-only**), `placeholders.ts` (fallback content — **exclude** `announcements`), and `prisma/seed.ts` (CMS pages — **exclude** `announcements`).
 
 13. **Tests to keep green.** Target the current count on `npm test` (66 files / 335 tests);
-    `npm run lint` should be clean apart from the two pre-existing Phase-1 warnings
-    (`admin/setup` useEffect deps, `Logo` `<img>`); `npm run build` exits 0.
+    `npm run lint` must exit **0** (warnings only: `admin/setup` useEffect deps, `Logo` `<img>`, two
+    `window.location.assign`, two `react-hooks/set-state-in-effect` in `ReportsTable.tsx`); `npm run build`
+    (Turbopack) exits 0.
 
 14. **Docs discipline.** Every code change is expected to update `docs/phase-2b-tasklist.md`
     (Files Modified + commit) so the work is traceable. Phase plans/checklists should stay in sync
@@ -467,6 +469,17 @@ All API routes guard themselves with `requireSession()` (a `{session, error}` re
       down as the `pathname` prop (React only supports async components on the server).
     - Tests call async server components as functions, so pass `params: Promise.resolve({ … })`.
     See `DEPLOYMENT.md` §2.3 for the full Next 15 migration notes.
+
+16. **Next.js 16 specifics.**
+    - **Turbopack is the default builder** for `next dev` *and* `next build` (opt out with `next build --webpack`).
+    - **`middleware.ts` → `proxy.ts`** — the file exports `proxy()`; `config.matcher` is unchanged.
+    - **`next lint` is gone** — `npm run lint` is `eslint .` with the flat `eslint.config.mjs`. Add new rule
+      overrides there, not to an `.eslintrc.json` (deleted).
+    - **Do not add** `next.config.ts`, experimental flags, `serverExternalPackages` or Cache Components opt-ins
+      without a plan: `next.config.js` is intentionally untouched and the next-intl plugin self-detects Next ≥ 16.
+    - Any `path` call Turbopack cannot statically scope **must** be annotated `/*turbopackIgnore: true*/`, otherwise
+      the whole project is traced into `.next/standalone` and shipped inside the Docker image.
+    - Full rationale and the verification log: `DEPLOYMENT.md` §2.4.
 
 ---
 
