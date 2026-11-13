@@ -7,7 +7,11 @@ const toLocale = (value: string | null | undefined): "en" | "zh" =>
   value === "zh" ? "zh" : "en";
 
 interface Props {
-  params: Promise<{ locale: string }>;
+  // Next.js 16 can render this boundary WITHOUT route props — e.g. the dev error
+  // overlay, or a 404 that never matched the `[locale]` segment. In those render
+  // paths `params` resolves to `undefined`, so it (and `locale`) must be optional
+  // to avoid a TypeError on the destructure below.
+  params?: Promise<{ locale?: string } | undefined>;
 }
 
 type NotFoundMessages = {
@@ -25,10 +29,19 @@ type NotFoundMessages = {
  * returns HTTP 404 automatically for this special `not-found` segment.
  */
 export default async function NotFound({ params }: Props) {
-  // Next.js 15: params and headers() are async. Prefer the middleware-set
-  // x-locale header and fall back to the route param.
-  const { locale: paramLocale } = await params;
-  const locale = toLocale((await headers()).get("x-locale") ?? paramLocale);
+  // Next.js 15+: params and headers() are async. Prefer the middleware-set
+  // x-locale header and fall back to the route param. The route param is read
+  // defensively — when the boundary is rendered without route props (see Props)
+  // `params` is undefined, and `headers()` may also be unavailable outside a
+  // request scope, so both are guarded instead of throwing.
+  let locale: "en" | "zh" = "en";
+  try {
+    const paramLocale = (await params)?.locale;
+    locale = toLocale((await headers()).get("x-locale") ?? paramLocale);
+  } catch {
+    // No request/route context (e.g. the dev overlay renders this boundary):
+    // fall back to the default locale so the 404 still renders.
+  }
   const messages: NotFoundMessages =
     locale === "zh" ? zhMessages.notFound : enMessages.notFound;
 

@@ -171,22 +171,21 @@ non-zero, so `continue-on-error` in `.github/workflows/security.yml` must stay u
 | Finding | Where | Fix |
 |---|---|---|
 | `postcss` ≤ 8.5.22 — XSS via unescaped `</style>`, arbitrary `.map` file read (high) | **bundled inside `next@15.5.29`** (`node_modules/next/node_modules/postcss`) | ✅ **Cleared** — `next@16.4.6` bundles a patched `postcss`. See §2.4. |
-| `nodemailer` < 10.4.0 (high) | contact-form SMTP (`src/lib/email.ts`) | `npm i nodemailer@10` (breaking major) — re-test the contact form. |
-| `postcss-selector-parser` < 6.1.5 / `@tailwindcss/typography` (moderate) | build-time only (Tailwind) | Routine dependency bump. |
+| `nodemailer` < 10.4.0 (high) | contact-form SMTP (`src/lib/email.ts`) | ✅ **Cleared** — `nodemailer@10.5.0` (§2.5). |
+| `postcss-selector-parser` < 6.1.5 / `@tailwindcss/typography` (moderate) | build-time only (Tailwind) | ✅ **Cleared** — transitive `overrides` pin to `^6.1.5` (§2.5). |
 
 **Action items (ranked):**
 
 1. ✅ **Done — Next 15 → 16 upgrade landed** (`next@16.4.6`, Turbopack build, `next lint` → ESLint CLI). This was
    also the fix for the `postcss` finding above; full notes in **§2.4**.
-2. Bump `nodemailer` to 10.x and re-test the contact form end to end.
-3. **Only after 1–2 are green:** remove `continue-on-error` from the `npm audit` step in `security.yml` (the
-   comment in that file points here), then re-run `npm audit --omit=dev` and target **0 critical/high** in
-   production deps.
+2. ✅ **Done — `nodemailer@10.5.0` landed** and the contact form re-tested (§2.5).
+3. ✅ **Done — the `npm audit` CI step is now BLOCKING.** `continue-on-error` was removed from
+   `security.yml`; `npm audit --omit=dev --audit-level=high` exits 0 (§2.5).
 4. Do not expose the admin/editor endpoints to the internet — enforce the authorization middleware and (recommended)
    an additional IP allow-list in `nginx.conf` for `/api/auth` and `/api/upload` if editors connect from fixed IPs.
 
 > This class of finding is why the image gate (Trivy) is pinned to `CRITICAL` — keep it strict. The dependency gate
-> becomes strict once item 3 is done.
+> is now strict too (item 3 above is done) — see §2.5, which also makes the **image** scan clean (0 findings).
 
 **Ubuntu terminal** — initial login as root (from a machine you trust):
 
@@ -234,15 +233,111 @@ the table above.
 (6 warnings) · `npm run build` (Turbopack) 0, plus a route smoke test against **both** `next start` and the
 standalone artifact (`node .next/standalone/server.js`): `/` → 307 `/en`; `/eng/corp_board.asp` → 301
 `/en/board-of-directors`; `/chi/major.asp` → 301 `/zh/announcements`; `/en`, `/zh`, `/sitemap.xml`, `/robots.txt`,
-`/api/health` → 200; `/en/admin/pages` → 307 to the admin login; unknown page → 404 with the **localized** copy.
+`/api/health` → 200; `/en/admin/pages` → 307 to the admin login; unknown page → 404 (rendered by the **global**
+`src/app/not-found.tsx` when no `[locale]` child route matches — see §2.6 for which boundary handles which path).
 `/en/admin/login` → **200** is the key assertion: the admin layout renders standalone only when the proxy-set
 `x-pathname` header reaches `headers()`, so this proves middleware → request header propagation still works on 16.
 ⚠️ **`docker build` was not run** (no Docker daemon in that environment) — run
 `docker build -t vvh:next16 .` before deploying.
 
-**Still deferred:** the `nodemailer` < 10.4.0 item below, and a one-line guard for the non-fatal `TypeError` that
-`src/app/[locale]/not-found.tsx` logs when Next renders the 404 boundary without route props (the page still renders
-and still returns HTTP 404).
+**Deferred item now resolved:** the non-fatal `TypeError` that `src/app/[locale]/not-found.tsx` logged when Next
+renders the 404 boundary without route props is fixed — see §2.6. The `nodemailer` < 10.4.0 item from §2.3 was
+already **resolved** — see §2.5.
+
+### 2.5 ✅ RESOLVED — Dependency highs cleared + npm/corepack removed from the runtime image
+
+Closes the remaining §2.3 action items (2 and 3) **and** every Trivy image finding.
+
+**Dependency bumps**
+
+| Before | After | Why |
+|---|---|---|
+| `nodemailer@^6.9.13` | `nodemailer@10.5.0` | clears the three `addressparser`/raw-option highs on the contact-form SMTP path (`src/lib/email.ts`). `@types/nodemailer` was dropped — v10 ships its own types. |
+| `archiver@^7.0.1` | `archiver@8.0.0` | drops the vulnerable `glob`/`archiver-utils` chain used by `scripts/backup.ts` (nightly backups). v8 is **ESM-only** and no longer exports the `archiver("zip", …)` factory, so the script now uses `new ZipArchive({ zlib: { level: 9 } })` and awaits `finalize()` (now a `Promise<void>`). |
+| `@types/archiver@^6` | `@types/archiver@^8` | matches the v8 API (named class exports only). |
+| `vitest@4.1.10` | `vitest@4.1.12` | dev-only, but clears a `vite` advisory in the test tree. |
+| *(no overrides)* | `overrides`: `postcss-selector-parser@^6.1.5`, `minimatch@^11.0.1` (under `readdir-glob` and `@typescript-eslint/typescript-estree`), `undici@^7.30.2`, `vite@^8.3.8` | transitive pins that force the patched versions where no upstream release depends on them yet (Tailwind/glob/ESLint/jsdom chains). |
+
+`npm audit` (full tree) and `npm audit --omit=dev --audit-level=high` both now report **0 vulnerabilities**, so
+`continue-on-error` was removed from the `npm-audit` job in `.github/workflows/security.yml` — the production
+dependency audit is a **blocking** CI gate.
+
+**npm/corepack removed from the runtime image**
+
+Most image findings were never app dependencies: they came from the **npm and corepack trees bundled inside
+`node:24-alpine`** (`usr/local/lib/node_modules/npm/node_modules/…`). In `docs/SecurityReview.txt`, 18 of the 69
+Trivy alerts are `usr/...` paths (`undici`, `glob`, `minimatch`, `brace-expansion`, `ip-address`,
+`postcss-selector-parser`). Upgrading npm is not a fix — npm 12 still bundles vulnerable copies — so the **runtime
+image no longer ships the package manager at all**:
+
+- `Dockerfile` (runner stage) deletes `/usr/local/lib/node_modules/{npm,corepack}` and the
+  `npm`/`npx`/`corepack`/`yarn`/`yarnpkg`/`pnpm`/`pnpx` shims in `/usr/local/bin`, **after** the `npm install` that
+  seeds the runtime CLI deps. npm stays available in the **builder** stage.
+- `docker-entrypoint.sh` calls the local binaries directly — `/app/node_modules/.bin/prisma db push` and
+  `/app/node_modules/.bin/tsx /app/prisma/seed.ts`. The seed is run with `tsx` rather than `prisma db seed`, because
+  the Prisma seed runner shells out to `npx` (which no longer exists at runtime). `deploy.sh` already invoked
+  `./node_modules/.bin/prisma` for `MIGRATE_ON_DEPLOY`, so it needs no change.
+- The Alpine `zlib` package is upgraded during the build (`apk upgrade --no-cache zlib`, `1.3.2-r1 → 1.4-r0`),
+  clearing CVE-2026-4738 — the last non-npm image finding.
+
+**Verification (local Docker Desktop, `vvh:next16`)**
+
+- `docker build` → OK. `docker run --entrypoint sh …`: `/usr/local/lib/node_modules` is **empty** and no
+  `npm`/`npx`/`corepack` is on `PATH`.
+- **Fresh volume:** entrypoint logged `No SQLite DB found … initializing` → `prisma db push` → seed (9 pages / 18
+  `page_contents` rows) → `node server.js` → **Next.js 16.4.6 ready**.
+- **Existing volume:** recreated container logged `Existing SQLite DB found … skipping init` (no re-seed).
+- **Route smoke test** from inside the container: `/api/health`, `/en`, `/zh`, `/sitemap.xml`, `/robots.txt`,
+  `/en/admin/login` → **200**; `/eng/corp_board.asp` → **301** `/en/board-of-directors`; `/chi/major.asp` →
+  **301** `/zh/announcements`; unknown page → **404**.
+- **Trivy image scan** (`--severity MEDIUM,HIGH,CRITICAL --ignore-unfixed`) → **0 findings**.
+- Host gates re-run: `npm run typecheck` 0 · `npm test` **335 tests / 66 files green** · `npm run lint` **0 errors**
+  · `npm run build` (Turbopack) 0 · `npm run backup` produced a working zip through the archiver-8 API.
+
+### 2.6 ✅ RESOLVED — localized 404 boundary survives a render without route props
+
+Next 16 can mount the `[locale]/not-found` boundary **without route props**, so `params` resolves to `undefined` and
+the destructure threw `TypeError: Cannot destructure property 'locale' of '(intermediate value)' as it is undefined`
+— logged by `npm run dev` on start-up and on every dev-mode 404. The response was still HTTP 404 (Next fell back to
+the global `src/app/not-found.tsx`), but the stack trace broke the "clean dev console" gate.
+
+- `src/app/[locale]/not-found.tsx` — `params` is now optional
+  (`params?: Promise<{ locale?: string } | undefined>`) and locale resolution is wrapped in `try`/`catch` with an
+  `"en"` fallback. `headers()` throwing outside a request scope is caught by the same guard. Resolution precedence
+  is unchanged: middleware `x-locale` header → route param → `"en"`.
+- `src/app/[locale]/not-found.test.tsx` — four tests added (route-param fallback when `x-locale` is absent; boundary
+  called with no props at all; `params` resolving to `undefined`; `headers()` throwing
+  ``"`headers` was called outside a request scope"``). The file is now **6 tests** and the whole suite is green
+  (`npm test` → **339 tests / 66 files**).
+
+**A/B check** (dev server on 4321, original destructure restored and then re-applied): `/en/nope` and `/zh/nope`
+return **404** with the same `h2` (`Page Not Found`) and the same locale links in both runs. Note that a path whose
+`[locale]` segment has no matching child route resolves to the **global** `src/app/not-found.tsx` — the root file is
+English-only by design (`src/app/not-found.tsx` header comment: "the few non-locale paths that reach the router"), which
+is why `/xx/nope` is not localized in dev *or* `next start`. The `[locale]` boundary is what renders when `notFound()`
+is thrown *inside* a matched `[locale]` route (e.g. `src/app/[locale]/layout.tsx` for an unknown locale, or the admin
+`pages/[slug]` editor for an unknown slug). The only difference between the two A/B runs is that the `TypeError` no
+longer reaches stderr, so the fix removes the console error without altering the 404 response.
+
+**Reaching the `[locale]` boundary over HTTP** (dev, port 4321). The boundary is used when `notFound()` is thrown
+*inside* a matched `[locale]` route — e.g. the admin editor at `/{locale}/admin/pages/[slug]` with an unknown slug
+(`src/app/[locale]/admin/pages/[slug]/page.tsx`). With a valid session cookie:
+
+| Request | Result |
+|---|---|
+| `/en/admin/pages` | 200 — control: proves the session works and the chrome renders |
+| `/en/admin/pages/nope` | **404** — boundary payload carries `"children":"Page Not Found"` + `Back to Home` |
+| `/zh/admin/pages/nope` | **404** — boundary payload carries `"children":"頁面未找到"` + `返回首頁` |
+
+So the 404 copy is localized end-to-end for `zh`, and **no `TypeError` reaches stderr** in any of these runs (the
+pre-fix A/B run above logged it). Two honest caveats about that check:
+
+- Next 16 streams this boundary render inside its own `#__next_error__` document shell (no `[locale]` chrome in the
+  SSR HTML — the boundary arrives via the streamed RSC payload, which is where the strings above were read). That is
+  pre-existing Next behaviour and is unchanged by the fix.
+- The session was minted with the app's own `signToken` secret (JWT-only `getSession()`), so **no admin password or
+  DB row was touched**. `/nope.txt` (a dotted path the proxy skips) renders Next's bare `#__next_error__` 404 without
+  the boundary, which is why it is not used as the assertion.
 
 ## 3. DNS & switchover plan (Phase 1a)
 

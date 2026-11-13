@@ -114,8 +114,12 @@ jobs:
 
       - name: Trivy image scan (gate)
         # GATE: fails the job (and blocks push/deploy) on any CRITICAL vuln.
-        # Adjust severity below if you want HIGH to block too.
-        uses: aquasecurity/trivy-action@v0.36.0 
+        # `exit-code: 1` is now ENFORCED (was temporarily bypassed). The last
+        # findings were cleared by dropping npm/corepack from the runtime image
+        # and upgrading zlib — a local scan is 0 findings at MEDIUM+/HIGH/
+        # CRITICAL. See DEPLOYMENT.md §2.5. Adjust `severity` if you want HIGH to
+        # block too.
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image-ref: ghcr.io/simon617/vvh:${{ github.sha }}
@@ -123,7 +127,7 @@ jobs:
           output: trivy-image.sarif
           severity: CRITICAL
           ignore-unfixed: true
-          exit-code: 0   #temporarily bypass 
+          exit-code: 1
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@v3
         #if: ${{ !cancelled() }}

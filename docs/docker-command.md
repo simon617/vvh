@@ -4,9 +4,12 @@
 > Compose file: `docker-compose.yml` · Image: `Dockerfile`.
 > Named volumes: `vvh_sqlite-data` (DB at `/app/prisma/data/vvh.db`) and
 > `vvh_uploads` (runtime uploads at `/app/uploads`) — both survive restarts.
-> First boot is **ready out of the box**: the image contains a seeded SQLite DB
-> (schema + 9 CMS pages with EN/ZH content), and Docker copies it into an empty
-> `sqlite-data` volume automatically.
+> First boot is **ready out of the box**: `docker-entrypoint.sh` creates the SQLite
+> DB (`prisma db push`) and seeds it (9 CMS pages with EN/ZH content) on an empty
+> `sqlite-data` volume, then hands off to `node server.js`. An existing volume is
+> left untouched.
+> The runtime image ships **no npm/npx/corepack** — the entrypoint calls
+> `/app/node_modules/.bin/*` directly (see §9).
 
 ---
 
@@ -77,13 +80,15 @@ docker compose top                 # live CPU/mem per container
 
 ```powershell
 git pull                      # or edit locally
-docker compose build          # rebuild the image (runs npm ci + build + DB seed)
+docker compose build          # rebuild the image (runs npm ci + next build)
 docker compose up -d          # recreate the container with the new image
 docker compose logs --tail=50 app
 ```
 
-> The seed runs during `docker compose build` (`prisma db push` + `npm run seed`),
-> so a rebuild also refreshes the baked baseline database.
+> The DB is **not** seeded at build time: the entrypoint seeds a *fresh* volume on
+> first boot only. A rebuild therefore never touches an existing `sqlite-data`
+> volume — to re-seed from scratch, remove the volume
+> (`docker compose down -v`) before `up`.
 
 ---
 
@@ -176,9 +181,21 @@ If you want to check if your container can access the outside world, the <target
 
 1. `node:24-alpine` builder: `npm ci` → `prisma generate` → `next build`
    (`output: "standalone"`).
-2. Builder also boots the SQLite DB: `prisma db push` (schema) + `npm run seed`
-   (9 CMS pages + EN/ZH content) → baked into the image.
-3. Slim runner: standalone `server.js` + `public/` + `_next/static` + Prisma
-   engine + the seeded `prisma/data` DB; runs as non-root user `nextjs`.
-4. Compose mounts two named volumes (DB + uploads) and maps `3000:3000`;
+2. Slim runner: standalone `server.js` + `public/` + `_next/static` + Prisma
+   engine + the runtime CLI deps (`prisma`, `tsx`, `bcryptjs`, `@prisma/client`,
+   installed with `--omit=dev`); runs as non-root user `nextjs`.
+3. **No package manager in the runner.** `npm`, `npx` and `corepack` (plus the
+   `yarn`/`pnpm` shims) are deleted after the runtime `npm install`. They carried
+   their own copies of `undici`, `glob`, `minimatch`, `brace-expansion`,
+   `ip-address` and `postcss-selector-parser`, which Trivy reported as vulnerable
+   (18 of the 69 alerts in `docs/SecurityReview.txt` were these `usr/...` paths).
+   Accordingly, `docker-entrypoint.sh` (and `deploy.sh`) invoke
+   `/app/node_modules/.bin/prisma` and `/app/node_modules/.bin/tsx` directly —
+   never `npx`. `npm` remains available in the **builder** stage only.
+4. `docker-entrypoint.sh` on first boot: if `/app/prisma/data/vvh.db` is **absent**
+   it runs `prisma db push` + `tsx prisma/seed.ts` (9 CMS pages + 18 EN/ZH content
+   rows), then `exec node server.js`. An existing DB is left as-is. The Alpine
+   `zlib` package is upgraded during the build (`apk upgrade zlib`) to clear
+   CVE-2026-4738.
+5. Compose mounts two named volumes (DB + uploads) and maps `3000:3000`;
    restart policy `unless-stopped`.

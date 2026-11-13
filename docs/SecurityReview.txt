@@ -1,0 +1,280 @@
+undici: undici: Denial of Service via TLS renegotiation with mismatched certificate
+High
+#133 opened 4 days ago • Detected by Trivy in usr/.../undici/package.json :1
+
+undici: undici: Denial of Service via unrequested WebSocket subprotocol
+High
+#132 opened 4 days ago • Detected by Trivy in usr/.../undici/package.json :1
+
+undici: undici: Denial of Service via unhandled stream error on excessive content encodings
+High
+#131 opened 4 days ago • Detected by Trivy in usr/.../undici/package.json :1
+
+undici: undici: Certificate validation bypass via dropped TLS options in Agent
+High
+#130 opened 4 days ago • Detected by Trivy in usr/.../undici/package.json :1
+
+Nodemailer: Quadratic backtracking in the addressparser free-text fallback allows remote denial of service
+High
+#106 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: Quadratic (O(n²)) time complexity in addressparser allows remote denial of service via a crafted address list
+High
+#105 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+nodemailer: Nodemailer: Arbitrary file read and Server-Side Request Forgery via raw option bypass
+High
+#103 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Select alert #102
+nodemailer: Nodemailer: Denial of service via crafted email address header
+High
+#102 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+brace-expansion: brace-expansion: Denial of Service via uncontrolled recursion in nested brace patterns
+High
+#64 opened 4 days ago • Detected by Trivy in usr/.../brace-expansion/package.json :1
+
+brace-expansion: brace-expansion: Denial of Service via stack exhaustion from crafted brace patterns
+High
+#63 opened 4 days ago • Detected by Trivy in usr/.../brace-expansion/package.json :1
+
+Nodemailer: Quadratic backtracking in the addressparser free-text fallback allows remote denial of service
+High
+#30 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: Quadratic (O(n²)) time complexity in addressparser allows remote denial of service via a crafted address list
+High
+#29 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+nodemailer: Nodemailer: Arbitrary file read and Server-Side Request Forgery via raw option bypass
+High
+#28 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+nodemailer: Nodemailer: Denial of service via crafted email address header
+High
+#27 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+postcss-selector-parser: postcss-selector-parser: Denial of Service via crafted CSS selectors
+Medium
+#140 opened 10 hours ago • Detected by Trivy in app/.../postcss-selector-parser/package.json :1
+
+postcss-selector-parser: postcss-selector-parser: Denial of Service via crafted CSS selectors
+Medium
+#139 opened 10 hours ago • Detected by Trivy in app/.../postcss-selector-parser/package.json :1
+
+undici: undici: Denial of Service via unhandled error in WebSocket permessage-deflate decompression
+Medium
+#136 opened 4 days ago • Detected by Trivy in usr/.../undici/package.json :1
+
+undici: undici: Denial of Service via unbounded WebSocket PONG buffering
+Medium
+#135 opened 4 days ago • Detected by Trivy in usr/.../undici/package.json :1
+
+undici: undici: Denial of Service via memory exhaustion in EventSource client
+Medium
+#134 opened 4 days ago • Detected by Trivy in usr/.../undici/package.json :1
+
+postcss-selector-parser: postcss-selector-parser: Denial of Service via crafted CSS selectors
+Medium
+#129 opened 4 days ago • Detected by Trivy in usr/.../postcss-selector-parser/package.json :1
+
+postcss-selector-parser: postcss-selector-parser: Denial of Service via crafted CSS selectors
+Medium
+#128 opened 4 days ago • Detected by Trivy in app/.../postcss-selector-parser/package.json :1
+
+Nodemailer jsonTransport bypasses disableFileAccess and disableUrlAccess during message normalization
+Medium
+#122 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: IDN/Punycode domain allow-list bypass leads to email delivery to an attacker-controlled domain
+Medium
+#121 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer Vulnerable to SMTP Command Injection via CRLF in Transport name Option (EHLO/HELO)
+Medium
+#120 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: A ";" inside a quoted string or comment ends an address group early in addressparser, turning display text into a recipient
+Medium
+#119 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: RFC 5322 comment inside an angle-bracket address is never stripped
+Medium
+#118 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: Recipient-domain validation bypass via RFC 5322 comment mis-parsing leads to email delivery to an attacker-controlled domain
+Medium
+#117 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: Nested structured recipient arrays bypass the parser depth limit and cause stack exhaustion DoS
+Medium
+#116 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: resolveContent() on a MailMessage bypasses disableFileAccess/disableUrlAccess when called with the legacy signature
+Medium
+#115 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: A nested comment ends early in addressparser, releasing the rest of the comment as a recipient
+Medium
+#114 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: A ">" inside a quoted local part ends an angle-addr early in addressparser, delivering to a domain the header does not name
+Medium
+#113 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: Process-global DNS cache reuses TLS `servername` across transports, enabling cross-tenant SMTP credential disclosure
+Medium
+#112 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: Quadratic (O(n^2)) SMTP client reply parsing lets a malicious server or MITM cause a pre-auth remote denial of service
+Medium
+#111 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: Quadratic backtracking in SMTP AUTH mechanism detection regexes allows pre-auth remote denial of service
+Medium
+Library
+#110 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+Nodemailer: CRLF injection in Nodemailer List-* header comments allows arbitrary message header injection
+Medium
+#109 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+nodemailer: nodemailer: Denial of Service via inefficient header parsing
+Medium
+#108 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+nodemailer: Nodemailer: Email to an unintended domain can occur due to Interpretation Conflict
+Medium
+#107 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+nodemailer: Nodemailer: Information disclosure due to disabled TLS certificate verification
+Medium
+#104 opened 4 days ago • Detected by Trivy in app/.../nodemailer/package.json :1
+
+minimatch: minimatch: Denial of Service via crafted glob pattern expansion
+Medium
+#74 opened 4 days ago • Detected by Trivy in app/.../minimatch/package.json :1
+
+minimatch: minimatch: Denial of Service via crafted glob pattern expansion
+Medium
+#73 opened 4 days ago • Detected by Trivy in usr/.../minimatch/package.json :1
+
+ip-address: ip-address: Denial of Service via excessive percent characters in IPv6 address input
+Medium
+#72 opened 4 days ago • Detected by Trivy in usr/.../ip-address/package.json :1
+
+ip-address: ip-address: Security bypass via incomplete IPv6 link-local address validation
+Medium
+#71 opened 4 days ago • Detected by Trivy in usr/.../ip-address/package.json :1
+
+ip-address: ip-address: Access control bypass via cross-family subnet comparison
+Medium
+#70 opened 4 days ago • Detected by Trivy in usr/.../ip-address/package.json :1
+
+ip-address: ip-address: Denial of Service via unbounded IPv6 address parsing
+Medium
+#69 opened 4 days ago • Detected by Trivy in usr/.../ip-address/package.json :1
+
+ip-address: ip-address: Security boundary bypass via unclassified NAT64 local-use address range
+Medium
+#68 opened 4 days ago • Detected by Trivy in usr/.../ip-address/package.json :1
+
+glob: glob: Denial of Service (DoS) via incomplete traversal cancellation
+Medium
+#67 opened 4 days ago • Detected by Trivy in usr/.../glob/package.json :1
+
+glob: glob: Denial of Service (DoS) via incomplete traversal cancellation
+Medium
+#66 opened 4 days ago • Detected by Trivy in app/.../glob/package.json :1
+
+brace-expansion: brace-expansion: Denial of Service via crafted brace patterns
+Medium
+#65 opened 4 days ago • Detected by Trivy in usr/.../brace-expansion/package.json :1
+
+Improper Restriction of Operations within the Bounds of a Memory Buffe ...
+Medium
+#61 opened 4 days ago • Detected by Trivy in simon617/vvh :1
+
+minimatch: minimatch: Denial of Service via crafted glob pattern expansion
+Medium
+#138 opened yesterday • Detected by Trivy in package-lock.json :7148
+
+Nodemailer: RFC 5322 comment inside an angle-bracket address is never stripped
+Medium
+#60 opened last week • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: Quadratic (O(n^2)) SMTP client reply parsing lets a malicious server or MITM cause a pre-auth remote denial of service
+Medium
+#59 opened last week • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: Quadratic backtracking in SMTP AUTH mechanism detection regexes allows pre-auth remote denial of service
+Medium
+#58 opened last week • Detected by Trivy in package-lock.json :8983
+
+glob: glob: Denial of Service (DoS) via incomplete traversal cancellation
+Medium
+#55 opened last week • Detected by Trivy in package-lock.json :7105
+
+postcss-selector-parser: postcss-selector-parser: Denial of Service via crafted CSS selectors
+Medium
+#53 opened 2 weeks ago • Detected by Trivy in package-lock.json :9533
+
+Nodemailer: A ";" inside a quoted string or comment ends an address group early in addressparser, turning display text into a recipient
+Medium
+#52 opened 2 weeks ago • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: A nested comment ends early in addressparser, releasing the rest of the comment as a recipient
+Medium
+#51 opened 2 weeks ago • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: A ">" inside a quoted local part ends an angle-addr early in addressparser, delivering to a domain the header does not name
+Medium
+#50 opened 2 weeks ago • Detected by Trivy in package-lock.json :8983
+
+nodemailer: nodemailer: Denial of Service via inefficient header parsing
+Medium
+#49 opened 2 weeks ago • Detected by Trivy in package-lock.json :8983
+
+nodemailer: Nodemailer: Information disclosure due to disabled TLS certificate verification
+Medium
+#48 opened 2 weeks ago • Detected by Trivy in package-lock.json :8983
+
+Nodemailer jsonTransport bypasses disableFileAccess and disableUrlAccess during message normalization
+Medium
+#40 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: IDN/Punycode domain allow-list bypass leads to email delivery to an attacker-controlled domain
+Medium
+#39 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+Nodemailer Vulnerable to SMTP Command Injection via CRLF in Transport name Option (EHLO/HELO)
+Medium
+#38 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: Recipient-domain validation bypass via RFC 5322 comment mis-parsing leads to email delivery to an attacker-controlled domain
+Medium
+#36 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: Nested structured recipient arrays bypass the parser depth limit and cause stack exhaustion DoS
+Medium
+#35 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: resolveContent() on a MailMessage bypasses disableFileAccess/disableUrlAccess when called with the legacy signature
+Medium
+#34 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: Process-global DNS cache reuses TLS `servername` across transports, enabling cross-tenant SMTP credential disclosure
+Medium
+#33 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+Nodemailer: CRLF injection in Nodemailer List-* header comments allows arbitrary message header injection
+Medium
+#32 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+nodemailer: Nodemailer: Email to an unintended domain can occur due to Interpretation Conflict
+Medium
+#31 opened on Oct 5 • Detected by Trivy in package-lock.json :8983
+
+
+

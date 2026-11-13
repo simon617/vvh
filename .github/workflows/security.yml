@@ -26,12 +26,11 @@ jobs:
       - name: Setup Node.js 24 + deps
         uses: ./.github/actions/node-setup
       - name: Audit production dependencies
-        # REPORT-ONLY. The critical Next.js RCEs (next@14.2.35) were cleared by
-        # the next@15.5.29 upgrade, but production deps still report highs:
-        # postcss bundled inside next@15 (fix = next@16.4.5) and nodemailer <10.4.0.
-        # Make this step blocking (remove continue-on-error) AFTER the Next 16
-        # upgrade and nodemailer bump listed in DEPLOYMENT.md §2.3 are merged.
-        continue-on-error: true
+        # BLOCKING (was report-only). All production highs are cleared: the Next 16
+        # upgrade, nodemailer@10.5.0 + archiver@8.0.0 (which drops the vulnerable
+        # glob/archiver-utils chain) and the transitive minimatch@11.0.1 /
+        # postcss-selector-parser@6.1.5 overrides in package.json. Dev-only
+        # findings do not run in production, hence --omit=dev.
         run: npm audit --omit=dev --audit-level=high
 
   gitleaks:

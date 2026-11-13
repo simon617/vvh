@@ -46,8 +46,11 @@ RUN npm run build
 FROM node:24-alpine AS runner
 WORKDIR /app
 
-# OpenSSL for Prisma at runtime.
-RUN apk add --no-cache openssl
+# OpenSSL for Prisma at runtime. `zlib` is upgraded deliberately: the base image
+# ships zlib 1.3.2-r1, which Trivy reports as CVE-2026-4738 (fixed in 1.4-r0).
+# Targeted upgrade (not a blanket `apk upgrade`) to keep the image reproducible.
+RUN apk add --no-cache openssl \
+  && apk upgrade --no-cache zlib
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -72,9 +75,21 @@ COPY --from=builder /app/src ./src
 
 # Runtime deps:
 #   bcryptjs — used by the app
-#   prisma   — CLI needed for `npx prisma db push` in the entrypoint
+#   prisma   — CLI needed for `prisma db push` in the entrypoint
 #   tsx      — TypeScript runtime, needed because the seed is `prisma/seed.ts`
 RUN npm install --no-save --omit=dev bcryptjs prisma tsx @prisma/client
+
+# Remove the package manager from the runtime image — the app never needs npm at
+# runtime (the entrypoint calls ./node_modules/.bin/* directly). The npm/corepack
+# trees bundled in the base image carry their own copies of undici, glob,
+# minimatch, brace-expansion, ip-address and postcss-selector-parser, which Trivy
+# reports as vulnerable CVE sources; upgrading npm does not help (npm 12 still
+# bundles vulnerable versions), so the only real fix is to not ship it. This must
+# stay AFTER the `npm install` above; npm remains available in the builder stage.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+  /usr/local/lib/node_modules/corepack \
+  /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+  /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm /usr/local/bin/pnpx
 
 # Entrypoint: initializes the SQLite DB on first boot if the bind mount is empty.
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import archiver from "archiver";
+import { ZipArchive } from "archiver";
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "prisma", "data");
@@ -31,10 +31,12 @@ async function createBackupArchive(): Promise<string> {
 
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(backupPath);
-    const archive = archiver("zip", { zlib: { level: 9 } });
+    // archiver v8 is ESM-only and no longer exposes the `archiver("zip", …)`
+    // factory: create the zip archive through its ZipArchive class instead.
+    const archive = new ZipArchive({ zlib: { level: 9 } });
 
     output.on("close", () => resolve(backupPath));
-    archive.on("error", (err) => reject(err));
+    archive.on("error", (err: Error) => reject(err));
 
     archive.pipe(output);
 
@@ -57,7 +59,9 @@ async function createBackupArchive(): Promise<string> {
       archive.file(envPath, { name: ".env" });
     }
 
-    archive.finalize();
+    // v8 returns a promise from finalize(); surface failures as a rejection
+    // instead of an unhandled rejection (fatal on Node >= 15).
+    archive.finalize().catch(reject);
   });
 }
 

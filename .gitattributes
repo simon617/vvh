@@ -1,0 +1,5 @@
+# Shell scripts are COPY'd into a Linux image and run with /bin/sh (see
+# Dockerfile → docker-entrypoint.sh). They MUST keep LF endings even when the
+# repo is checked out on Windows, where core.autocrlf=true would otherwise
+# rewrite them to CRLF and `/bin/sh` would fail on the trailing \r of every line.
+*.sh text eol=lf
