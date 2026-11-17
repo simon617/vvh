@@ -161,8 +161,11 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          envs: GHCR_PULL_TOKEN
           command_timeout: 15m
           script: |
             set -euo pipefail
             cd /opt/vvh
             ./deploy.sh ghcr.io/simon617/vvh:${{ github.sha }}
+        env:
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}

@@ -836,12 +836,12 @@ fine-grained, `read:packages` only) and store it server-side:
 ```bash (After generating the PAT, you run this on the Ubuntu server.)
 # securely prompt you for a GitHub token and save it into a hidden, password-protected file so your scripts can use it later 
 # - p "GHCR_PULL_TOKEN: " : display text prompt
-# GHCR_PULL_TOKEN : variable that stores whatever value you type next
-read -s -p "GHCR_PULL_TOKEN: " GHCR_PULL_TOKEN   # never typed into shell history visibly
+# GHCR_PULL_TOKEN : variable that stores whatever value youcd  type next
+   # never typed into shell history visibly
 mkdir -p ~/.config
 printf '%s' "$GHCR_PULL_TOKEN" > ~/.config/ghcr_pull_token && chmod 600 ~/.config/ghcr_pull_token
 
-Below command authenticates the server to GHCR so it can pull your images. Docker stores the credential locally (usually in ~/.docker/config.json), so you only do this once per server.
+Below command authenticates the server to GHCR so it can pull your images. Docker stores the credential locally (usually in ~/.docker/config.json), so you only do this once per server.read -s -p "GHCR_PULL_TOKEN: " GHCR_PULL_TOKEN
 # print token value and pipe to right side, read password directly from the pipe
 echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u simon617 --password-stdin
 # verify:
