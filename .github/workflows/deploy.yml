@@ -166,6 +166,27 @@ jobs:
           script: |
             set -euo pipefail
             cd /opt/vvh
+            # The server-installed deploy.sh is not synced by this workflow, so authenticate here.
+            if [ -z "${GHCR_PULL_TOKEN:-}" ]; then
+              echo "GHCR_PULL_TOKEN Actions secret is not set." >&2
+              exit 1
+            fi
+            : "${GHCR_USERNAME:?GHCR_USERNAME is required}"
+            export DOCKER_CONFIG="$(mktemp -d "${TMPDIR:-/tmp}/vvh-docker-config.XXXXXX")"
+            cleanup_docker_config() {
+              rm -f "$DOCKER_CONFIG/config.json"
+              if ! rmdir "$DOCKER_CONFIG"; then
+                echo "WARNING: could not remove temporary Docker config directory." >&2
+              fi
+            }
+            trap cleanup_docker_config EXIT
+            chmod 700 "$DOCKER_CONFIG"
+            if ! printf '%s' "$GHCR_PULL_TOKEN" |
+              docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin; then
+              echo "GHCR login failed. Verify GHCR_PULL_TOKEN has read:packages access to ghcr.io/simon617/vvh." >&2
+              exit 1
+            fi
+            unset GHCR_PULL_TOKEN            
             ./deploy.sh ghcr.io/simon617/vvh:${{ github.sha }}
         env:
           GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
