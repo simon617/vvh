@@ -72,7 +72,7 @@ Key decisions (pronounced, not assumed):
 | Node / runtime | **Node 24 LTS** (`node:24-alpine`); Next.js `output: "standalone"`; non-root `nextjs` user. (Dependency tree requires ≥22 — `@testing-library/jest-dom@7`; Node 20 is EOL since 2026-04; the whole project is pinned to 24 — `.nvmrc`, `package.json engines`, CI, Docker.) |
 | Package manager | **npm** (`package-lock.json` confirmed; no pnpm/yarn) |
 | Database | **SQLite via Prisma**, named volume `vvh_sqlite-data`; seeded DB baked into the image (fresh-volume bootstrap), server `.env` holds runtime config |
-| Registry auth | Push: built-in `GITHUB_TOKEN` (`packages: write`). Server pull: PAT `GHCR_PULL_TOKEN` (`read:packages`) |
+| Registry auth | Push: built-in `GITHUB_TOKEN` (`packages: write`). Server pull: classic PAT `GHCR_PULL_TOKEN` (`read:packages`) |
 | TLS issuance | **HTTP-01 via Certbot (webroot)** — needs ports 80/443 forwarded to this server (already required for the site itself) |
 | DNS & cutover | DNS stays with the existing provider (no Cloudflare, no NS change); switchover = change the **firewall routing/NAT rule** from the old web server to the new one (§3) |
 | Reverse proxy | Nginx on the **host**, `server_name www.visionvalues.com.hk visionvalues.com.hk;`, apex→www 301, proxy to `127.0.0.1:3000` |
@@ -476,7 +476,7 @@ Action : merge button will be greyed out until this specific check passes. You c
 | `SSH_PORT` | `22` (or `2222` if you moved sshd — §7.7) |
 | `SSH_PRIVATE_KEY` | private key from §5.5 (entire contents, including -----BEGIN OPENSSH PRIVATE KEY----- and -----END OPENSSH PRIVATE KEY----- lines) . Workflow uses private key to authenticate with public key on the Ubuntu server during deployment phase CD. |
 | `SSH_KNOWN_HOSTS` | `ssh-keyscan -t ed25519 202.77.49.35` output (fetch server's ed25519 host key. Run after the server exists) |
-| `GHCR_PULL_TOKEN` | GitHub PAT with **`read:packages`** scope and access to `ghcr.io/simon617/vvh`. Passed to the server by the deploy workflow for the image pull. |
+| `GHCR_PULL_TOKEN` | GitHub **classic PAT** with **`read:packages`** scope and access to `ghcr.io/simon617/vvh`. Passed to the server by the deploy workflow for the image pull. |
 
 > `GHCR_PULL_TOKEN` is a PAT because the server cannot use the Actions job's `GITHUB_TOKEN`. The SSH deployment step logs
 > in to GHCR using this PAT and removes its temporary Docker config when the remote command exits. Push-side needs **no PAT** — the
@@ -828,9 +828,12 @@ chown deploy:deploy /opt/vvh/.env
 
 ### 9.4 GHCR login for deployment
 
-Create a GitHub PAT with **`read:packages`** scope and access to the `vvh` package
-([GitHub token settings](https://github.com/settings/tokens)). Save it as the Actions
-repository secret `GHCR_PULL_TOKEN` (§5.4). The deploy workflow passes the token to
+Create a GitHub **personal access token (classic)** with the **`read:packages`**
+scope and access to the `vvh` package
+([GitHub token settings](https://github.com/settings/tokens)). GHCR does not accept
+fine-grained PATs. If your organization requires SSO, authorize the token for SSO.
+Save it as the Actions repository secret `GHCR_PULL_TOKEN` (§5.4), replacing any
+previous value. The deploy workflow passes the token to
 the SSH session, which logs in as the repository owner before invoking `deploy.sh`.
 Docker credentials are kept in a temporary config directory and removed when the
 remote command exits; no server-side token file or one-time manual login is needed.
@@ -1171,7 +1174,7 @@ docker run --rm \
 |---|---|---|
 | SSH `Permission denied (publickey)` | Wrong key / wrong user / root login disabled too early | Confirm you're `deploy`, key is in `~/.ssh/authorized_keys` (mode 600, owner deploy), `PubkeyAuthentication yes`. If you locked yourself out, use the cloud console/VNC to fix sshd, then disable password auth again. |
 | `docker: permission denied` | `deploy` not in the `docker` group / stale session | `sudo usermod -aG docker deploy`, log out/in, `docker run --rm hello-world`. |
-| GHCR pull denied | `GHCR_PULL_TOKEN` is missing/invalid or cannot read the private package | Confirm the Actions secret is set to a valid PAT with `read:packages` access to `ghcr.io/simon617/vvh`; check the package's Actions access and visibility in GHCR settings. |
+| GHCR pull denied | `GHCR_PULL_TOKEN` is missing/invalid or cannot read the private package | Confirm the Actions secret contains a classic PAT with `read:packages` access to `ghcr.io/simon617/vvh`; authorize it for SSO if required, and check package access in GHCR settings. |
 | Nginx 502 Bad Gateway | App down / not yet healthy / proxy target wrong | `docker ps` → is `vvh-app` `Up (healthy)`? `docker logs vvh-app --tail 50`. Confirm `proxy_pass http://127.0.0.1:3000` and that compose binds `127.0.0.1:3000:3000` (no port clash with Nginx). |
 | Site shows old cert / certificate verify failed | Firewall switchover not done; cert names mismatch; HSTS cached | Confirm the firewall routes 80/443 to this server (§3.2) and the cert covers both names (`sudo certbot certificates`); test in a private/incognito window (`chrome://net-internals/#hsts` to clear). |
 | HTTP-01 challenge failed / port 80 blocked by ISP | No firewall forward on 80; old server still answering; ISP blocks inbound 80/443 | Confirm the firewall routes port 80 to this server (§3.2, §4). If the ISP truly blocks inbound 80/443, contact the ISP — the site cannot be served publicly without them. |
