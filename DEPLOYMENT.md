@@ -476,9 +476,10 @@ Action : merge button will be greyed out until this specific check passes. You c
 | `SSH_PORT` | `22` (or `2222` if you moved sshd — §7.7) |
 | `SSH_PRIVATE_KEY` | private key from §5.5 (entire contents, including -----BEGIN OPENSSH PRIVATE KEY----- and -----END OPENSSH PRIVATE KEY----- lines) . Workflow uses private key to authenticate with public key on the Ubuntu server during deployment phase CD. |
 | `SSH_KNOWN_HOSTS` | `ssh-keyscan -t ed25519 202.77.49.35` output (fetch server's ed25519 host key. Run after the server exists) |
-| `GHCR_PULL_TOKEN` | GitHub PAT with **`read:packages`** scope — used on the *server*, not in Actions. Use by server to pull container image from GitHub Container Registry |
+| `GHCR_PULL_TOKEN` | GitHub PAT with **`read:packages`** scope and access to `ghcr.io/simon617/vvh`. Passed to the server by the deploy workflow for the image pull. |
 
-> `GHCR_PULL_TOKEN` is a PAT because `GITHUB_TOKEN` works only inside Actions jobs. Push-side needs **no PAT** — the
+> `GHCR_PULL_TOKEN` is a PAT because the server cannot use the Actions job's `GITHUB_TOKEN`. The deploy workflow logs in
+> to GHCR using this PAT and removes its temporary Docker config when deployment exits. Push-side needs **no PAT** — the
 > workflow declares `permissions: packages: write` and logs in with `GITHUB_TOKEN`.
 
 ### 5.5 Generate the deploy SSH key (Local Windows)
@@ -825,27 +826,23 @@ chown deploy:deploy /opt/vvh/.env
 > GitHub only needs `NEXT_PUBLIC_SITE_URL` (build-time); **runtime secrets are configured here once**, so Actions never
 > echo them. If SMTP is already working in dev, copy those values here.
 
-### 9.4 GHCR login for the `deploy` user
+### 9.4 GHCR login for deployment
 
-Create the PAT 
-Profile icon > Settings > Developer Settings > Personal access token > Tokens (classic) > Generate new token (classic)
-Paste the token value into the GHCR_PULL_TOKEN secret (for reference only, not used by GitHub)
-(**GitHub UI**: [github.com/settings/tokens](https://github.com/settings/tokens/new) →
-fine-grained, `read:packages` only) and store it server-side:
+Create a GitHub PAT with **`read:packages`** scope and access to the `vvh` package
+([GitHub token settings](https://github.com/settings/tokens)). Save it as the Actions
+repository secret `GHCR_PULL_TOKEN` (§5.4). The deploy workflow passes the token to
+`deploy.sh`, which logs in as the repository owner before pulling the image. Docker
+credentials are kept in a temporary config directory and removed when the deploy
+script exits; no server-side token file or one-time manual login is needed.
 
-```bash (After generating the PAT, you run this on the Ubuntu server.)
-# securely prompt you for a GitHub token and save it into a hidden, password-protected file so your scripts can use it later 
-# - p "GHCR_PULL_TOKEN: " : display text prompt
-# GHCR_PULL_TOKEN : variable that stores whatever value youcd  type next
-   # never typed into shell history visibly
-mkdir -p ~/.config
-printf '%s' "$GHCR_PULL_TOKEN" > ~/.config/ghcr_pull_token && chmod 600 ~/.config/ghcr_pull_token
+For a manual deploy run directly on the server, authenticate the `deploy` user's
+Docker CLI first using a PAT with the same package access:
 
-Below command authenticates the server to GHCR so it can pull your images. Docker stores the credential locally (usually in ~/.docker/config.json), so you only do this once per server.read -s -p "GHCR_PULL_TOKEN: " GHCR_PULL_TOKEN
-# print token value and pipe to right side, read password directly from the pipe
-echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u simon617 --password-stdin
-# verify:
-docker pull ghcr.io/simon617/vvh:latest 2>&1 | tail -2   # works after Phase 6 pushes the first image
+```bash
+read -s -p "GHCR_PULL_TOKEN: " GHCR_PULL_TOKEN
+printf '%s' "$GHCR_PULL_TOKEN" | docker login ghcr.io -u simon617 --password-stdin
+unset GHCR_PULL_TOKEN
+docker pull ghcr.io/simon617/vvh:latest
 ```
 
 ### 9.5 Validate the compose file
@@ -1174,7 +1171,7 @@ docker run --rm \
 |---|---|---|
 | SSH `Permission denied (publickey)` | Wrong key / wrong user / root login disabled too early | Confirm you're `deploy`, key is in `~/.ssh/authorized_keys` (mode 600, owner deploy), `PubkeyAuthentication yes`. If you locked yourself out, use the cloud console/VNC to fix sshd, then disable password auth again. |
 | `docker: permission denied` | `deploy` not in the `docker` group / stale session | `sudo usermod -aG docker deploy`, log out/in, `docker run --rm hello-world`. |
-| GHCR pull denied | Server token lacks `read:packages`; package private; token expired/revoked | Re-create the PAT (fine-grained, `read:packages`), `echo "$TOKEN" \| docker login ghcr.io -u simon617 --password-stdin`. Check package visibility in GHCR settings. |
+| GHCR pull denied | `GHCR_PULL_TOKEN` is missing/invalid or cannot read the private package | Confirm the Actions secret is set to a valid PAT with `read:packages` access to `ghcr.io/simon617/vvh`; check the package's Actions access and visibility in GHCR settings. |
 | Nginx 502 Bad Gateway | App down / not yet healthy / proxy target wrong | `docker ps` → is `vvh-app` `Up (healthy)`? `docker logs vvh-app --tail 50`. Confirm `proxy_pass http://127.0.0.1:3000` and that compose binds `127.0.0.1:3000:3000` (no port clash with Nginx). |
 | Site shows old cert / certificate verify failed | Firewall switchover not done; cert names mismatch; HSTS cached | Confirm the firewall routes 80/443 to this server (§3.2) and the cert covers both names (`sudo certbot certificates`); test in a private/incognito window (`chrome://net-internals/#hsts` to clear). |
 | HTTP-01 challenge failed / port 80 blocked by ISP | No firewall forward on 80; old server still answering; ISP blocks inbound 80/443 | Confirm the firewall routes port 80 to this server (§3.2, §4). If the ISP truly blocks inbound 80/443, contact the ISP — the site cannot be served publicly without them. |

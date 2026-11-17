@@ -40,6 +40,15 @@ chmod 660 "$LOG_FILE" 2>/dev/null || true
 PREV_IMAGE=""
 [ -f "$LAST_IMAGE_FILE" ] && PREV_IMAGE="$(cat "$LAST_IMAGE_FILE")"
 
+cleanup_docker_config() {
+  if [ -n "${DEPLOY_DOCKER_CONFIG:-}" ]; then
+    rm -f "$DEPLOY_DOCKER_CONFIG/config.json"
+    if ! rmdir "$DEPLOY_DOCKER_CONFIG"; then
+      log "WARNING: could not remove temporary Docker config directory."
+    fi
+  fi
+}
+
 # MIGRATE_ON_DEPLOY comes from the server .env (never echoed).
 MIGRATE_ON_DEPLOY="$(sed -n 's/^MIGRATE_ON_DEPLOY=//p' "$ENV_FILE" 2>/dev/null || true)"
 
@@ -57,11 +66,26 @@ healthcheck() {
 log "==> Deploying $NEW_IMAGE (previous: ${PREV_IMAGE:-none})"
 export VVH_IMAGE="$NEW_IMAGE"
 
+# Use an isolated Docker config so the Actions PAT is not stored in the deploy
+# user's normal Docker credentials.
+if [ -n "${GHCR_PULL_TOKEN:-}" ]; then
+  DEPLOY_DOCKER_CONFIG="$(mktemp -d "${TMPDIR:-/tmp}/vvh-docker-config.XXXXXX")"
+  chmod 700 "$DEPLOY_DOCKER_CONFIG"
+  export DOCKER_CONFIG="$DEPLOY_DOCKER_CONFIG"
+  trap cleanup_docker_config EXIT
+  if ! printf '%s' "$GHCR_PULL_TOKEN" |
+    docker login ghcr.io -u "${GHCR_USERNAME:-simon617}" --password-stdin; then
+    fail "GHCR login failed. Verify GHCR_PULL_TOKEN has read:packages access to ghcr.io/simon617/vvh."
+  fi
+  unset GHCR_PULL_TOKEN
+else
+  info "GHCR_PULL_TOKEN is not set; using the deploy user's existing Docker credentials."
+fi
+
 # --- Pull the new image ---
 info "Pulling image..."
 docker compose -f "$COMPOSE_FILE" pull app \
-  || fail "docker compose pull failed. Is the server logged in to ghcr.io?
-           Run: echo \"\$GHCR_PULL_TOKEN\" | docker login ghcr.io -u <user> --password-stdin"
+  || fail "docker compose pull failed. Verify the GHCR credentials can read ghcr.io/simon617/vvh."
 
 # --- Optional migrations (flag-controlled; Prisma CLI must ship in the image) ---
 if [ "${MIGRATE_ON_DEPLOY:-false}" = "true" ]; then
