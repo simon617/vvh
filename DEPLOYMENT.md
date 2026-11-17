@@ -478,8 +478,8 @@ Action : merge button will be greyed out until this specific check passes. You c
 | `SSH_KNOWN_HOSTS` | `ssh-keyscan -t ed25519 202.77.49.35` output (fetch server's ed25519 host key. Run after the server exists) |
 | `GHCR_PULL_TOKEN` | GitHub PAT with **`read:packages`** scope and access to `ghcr.io/simon617/vvh`. Passed to the server by the deploy workflow for the image pull. |
 
-> `GHCR_PULL_TOKEN` is a PAT because the server cannot use the Actions job's `GITHUB_TOKEN`. The deploy workflow logs in
-> to GHCR using this PAT and removes its temporary Docker config when deployment exits. Push-side needs **no PAT** — the
+> `GHCR_PULL_TOKEN` is a PAT because the server cannot use the Actions job's `GITHUB_TOKEN`. The SSH deployment step logs
+> in to GHCR using this PAT and removes its temporary Docker config when the remote command exits. Push-side needs **no PAT** — the
 > workflow declares `permissions: packages: write` and logs in with `GITHUB_TOKEN`.
 
 ### 5.5 Generate the deploy SSH key (Local Windows)
@@ -831,9 +831,9 @@ chown deploy:deploy /opt/vvh/.env
 Create a GitHub PAT with **`read:packages`** scope and access to the `vvh` package
 ([GitHub token settings](https://github.com/settings/tokens)). Save it as the Actions
 repository secret `GHCR_PULL_TOKEN` (§5.4). The deploy workflow passes the token to
-`deploy.sh`, which logs in as the repository owner before pulling the image. Docker
-credentials are kept in a temporary config directory and removed when the deploy
-script exits; no server-side token file or one-time manual login is needed.
+the SSH session, which logs in as the repository owner before invoking `deploy.sh`.
+Docker credentials are kept in a temporary config directory and removed when the
+remote command exits; no server-side token file or one-time manual login is needed.
 
 For a manual deploy run directly on the server, authenticate the `deploy` user's
 Docker CLI first using a PAT with the same package access:
