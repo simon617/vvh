@@ -14,12 +14,12 @@ services:
       - HOSTNAME=0.0.0.0
     ports:
       # Loopback only — Nginx is the ONLY process that reaches the app.
-      #- "127.0.0.1:3000:3000"
+      - "127.0.0.1:3000:3000"
       # Tempoarily test the application on 10.0.2.7
-      - "10.0.2.7:3000:3000"
+      #- "10.0.2.7:3000:3000"
     volumes:
       - sqlite-data:/app/prisma/data
-      - uploads:/app/uploads
+      - ./uploads:/app/uploads
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s
@@ -36,5 +36,3 @@ services:
 volumes:
   sqlite-data:
     name: vvh_sqlite-data
-  uploads:
-    name: vvh_uploads

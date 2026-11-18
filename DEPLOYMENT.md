@@ -55,7 +55,7 @@
    · deploy user       · TLS termination       · vvh-app container
    · key-only auth     · apex→www 301          · 127.0.0.1:3000:3000
    · fail2ban          · proxy app            · volumes: vvh_sqlite-data,
-                        · security headers       vvh_uploads
+                        · security headers       /opt/vvh/uploads
 
 GitHub Actions (github.com/simon617/vvh)
   · PR  -> CI + Security            (required status checks — they gate the merge, §5.2)
@@ -71,7 +71,7 @@ Key decisions (pronounced, not assumed):
 |---|---|
 | Node / runtime | **Node 24 LTS** (`node:24-alpine`); Next.js `output: "standalone"`; non-root `nextjs` user. (Dependency tree requires ≥22 — `@testing-library/jest-dom@7`; Node 20 is EOL since 2026-04; the whole project is pinned to 24 — `.nvmrc`, `package.json engines`, CI, Docker.) |
 | Package manager | **npm** (`package-lock.json` confirmed; no pnpm/yarn) |
-| Database | **SQLite via Prisma**, named volume `vvh_sqlite-data`; seeded DB baked into the image (fresh-volume bootstrap), server `.env` holds runtime config |
+| Database / uploads | **SQLite via Prisma**, named volume `vvh_sqlite-data`; uploaded files in host directory `/opt/vvh/uploads` bind-mounted to `/app/uploads`; seeded DB baked into image (fresh-volume bootstrap) |
 | Registry auth | Push: built-in `GITHUB_TOKEN` (`packages: write`). Server pull: classic PAT `GHCR_PULL_TOKEN` (`read:packages`) |
 | TLS issuance | **HTTP-01 via Certbot (webroot)** — needs ports 80/443 forwarded to this server (already required for the site itself) |
 | DNS & cutover | DNS stays with the existing provider (no Cloudflare, no NS change); switchover = change the **firewall routing/NAT rule** from the old web server to the new one (§3) |
@@ -537,7 +537,7 @@ separate).
 | `.github/actions/node-setup/action.yml` | Shared Node 24 + npm 11 install for CI/Security — the npm 11 pin lives in exactly one place |
 | `.github/dependabot.yml` | Weekly npm + GitHub Actions bump PRs, grouped |
 | `Dockerfile` | Multi-stage `node:24-alpine`; standalone build; seeded SQLite baked in; non-root `nextjs` user; `ARG NEXT_PUBLIC_SITE_URL` |
-| `docker-compose.prod.yml` | Server compose: `ghcr.io/simon617/vvh`, `127.0.0.1:3000:3000`, `env_file: .env`, named volumes, healthcheck |
+| `docker-compose.prod.yml` | Server compose: `ghcr.io/simon617/vvh`, `127.0.0.1:3000:3000`, `env_file: .env`, SQLite named volume + `/opt/vvh/uploads` bind mount, healthcheck |
 | `nginx.conf` | Host Nginx: 80→https, apex→www 301, TLS, security headers/CSP/gzip/WebSockets, `proxy_pass http://127.0.0.1:3000` |
 | `deploy.sh` | Server-side deploy: pull → optional migrate → up → healthcheck with retries → rollback to previous tag |
 | `.env.example` | Complete env template (`.env` gitignored; server copy `/opt/vvh/.env`) |
@@ -762,8 +762,9 @@ certbot --version
 ### 9.1 Directories and file ownership
 
 ```bash
-sudo mkdir -p /opt/vvh/logs /opt/vvh/backups /opt/vvh/bin
+sudo mkdir -p /opt/vvh/logs /opt/vvh/backups /opt/vvh/bin /opt/vvh/uploads
 sudo chown -R deploy:deploy /opt/vvh
+sudo chown -R 1001:1001 /opt/vvh/uploads
 mkdir -p /var/www/certbot && sudo chown -R deploy:deploy /var/www/certbot
 ```
 
@@ -786,6 +787,22 @@ chmod +x /opt/vvh/deploy.sh /opt/vvh/bin/*.sh
 # create a symbolic link : source  shortcut destination
 sudo ln -s /opt/vvh/scripts /opt/vvh/bin   # optional convenience
 ```
+
+The production Compose file bind-mounts `/opt/vvh/uploads` into the app. If migrating
+from the previous `vvh_uploads` named volume, first back it up, then merge its files
+into the host directory before deploying the Compose change:
+
+```bash
+mkdir -p /opt/vvh/uploads /opt/vvh/backups
+docker run --rm -v vvh_uploads:/src:ro -v /opt/vvh/backups:/backup alpine \
+  sh -c "tar czf /backup/uploads-named-volume-before-bind-$(date +%Y%m%d-%H%M%S).tar.gz -C /src ."
+docker run --rm -v vvh_uploads:/src:ro -v /opt/vvh/uploads:/dst alpine \
+  sh -c "cp -a /src/. /dst/"
+sudo chown -R 1001:1001 /opt/vvh/uploads
+```
+
+Keep the old named volume until the uploaded files and report downloads have been
+verified. Files copied directly to `/opt/vvh/uploads` are now served by the app.
 
 > Alternative without `scp` keys: download from GitHub
 > `curl -fsSLO https://raw.githubusercontent.com/simon617/vvh/main/docker-compose.prod.yml` (etc.) into `/opt/vvh`.
@@ -960,7 +977,8 @@ site is served by this box — DNS itself is never changed.
    prompt.
 4. Watch the **Deploy over SSH** step → it runs `/opt/vvh/deploy.sh ghcr.io/simon617/vvh:<sha>` which:
    pulls → recreates `vvh-app` → waits on `/api/health` (30×3s) → writes `.last_image`.
-5. First run also creates volumes `vvh_sqlite-data` + `vvh_uploads` and populates the DB from the baked image.
+5. First run creates the `vvh_sqlite-data` volume and populates the DB from the baked image. Uploaded files persist
+   under `/opt/vvh/uploads` on the host.
 
 If anything fails, see §17 (troubleshooting) and §13 (rollback) before re-running.
 
@@ -1034,8 +1052,8 @@ Three independent layers, in order of preference:
 
 Link to a known-good sha is in `.last_image`, the Actions run summary, or the GHCR package page.
 
-**Rollback of data** is handled separately — SQLite + uploads are persistent volumes and are **never** deleted by a
-deploy. Restore point-in-time from §14.4 backups if needed.
+**Rollback of data** is handled separately — SQLite is a persistent volume and uploads are stored in
+`/opt/vvh/uploads`; neither is deleted by a deploy. Restore point-in-time from §14.4 backups if needed.
 
 ---
 
@@ -1072,7 +1090,7 @@ On each release: confirm git tag == GHCR tag == .last_image
 
 ### 14.4 Backups
 
-`/opt/vvh/bin/backup-prod.sh` snapshots both named volumes nightly (installed below):
+`/opt/vvh/bin/backup-prod.sh` snapshots the SQLite named volume and `/opt/vvh/uploads` nightly (installed below):
 
 ```bash
 # systemd timer (Ubuntu terminal, as deploy):
@@ -1103,6 +1121,9 @@ systemctl --user list-timers | grep vvh-backup
 
 ```bash
 docker run --rm -v vvh_sqlite-data:/data -v /opt/vvh/backups:/backup alpine sh -c "tar xzf /backup/sqlite-<stamp>.tar.gz -C /data"
+# Restore uploads into the host directory (create it first if needed):
+sudo tar xzf /opt/vvh/backups/uploads-<stamp>.tar.gz -C /opt/vvh/uploads
+sudo chown -R 1001:1001 /opt/vvh/uploads
 ```
 
 ## 15. Dynamic public IP

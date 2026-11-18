@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 #
-# backup-prod.sh — nightly snapshot of the SQLite DB + uploads named volumes.
+# backup-prod.sh — nightly snapshot of the SQLite volume + uploads directory.
 # Runs via systemd timer on the server as user `deploy` (see DEPLOYMENT.md,
 # section "Backups").
 #
-# Restore: extract the archive, then copy files into the volume:
+# Restore the SQLite archive into its volume and uploads into /opt/vvh/uploads.
+# SQLite restore:
 #   docker run --rm -v vvh_sqlite-data:/data -v /opt/vvh/backups:/backup \
 #     alpine sh -c "tar xzf /backup/sqlite-<stamp>.tar.gz -C /data"
 #
@@ -15,10 +16,14 @@ set -Eeuo pipefail
 
 BACKUP_DIR="${BACKUP_DIR:-/opt/vvh/backups}"
 SQLITE_VOLUME="${SQLITE_VOLUME:-vvh_sqlite-data}"
-UPLOADS_VOLUME="${UPLOADS_VOLUME:-vvh_uploads}"
+UPLOADS_DIR="${UPLOADS_DIR:-/opt/vvh/uploads}"
 KEEP_DAILY="${KEEP_DAILY:-14}"
 
 mkdir -p "$BACKUP_DIR"
+if [ ! -d "$UPLOADS_DIR" ]; then
+  echo "ERROR: uploads directory does not exist: $UPLOADS_DIR" >&2
+  exit 1
+fi
 STAMP="$(date +%Y%m%d-%H%M%S)"
 
 docker run --rm \
@@ -26,10 +31,7 @@ docker run --rm \
   -v "${BACKUP_DIR}:/backup" \
   alpine sh -c "tar czf /backup/sqlite-${STAMP}.tar.gz -C /data ."
 
-docker run --rm \
-  -v "${UPLOADS_VOLUME}:/data:ro" \
-  -v "${BACKUP_DIR}:/backup" \
-  alpine sh -c "tar czf /backup/uploads-${STAMP}.tar.gz -C /data ."
+tar czf "${BACKUP_DIR}/uploads-${STAMP}.tar.gz" -C "$UPLOADS_DIR" .
 
 # Retention (keep the last KEEP_DAILY snapshots of each kind).
 ls -1t "${BACKUP_DIR}"/sqlite-*.tar.gz 2>/dev/null | tail -n +$((KEEP_DAILY + 1)) | xargs -r rm -f
