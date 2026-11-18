@@ -12,11 +12,11 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
-    #ports:
+    ports:
       # Loopback only — Nginx is the ONLY process that reaches the app.
-      #- "127.0.0.1:3000:3000"
-      # Tempoarily test the application on 10.0.2.7
-      #- "10.0.2.7:3000:3000"
+      - "127.0.0.1:3000:3000"
+      # Temporary LAN access for testing.
+      - "10.0.2.7:3000:3000"
     volumes:
       - sqlite-data:/app/prisma/data
       - ./uploads:/app/uploads

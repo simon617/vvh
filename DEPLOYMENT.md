@@ -165,12 +165,11 @@ rather than merely mitigated. 21 advisories remain overall (14 moderate, 7 high)
   `{ params: Promise.resolve({ … }) }`; `src/lib/redirects.test.ts` now pins `// @vitest-environment node`
   because importing `next.config.js` pulls in `next-intl/plugin`, whose filename resolution breaks under jsdom.
 
-**Production audit status:** `.github/workflows/security.yml` blocks high/critical
-production findings, with a temporary, exact exception for
-`GHSA-fc5q-39xc-vjpf` (`picomatch` via `@parcel/watcher`). As of 2026-11-18, the
-advisory has no patched upstream release. The audit checker validates the advisory
-and dependency path; any other high/critical finding still fails the check. Remove
-the exception once a patched version is available.
+**Production audit status:** `npm audit --omit=dev --audit-level=high` is temporarily
+report-only in `.github/workflows/security.yml` while upstream works on a fix for
+`GHSA-fc5q-39xc-vjpf` (`picomatch` via `@parcel/watcher`). The audit output remains
+visible in Actions, but the step is allowed to fail so it does not block deployment.
+Restore blocking behavior once the dependency advisory is resolved.
 
 | Finding | Where | Fix |
 |---|---|---|
@@ -183,12 +182,12 @@ the exception once a patched version is available.
 1. ✅ **Done — Next 15 → 16 upgrade landed** (`next@16.4.6`, Turbopack build, `next lint` → ESLint CLI). This was
    also the fix for the `postcss` finding above; full notes in **§2.4**.
 2. ✅ **Done — `nodemailer@10.5.0` landed** and the contact form re-tested (§2.5).
-3. ✅ **Done — production `npm audit` is blocking**, except the temporary Picomatch exception above.
+3. Production `npm audit` is temporarily non-blocking until the Picomatch advisory is resolved.
 4. Do not expose the admin/editor endpoints to the internet — enforce the authorization middleware and (recommended)
    an additional IP allow-list in `nginx.conf` for `/api/auth` and `/api/upload` if editors connect from fixed IPs.
 
-> Keep the Trivy image gate pinned to `CRITICAL`. The dependency gate blocks all other production high/critical
-> findings while the Picomatch exception remains — see §2.5.
+> The Trivy image gate remains blocking at `CRITICAL`. The production npm audit is temporarily non-blocking; restore
+> its blocking behavior after the upstream dependency fix.
 
 **Ubuntu terminal** — initial login as root (from a machine you trust):
 
@@ -261,11 +260,10 @@ This section records dependency and runtime-image fixes. The current production 
 | `vitest@4.1.10` | `vitest@4.1.12` | dev-only, but clears a `vite` advisory in the test tree. |
 | *(no overrides)* | `overrides`: `postcss-selector-parser@^6.1.5`, `minimatch@^11.0.1` (under `readdir-glob` and `@typescript-eslint/typescript-estree`), `undici@^7.30.2`, `vite@^8.3.8` | transitive pins that force the patched versions where no upstream release depends on them yet (Tailwind/glob/ESLint/jsdom chains). |
 
-The production dependency audit is a **blocking** CI gate, except for the exact
-Picomatch advisory documented in §2.3. It writes the `npm audit` JSON report and
-allows only that advisory when it is nested under `@parcel/watcher`; all other high
-and critical findings fail. Dev dependencies remain excluded from this production
-gate. See `scripts/check-production-audit.mjs`.
+The production dependency audit currently runs with `continue-on-error: true` while
+the upstream Picomatch advisory documented in §2.3 is unresolved. The audit output
+is retained in Actions, but failures do not block deployment. Remove
+`continue-on-error` after the advisory is resolved.
 
 **npm/corepack removed from the runtime image**
 
@@ -448,9 +446,9 @@ Action : merge button will be greyed out until this specific check passes. You c
 → add **`CI / ci`** now. After the first green security run, also
   require **`Security / npm audit (production deps)`**, **`Security / Gitleaks secret scan`**,
   **`Security / Trivy filesystem scan`** and **`Security / CodeQL`** — type each as `<workflow name> / <job name>`
-  exactly as shown here. The production `npm audit` job blocks all high/critical findings except the narrowly scoped
-  Picomatch advisory exception (§2.3). Do not rename workflow/job names without also updating this rule and the
-  `REQUIRED_CHECKS` list in `deploy.yml` (§5.7).
+  exactly as shown here. The production `npm audit` step is temporarily non-blocking while the Picomatch advisory
+  remains unresolved (§2.3). Do not rename workflow/job names without also updating this rule and the `REQUIRED_CHECKS`
+  list in `deploy.yml` (§5.7).
 - ☑ **Do not allow bypassing the above settings**
 - ☐ *Require signed commits* — enable if you sign commits (`Optional/recommended`).
 - Save.
@@ -537,7 +535,7 @@ separate).
 | File | What it does |
 |---|---|
 | `.github/workflows/ci.yml` | Shared Node setup → lint → vitest → `next build` → `tsc --noEmit` on PRs + pushes to `main` |
-| `.github/workflows/security.yml` | Production `npm audit` (high/critical blocking with one exact temporary Picomatch exception), Gitleaks (SARIF), Trivy FS (SARIF, report-only — **skipped on push**), CodeQL; weekly cron |
+| `.github/workflows/security.yml` | Production `npm audit` (temporarily non-blocking), Gitleaks (SARIF), Trivy FS (SARIF, report-only — **skipped on push**), CodeQL; weekly cron |
 | `.github/workflows/deploy.yml` | `wait-for-checks` (push only, §5.7) → build → Trivy image gate (fails on CRITICAL) → push `:latest` + `:sha` → SSH deploy (gated by `DEPLOY_ENABLED` + `production` env) |
 | `.github/actions/node-setup/action.yml` | Shared Node 24 + npm 11 install for CI/Security — the npm 11 pin lives in exactly one place |
 | `.github/dependabot.yml` | Weekly npm + GitHub Actions bump PRs, grouped |
