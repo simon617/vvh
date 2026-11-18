@@ -165,8 +165,12 @@ rather than merely mitigated. 21 advisories remain overall (14 moderate, 7 high)
   `{ params: Promise.resolve({ … }) }`; `src/lib/redirects.test.ts` now pins `// @vitest-environment node`
   because importing `next.config.js` pulls in `next-intl/plugin`, whose filename resolution breaks under jsdom.
 
-**Still open — keep the `npm audit` CI step REPORT-ONLY.** `npm audit --omit=dev --audit-level=high` still exits
-non-zero, so `continue-on-error` in `.github/workflows/security.yml` must stay until these clear:
+**Production audit status:** `.github/workflows/security.yml` blocks high/critical
+production findings, with a temporary, exact exception for
+`GHSA-fc5q-39xc-vjpf` (`picomatch` via `@parcel/watcher`). As of 2026-11-18, the
+advisory has no patched upstream release. The audit checker validates the advisory
+and dependency path; any other high/critical finding still fails the check. Remove
+the exception once a patched version is available.
 
 | Finding | Where | Fix |
 |---|---|---|
@@ -179,13 +183,12 @@ non-zero, so `continue-on-error` in `.github/workflows/security.yml` must stay u
 1. ✅ **Done — Next 15 → 16 upgrade landed** (`next@16.4.6`, Turbopack build, `next lint` → ESLint CLI). This was
    also the fix for the `postcss` finding above; full notes in **§2.4**.
 2. ✅ **Done — `nodemailer@10.5.0` landed** and the contact form re-tested (§2.5).
-3. ✅ **Done — the `npm audit` CI step is now BLOCKING.** `continue-on-error` was removed from
-   `security.yml`; `npm audit --omit=dev --audit-level=high` exits 0 (§2.5).
+3. ✅ **Done — production `npm audit` is blocking**, except the temporary Picomatch exception above.
 4. Do not expose the admin/editor endpoints to the internet — enforce the authorization middleware and (recommended)
    an additional IP allow-list in `nginx.conf` for `/api/auth` and `/api/upload` if editors connect from fixed IPs.
 
-> This class of finding is why the image gate (Trivy) is pinned to `CRITICAL` — keep it strict. The dependency gate
-> is now strict too (item 3 above is done) — see §2.5, which also makes the **image** scan clean (0 findings).
+> Keep the Trivy image gate pinned to `CRITICAL`. The dependency gate blocks all other production high/critical
+> findings while the Picomatch exception remains — see §2.5.
 
 **Ubuntu terminal** — initial login as root (from a machine you trust):
 
@@ -244,9 +247,9 @@ standalone artifact (`node .next/standalone/server.js`): `/` → 307 `/en`; `/en
 renders the 404 boundary without route props is fixed — see §2.6. The `nodemailer` < 10.4.0 item from §2.3 was
 already **resolved** — see §2.5.
 
-### 2.5 ✅ RESOLVED — Dependency highs cleared + npm/corepack removed from the runtime image
+### 2.5 — Dependency fixes + npm/corepack removed from the runtime image
 
-Closes the remaining §2.3 action items (2 and 3) **and** every Trivy image finding.
+This section records dependency and runtime-image fixes. The current production audit exception is documented in §2.3.
 
 **Dependency bumps**
 
@@ -258,9 +261,11 @@ Closes the remaining §2.3 action items (2 and 3) **and** every Trivy image find
 | `vitest@4.1.10` | `vitest@4.1.12` | dev-only, but clears a `vite` advisory in the test tree. |
 | *(no overrides)* | `overrides`: `postcss-selector-parser@^6.1.5`, `minimatch@^11.0.1` (under `readdir-glob` and `@typescript-eslint/typescript-estree`), `undici@^7.30.2`, `vite@^8.3.8` | transitive pins that force the patched versions where no upstream release depends on them yet (Tailwind/glob/ESLint/jsdom chains). |
 
-`npm audit` (full tree) and `npm audit --omit=dev --audit-level=high` both now report **0 vulnerabilities**, so
-`continue-on-error` was removed from the `npm-audit` job in `.github/workflows/security.yml` — the production
-dependency audit is a **blocking** CI gate.
+The production dependency audit is a **blocking** CI gate, except for the exact
+Picomatch advisory documented in §2.3. It writes the `npm audit` JSON report and
+allows only that advisory when it is nested under `@parcel/watcher`; all other high
+and critical findings fail. Dev dependencies remain excluded from this production
+gate. See `scripts/check-production-audit.mjs`.
 
 **npm/corepack removed from the runtime image**
 
@@ -443,9 +448,9 @@ Action : merge button will be greyed out until this specific check passes. You c
 → add **`CI / ci`** now. After the first green security run, also
   require **`Security / npm audit (production deps)`**, **`Security / Gitleaks secret scan`**,
   **`Security / Trivy filesystem scan`** and **`Security / CodeQL`** — type each as `<workflow name> / <job name>`
-  exactly as shown here. `npm audit` is still report-only (`continue-on-error`), but its *job* still concludes
-  `success`, so requiring it does not block merges. ⚠ Do not rename workflow/job names without also updating this rule
-  and the `REQUIRED_CHECKS` list in `deploy.yml` (§5.7).
+  exactly as shown here. The production `npm audit` job blocks all high/critical findings except the narrowly scoped
+  Picomatch advisory exception (§2.3). Do not rename workflow/job names without also updating this rule and the
+  `REQUIRED_CHECKS` list in `deploy.yml` (§5.7).
 - ☑ **Do not allow bypassing the above settings**
 - ☐ *Require signed commits* — enable if you sign commits (`Optional/recommended`).
 - Save.
@@ -532,7 +537,7 @@ separate).
 | File | What it does |
 |---|---|
 | `.github/workflows/ci.yml` | Shared Node setup → lint → vitest → `next build` → `tsc --noEmit` on PRs + pushes to `main` |
-| `.github/workflows/security.yml` | `npm audit` (report-only), Gitleaks (SARIF), Trivy FS (SARIF, report-only — **skipped on push**), CodeQL; weekly cron |
+| `.github/workflows/security.yml` | Production `npm audit` (high/critical blocking with one exact temporary Picomatch exception), Gitleaks (SARIF), Trivy FS (SARIF, report-only — **skipped on push**), CodeQL; weekly cron |
 | `.github/workflows/deploy.yml` | `wait-for-checks` (push only, §5.7) → build → Trivy image gate (fails on CRITICAL) → push `:latest` + `:sha` → SSH deploy (gated by `DEPLOY_ENABLED` + `production` env) |
 | `.github/actions/node-setup/action.yml` | Shared Node 24 + npm 11 install for CI/Security — the npm 11 pin lives in exactly one place |
 | `.github/dependabot.yml` | Weekly npm + GitHub Actions bump PRs, grouped |
